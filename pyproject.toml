@@ -1,0 +1,15 @@
+﻿[project]
+name = "realm-fabric"
+version = "0.0.1"
+description = "Grid-based agent simulation framework for learning reliable structured LLM output (V0)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic",
+    "openai",
+    "rich",
+    "python-dotenv",
+]
+
+[dependency-groups]
+dev = []

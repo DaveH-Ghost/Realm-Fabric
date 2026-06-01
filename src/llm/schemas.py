@@ -1,19 +1,12 @@
 """
-AgentTurn Schema - Version 0 (Design Reference)
+AgentTurn Schema - Version 0 (Authoritative Source)
 
-!!! IMPORTANT !!!
+This is the canonical Pydantic schema for agent turn outputs in Version 0.
 
-This file is NO LONGER the authoritative version.
-
-The real implementation now lives here:
-    src/llm/schemas.py
-
-This file in docs/ is kept only as a design reference / historical snapshot
-so it's easy to review the schema during planning discussions without
-having to look at implementation code.
-
-For all actual development and imports, use:
-    from src.llm.schemas import AgentTurn
+IMPORTANT:
+- This file (src/llm/schemas.py) is the single source of truth.
+- The simulation code will import from here.
+- The copy in docs/schemas/AgentTurn.py is kept only as a design reference.
 
 Current V0 Scope:
 - Only three actions: move, look, speak
@@ -23,7 +16,7 @@ Current V0 Scope:
 - move target uses full direction strings ("north", "east", etc.)
 - confidence and emotion fields are kept for now (can be removed later if problematic)
 
-Last synced: 2026-05-31
+Last synced from design docs: 2026-05-31
 """
 
 from pydantic import BaseModel, Field, field_validator
