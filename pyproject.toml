@@ -1,4 +1,4 @@
-﻿[project]
+[project]
 name = "realm-fabric"
 version = "0.0.1"
 description = "Grid-based agent simulation framework for learning reliable structured LLM output (V0)"
@@ -12,4 +12,11 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = []
+dev = [
+    "pytest>=9.0.3",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q"
