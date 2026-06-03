@@ -255,11 +255,11 @@ def test_step_unknown_action_still_records_turn():
 # =============================================================================
 
 def test_build_prompt_produces_reasonable_output():
-    """The prompt builder should produce a non-empty string containing key sections."""
+    """The prompt builder should produce a non-empty string containing key sections (with examples enabled)."""
     world = create_initial_world()
     agent = world.get_agent()
 
-    prompt = build_prompt(agent, world)
+    prompt = build_prompt(agent, world, include_examples=True)
 
     assert isinstance(prompt, str)
     assert len(prompt) > 500  # at least the rules + examples + current state

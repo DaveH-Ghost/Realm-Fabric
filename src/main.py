@@ -22,11 +22,11 @@ Future: real autonomous runs, better logging, etc.
 
 Run with (from the project root):
 
-    # Easiest way
+    # Easiest way (few-shots OFF by default for token efficiency)
     uv run python src/main.py
 
-    # With few-shots disabled for testing (e.g. to measure LLM success rate drop):
-    uv run python src/main.py --no-fewshots
+    # To include the four few-shot examples:
+    uv run python src/main.py --with-fewshots
 
     # After `uv sync`, you can also do:
     # uv run realm
@@ -76,15 +76,15 @@ class ManualStepper(cmd.Cmd):
         "- 'step <action> ...'   : manually simulate a turn (for testing)\n"
         "- Type an agent's name (e.g. 'Explorer') : let the LLM decide its action\n"
         "- 'prompt' : show the full prompt that would be sent to the LLM\n"
-        "- 'fewshots on/off' : toggle few-shot examples in prompts (for success rate tests)\n"
+        "- 'fewshots on/off' : toggle few-shot examples in prompts (off by default)\n"
         "- 'sign \"new text\"' : debug command to update the sign\n"
-        "CLI flags: --log , --no-fewshots\n"
+        "CLI flags: --log , --with-fewshots\n"
         "Example: Explorer\n"
         "Example: step look obj_ball_01\n"
     )
     prompt = "(realm) "
 
-    def __init__(self, include_examples: bool = True):
+    def __init__(self, include_examples: bool = False):
         super().__init__()
         self.world = create_initial_world()
         # Support multiple agents by name (case-insensitive lookup)
@@ -125,11 +125,11 @@ class ManualStepper(cmd.Cmd):
     def do_fewshots(self, arg):
         """
         Toggle or show the few-shot examples setting for prompts.
-        Useful for A/B testing LLM success rate with/without examples.
+        (Default is now OFF for token efficiency.)
 
         Usage:
             fewshots          # show current state
-            fewshots on       # enable
+            fewshots on       # enable (adds the 4 examples)
             fewshots off      # disable
         """
         arg = arg.strip().lower()
@@ -324,9 +324,9 @@ def main():
         help="Enable full logging of every turn to a timestamped file in logs/",
     )
     parser.add_argument(
-        "--no-fewshots",
+        "--with-fewshots",
         action="store_true",
-        help="Start with few-shot examples disabled in the prompt builder (for testing LLM success rate impact)",
+        help="Include the four few-shot examples in prompts (off by default for token efficiency; current models perform well without them)",
     )
     args = parser.parse_args()
 
@@ -335,7 +335,7 @@ def main():
         log_path = setup_file_logging()
 
     try:
-        stepper = ManualStepper(include_examples=not args.no_fewshots)
+        stepper = ManualStepper(include_examples=args.with_fewshots)
         stepper.cmdloop()
     finally:
         if log_path:

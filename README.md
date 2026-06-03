@@ -26,12 +26,14 @@ This project was made using the Grok Build CLI.
    uv run python src/main.py
    ```
 
+   Few-shot examples are disabled by default for token efficiency (saves ~50% tokens). Use `--with-fewshots` if you want the 4 examples included.
+
    Inside the `(realm)` prompt you can:
    - `state` — see current world/agent state
    - `vision` — see what the agent currently perceives
    - `prompt` — see the full prompt the LLM would receive
    - `step look obj_ball_01` — manually drive the agent (great for testing)
-   - `Explorer` — (type the agent's name) to let the **LLM** decide the next action (requires OPENROUTER_API_KEY)
+   - `Explorer` — (type the agent's name) to let the **LLM** decide the next action (requires OPENROUTER_API_KEY). Few-shot examples are OFF by default (saves ~50% tokens; current models perform well without them). Use `--with-fewshots` or `fewshots on` to enable.
    - `sign "new text here"` — simulate the human updating the sign (triggers the special "has changed" behavior)
    - `quit`
 

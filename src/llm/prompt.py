@@ -16,7 +16,7 @@ The prompt includes:
 - Recent history (from agent's memory)
 - Turn-specific reminders
 - Output format reminder
-- 4 few-shot examples (to teach reliable structured output)
+- 4 few-shot examples (optional; off by default for token efficiency)
 
 This is kept separate from the LLM client so it can be tested and iterated independently.
 """
@@ -192,18 +192,22 @@ def _format_history(turns: list[TurnRecord]) -> str:
     return "\n".join(lines).rstrip()
 
 
-def build_prompt(agent: Agent, world: World, include_examples: bool = True) -> str:
+def build_prompt(agent: Agent, world: World, include_examples: bool = False) -> str:
     """
     Assemble the complete prompt for the current turn.
 
     This follows the canonical high-level order from the V0 spec:
     Character Description, System Instructions, Room Description,
     Current Passive Vision, Available Actions, Recent History,
-    Current Instructions, Output Format, plus the four few-shot examples.
+    Current Instructions, Output Format.
+
+    The four few-shot examples from the checklist are included only when
+    include_examples=True (off by default for token efficiency; current
+    models perform well without them).
 
     Args:
-        include_examples: If False, omits the few-shot examples (useful for
-            token budget experiments or when using chat-style messages later).
+        include_examples: Whether to include the four few-shot examples.
+            Default is False.
     """
     parts = []
 
