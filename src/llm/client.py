@@ -10,7 +10,9 @@ Usage:
     from src.llm.prompt import build_prompt
 
     prompt = build_prompt(agent, world)
-    turn = get_next_action(prompt)
+    llm_resp = get_next_action(prompt)
+    turn = llm_resp.turn
+    print(f"Tokens: input={llm_resp.prompt_tokens}, output={llm_resp.completion_tokens}")
 """
 
 import os
@@ -20,6 +22,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from src.llm.schemas import AgentTurn
+from src.llm.types import LLMResponse
 
 
 def _load_environment() -> None:
@@ -79,12 +82,17 @@ def get_next_action(
     prompt: str,
     model: Optional[str] = None,
     temperature: float = 0.7,
-) -> AgentTurn:
+) -> LLMResponse:
     """
-    Send the prompt to the LLM and return a parsed AgentTurn.
+    Send the prompt to the LLM and return a parsed AgentTurn plus usage info.
 
     The prompt should already contain instructions to output valid JSON
     matching the AgentTurn schema (see prompt.py).
+
+    Returns an LLMResponse which includes:
+    - the parsed turn
+    - token usage (prompt_tokens = input, completion_tokens = output)
+      when the provider returns it (OpenRouter/DeepSeek usually do).
     """
     client = get_llm_client()
     model = model or DEFAULT_MODEL
@@ -115,4 +123,18 @@ def get_next_action(
         if content.endswith("```"):
             content = content[:-3].strip()
 
-    return AgentTurn.model_validate_json(content)
+    turn = AgentTurn.model_validate_json(content)
+
+    usage = getattr(response, "usage", None)
+    prompt_tokens = getattr(usage, "prompt_tokens", None) if usage else None
+    completion_tokens = getattr(usage, "completion_tokens", None) if usage else None
+    total_tokens = getattr(usage, "total_tokens", None) if usage else None
+
+    return LLMResponse(
+        turn=turn,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=total_tokens,
+        model=model,
+        raw_response=content,
+    )

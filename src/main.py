@@ -234,14 +234,31 @@ class ManualStepper(cmd.Cmd):
 
         try:
             prompt = build_prompt(agent, self.world)
-            print(f"Prompt length: {len(prompt)} chars (type 'prompt' to view)")
+            print(f"Prompt length: {len(prompt)} chars (type 'prompt' to view full)")
 
             print("Calling LLM...")
             get_next_action = _get_llm_function()
-            turn = get_next_action(prompt)
+            llm_response = get_next_action(prompt)
+            turn = llm_response.turn
 
-            print(f"LLM decided → action={turn.action} target={turn.target} content={turn.content}")
+            # === Rich logging as per readiness checklist ===
+            print("\n" + "=" * 60)
+            print(f"FULL PROMPT (turn {self.turn_number + 1})")
+            print("=" * 60)
+            print(prompt)
+            print("=" * 60)
+
+            print(f"\nRAW LLM RESPONSE (model={llm_response.model}):\n{llm_response.raw_response}")
+            print("=" * 60)
+
+            print(f"\nPARSED TURN: action={turn.action} target={turn.target}")
             print(f"Reasoning: {turn.reasoning}")
+
+            # Log token usage if available (standard OpenAI/OpenRouter usage fields)
+            if llm_response.total_tokens is not None:
+                print(f"\nTOKEN USAGE: input (prompt)={llm_response.prompt_tokens} + "
+                      f"output (completion)={llm_response.completion_tokens} = "
+                      f"total={llm_response.total_tokens}")
 
             self.turn_number += 1
             record = step_turn(agent, self.world, turn, self.turn_number)
