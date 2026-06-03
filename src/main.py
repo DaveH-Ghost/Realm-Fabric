@@ -14,19 +14,33 @@ Supports:
 - quit / exit           : leave the simulation.
 - vision / state        : print current passive vision or agent/world state.
 
-Future: this will be replaced by real LLM-driven turns once we wire the
-llm/ package.
+Typing an agent's name (e.g. "Explorer") will automatically build a prompt
+using the current world state and call the LLM to decide the next action.
+This design makes it easy to support multiple agents later.
 
-Run with:
-    uv run python -m src.main
-    # or from project root (with PYTHONPATH):
-    uv run python -c "
-import sys
-sys.path.insert(0, '.')
-from src.main import ManualStepper
-ManualStepper().cmdloop()
-"
+Future: real autonomous runs, better logging, etc.
+
+Run with (from the project root):
+
+    # Easiest way
+    uv run python src/main.py
+
+    # After `uv sync`, you can also do:
+    # uv run realm
+    # (if the entry point was picked up)
+
+    # To use real LLM calls, copy .env.example to .env and add your OPENROUTER_API_KEY
+
 """
+
+import os
+import sys
+
+# Ensure 'src' package is importable no matter how this script is launched
+# (uv run, python src/main.py, double-click, etc.)
+_project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
 
 import cmd
 from src.world import create_initial_world
@@ -35,23 +49,39 @@ from src.llm.schemas import AgentTurn
 from src.llm.prompt import build_prompt
 from src.perception import build_passive_vision
 
+# Lazy import for the client so you can run the manual stepper
+# without an OPENROUTER_API_KEY
+_get_next_action = None
+
+def _get_llm_function():
+    global _get_next_action
+    if _get_next_action is None:
+        from src.llm.client import get_next_action as _gn
+        _get_next_action = _gn
+    return _get_next_action
+
 
 class ManualStepper(cmd.Cmd):
     intro = (
         "Realm-Fabric V0 Manual Stepper\n"
         "Type 'help' or '?' for commands.\n"
-        "Use 'step <action> [target] [content]' to simulate an agent turn.\n"
-        "Use 'prompt' to see the exact text that would be sent to the LLM.\n"
+        "- 'step <action> ...'   : manually simulate a turn (for testing)\n"
+        "- Type an agent's name (e.g. 'Explorer') : let the LLM decide its action\n"
+        "- 'prompt' : show the full prompt that would be sent to the LLM\n"
+        "- 'sign \"new text\"' : debug command to update the sign\n"
+        "Example: Explorer\n"
         "Example: step look obj_ball_01\n"
-        "Example: step move north\n"
-        "Example: step speak Hello there.\n"
     )
     prompt = "(realm) "
 
     def __init__(self):
         super().__init__()
         self.world = create_initial_world()
-        self.agent = self.world.get_agent()
+        # Support multiple agents by name (case-insensitive lookup)
+        self.agents: dict[str, "Agent"] = {
+            a.name.lower(): a for a in self.world.agents
+        }
+        self.agent = self.world.get_agent()  # current active agent
         self.turn_number = 0
 
     def do_vision(self, arg):
@@ -65,17 +95,25 @@ class ManualStepper(cmd.Cmd):
         print(prompt)
 
     def do_state(self, arg):
-        """Print basic agent and world state."""
+        """Print basic agent and world state (for the currently active agent)."""
         print(f"Turn: {self.turn_number}")
-        print(f"Agent pos: {self.agent.position}")
+        print(f"Active agent: {self.agent.name} at {self.agent.position}")
         print(f"Memory turns: {self.agent.memory.turn_count}")
         print(f"Looked at: {sorted(self.agent.memory.looked_at)}")
         objs = [(o.name, o.position) for o in self.world.get_objects()]
         print(f"Objects: {objs}")
 
+    def do_agents(self, arg):
+        """List all agents in the world and which one is active."""
+        print("Agents in world:")
+        for name_lower, ag in self.agents.items():
+            marker = " (active)" if ag is self.agent else ""
+            print(f"  - {ag.name}{marker} at {ag.position}")
+
     def do_step(self, arg):
         """
-        Simulate one agent turn.
+        Manually simulate one turn for the currently active agent.
+        Use this for testing specific behaviors without calling the LLM.
 
         Usage:
             step move north
@@ -168,6 +206,64 @@ class ManualStepper(cmd.Cmd):
         print()
         return self.do_quit(arg)
 
+    # ------------------------------------------------------------------
+    # LLM-driven turns by typing agent name (supports future multi-agent)
+    # ------------------------------------------------------------------
+
+    def default(self, line: str):
+        """
+        If the user types an agent's name (instead of a built-in command),
+        run that agent using the LLM to decide its action.
+        This is the main way to let agents "think" autonomously.
+        """
+        line = line.strip()
+        if not line:
+            return
+
+        name_lower = line.lower()
+        if name_lower in self.agents:
+            self._run_llm_turn_for_agent(self.agents[name_lower])
+            return
+
+        # Not an agent name — let cmd.Cmd handle it (unknown command)
+        super().default(line)
+
+    def _run_llm_turn_for_agent(self, agent: "Agent"):
+        """Build prompt, call LLM, execute the resulting turn."""
+        print(f"\n=== Running LLM for {agent.name} ===")
+
+        try:
+            prompt = build_prompt(agent, self.world)
+            print(f"Prompt length: {len(prompt)} chars (type 'prompt' to view)")
+
+            print("Calling LLM...")
+            get_next_action = _get_llm_function()
+            turn = get_next_action(prompt)
+
+            print(f"LLM decided → action={turn.action} target={turn.target} content={turn.content}")
+            print(f"Reasoning: {turn.reasoning}")
+
+            self.turn_number += 1
+            record = step_turn(agent, self.world, turn, self.turn_number)
+
+            print(f"\n--- Turn {self.turn_number} result ---")
+            print(f"Action: {record.action}")
+            print(f"Result: {record.result}")
+            print()
+
+            # Make this agent the active one for subsequent vision/state commands
+            self.agent = agent
+
+        except Exception as e:
+            print(f"LLM call failed: {e}")
+            import traceback
+            traceback.print_exc()
+
+
+def main():
+    """Entry point for the manual stepper (used by `uv run realm`)."""
+    ManualStepper().cmdloop()
+
 
 if __name__ == "__main__":
-    ManualStepper().cmdloop()
+    main()

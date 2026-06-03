@@ -20,3 +20,6 @@ dev = [
 pythonpath = ["."]
 testpaths = ["tests"]
 addopts = "-q"
+
+[project.scripts]
+realm = "src.main:main"
