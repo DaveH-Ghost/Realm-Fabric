@@ -4,6 +4,7 @@ from typing import Optional
 from src.agent import Agent
 from src.memory import Memory
 from src.object import Object
+from src.object_action import ObjectAction
 
 
 class World:
@@ -44,10 +45,15 @@ class World:
         self.objects.append(obj)
 
     def remove_object(self, object_id: str) -> bool:
-        """Remove an object by ID. Returns True if removed, False if not found."""
+        """
+        Remove an object by ID. Returns True if removed, False if not found.
+
+        Clears looked_at / ever_looked for that object on all agents.
+        """
         for i, obj in enumerate(self.objects):
             if obj.id == object_id:
                 self.objects.pop(i)
+                self.clear_object_examination_history(object_id)
                 return True
         return False
 
@@ -201,6 +207,15 @@ def create_initial_world() -> World:
         name="Ceramic Ball",
         description="A slightly worn ceramic ball. It has a few scuffs and feels light.",
         position=(2, 2),
+        actions={
+            "kick": ObjectAction(
+                name="kick",
+                range=1,
+                result="You kick the {object}.",
+                passive_result="{actor} kicks the {object}.",
+                effects=["random_move_self"],
+            ),
+        },
     )
     world.add_object(ball)
 

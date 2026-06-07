@@ -1,4 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+from src.object_action import ObjectAction
 
 
 @dataclass
@@ -10,7 +12,7 @@ class Object:
     - passive_description: visible at a glance (no look required)
     - description: detailed text revealed by the `look` action
 
-    Objects do not have behavior or interactions yet (out of scope for V0).
+    V0.2 adds declarative ``actions`` (e.g. eat with delete_self effect).
     """
 
     id: str
@@ -38,3 +40,6 @@ class Object:
     passive and detailed descriptions exist, never-examined objects show
     "[?] {passive_description}"; stale knowledge shows "[?] [changed] {passive}".
     """
+
+    actions: dict[str, ObjectAction] = field(default_factory=dict)
+    """Named interactions keyed by action name (unique per object)."""

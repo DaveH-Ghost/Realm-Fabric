@@ -6,7 +6,11 @@ Two-phase prompt construction for V0.2 compound turns.
 
 from src.agent import Agent
 from src.memory import TurnRecord
-from src.perception import build_passive_vision, get_available_look_targets
+from src.perception import (
+    build_passive_vision,
+    get_available_interactions,
+    get_available_look_targets,
+)
 from src.world import World
 
 
@@ -125,6 +129,20 @@ def _get_nav_move_block(agent: Agent) -> str:
     )
 
 
+def _format_interact_block(agent: Agent, world: World) -> str:
+    interactions = get_available_interactions(agent, world)
+    if not interactions:
+        return ""
+    lines = ["Object interactions available this turn:"]
+    for action_name, obj_id, obj, action in interactions:
+        if action.range == 0:
+            range_label = "same tile"
+        else:
+            range_label = f"range {action.range}"
+        lines.append(f"- {action_name} {obj_id} ({obj.name}) — {range_label}")
+    return "\n".join(lines)
+
+
 def _get_action_available_block(agent: Agent, world: World) -> str:
     targets = get_available_look_targets(agent, world)
     lines = []
@@ -132,6 +150,10 @@ def _get_action_available_block(agent: Agent, world: World) -> str:
         lines.append("You can look at: " + ", ".join(targets))
     else:
         lines.append("You can look at: (nothing visible to examine)")
+    interact_block = _format_interact_block(agent, world)
+    if interact_block:
+        lines.append("")
+        lines.append(interact_block)
     lines.append("")
     lines.append(
         'Turn action: set turn_action to "speak" (with content), "interact" '

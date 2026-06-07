@@ -8,7 +8,7 @@ Pipeline per agent turn:
 """
 
 from src.action_outcome import ActionOutcome
-from src.actions import do_move, do_speak
+from src.actions import do_interact, do_move, do_speak
 from src.agent import Agent
 from src.llm.schemas import AgentActionTurn, AgentNavigationTurn
 from src.memory import StepKind, TurnRecord, TurnStep
@@ -105,7 +105,12 @@ def execute_action_phase(
             )
         )
     elif action_turn.turn_action == "interact":
-        outcome = _execute_interact_stub(agent, world, action_turn)
+        outcome = do_interact(
+            agent,
+            world,
+            action_turn.target or "",
+            action_turn.action_name or "",
+        )
         steps.append(
             _make_step(
                 "interact",
@@ -117,18 +122,6 @@ def execute_action_phase(
         )
 
     return steps
-
-
-def _execute_interact_stub(
-    agent: Agent, world: World, action_turn: AgentActionTurn
-) -> ActionOutcome:
-    """Placeholder until Section 3."""
-    return ActionOutcome(
-        result=(
-            f"Object interactions are not available yet "
-            f"(would {action_turn.action_name} {action_turn.target})."
-        ),
-    )
 
 
 def _pick_passive_from_steps(

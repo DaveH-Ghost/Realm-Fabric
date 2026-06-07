@@ -14,8 +14,10 @@ Walls/room boundaries are conveyed via the separate room description from World.
 
 from src.action_outcome import ActionOutcome
 from src.agent import Agent
+from src.grid import chebyshev_distance
 from src.memory import Memory
 from src.object import Object
+from src.object_action import ObjectAction
 from src.world import World
 
 
@@ -116,8 +118,33 @@ def get_visible_look_target_ids(agent: Agent, world: World) -> list[str]:
 
 
 def get_visible_object_ids(agent: Agent, world: World) -> list[str]:
-    """Backward-compatible alias: object IDs only."""
+    """Return object IDs visible in passive vision."""
     return [obj.id for obj in world.get_objects()]
+
+
+def is_object_in_passive_vision(agent: Agent, world: World, object_id: str) -> bool:
+    """Return True if the object appears in the agent's passive vision."""
+    return object_id in get_visible_object_ids(agent, world)
+
+
+def get_available_interactions(
+    agent: Agent, world: World
+) -> list[tuple[str, str, Object, ObjectAction]]:
+    """
+    Return in-range object interactions for the action-phase prompt.
+
+    Each entry is (action_name, object_id, object, action).
+    """
+    results: list[tuple[str, str, Object, ObjectAction]] = []
+    visible = set(get_visible_object_ids(agent, world))
+    for obj in world.get_objects():
+        if obj.id not in visible:
+            continue
+        for action_name, action in obj.actions.items():
+            if chebyshev_distance(agent.position, obj.position) <= action.range:
+                results.append((action_name, obj.id, obj, action))
+    results.sort(key=lambda item: (item[2].name.lower(), item[0], item[1]))
+    return results
 
 
 def perform_look(agent: Agent, world: World, target_id: str) -> ActionOutcome:

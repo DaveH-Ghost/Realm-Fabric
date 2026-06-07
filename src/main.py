@@ -89,8 +89,8 @@ class ManualStepper(cmd.Cmd):
         "- 'run' : LLM turn for the active agent\n"
         "- Type an agent's name (e.g. 'Explorer') : LLM turn for that agent\n"
         "- 'switch <name>' : change active agent (no turn, no LLM)\n"
-        "- 'list' / 'objects' / 'agents' : list world entities (no turn)\n"
-        "- 'create-object' / 'edit-object' / 'delete-object' : edit objects\n"
+        "- 'list' / 'objects' / 'agents' / 'effects' : list world entities (no turn)\n"
+        "- 'create-object' / 'edit-object' / 'delete-object' : edit objects (see 'effects')\n"
         "- 'create-agent' / 'edit-agent' / 'delete-agent' : edit agents\n"
         "- 'prompt' : show the full prompt that would be sent to the LLM\n"
         "- 'fewshots on/off' : toggle few-shot examples in prompts (off by default)\n"
@@ -236,8 +236,14 @@ class ManualStepper(cmd.Cmd):
         print(f"Objects: {objs}")
 
     def do_objects(self, arg):
-        """List all objects in the world (id, name, position). Does not consume a turn."""
+        """List all objects in the world (id, name, position, actions). Does not consume a turn."""
         print(format_objects_list(self.world))
+
+    def do_effects(self, arg):
+        """List registered object interaction effects (read-only). Does not consume a turn."""
+        from src.object_effects import format_effects_list
+
+        print(format_effects_list())
 
     def do_agents(self, arg):
         """List all agents in the world (id, name, position, active marker). Does not consume a turn."""
@@ -253,6 +259,8 @@ class ManualStepper(cmd.Cmd):
 
         Usage:
             create-object name "Ceramic Ball" pdesc "A ball on the floor." desc "A worn ball." at 2,2
+            create-object name "Cookie" pdesc "A cookie." desc "Tasty." at 2,2 action eat range 1 \\
+                effect delete_self result "You ate the cookie." passive "{actor} ate the cookie."
         """
         obj, message = create_object_from_args(self.world, arg)
         print(message)
@@ -264,6 +272,8 @@ class ManualStepper(cmd.Cmd):
         Usage:
             edit-object obj_ball_01 pdesc "A ball." desc "New description."
             edit-object obj_ball_01 name "Old Ball" pos 3,3
+            edit-object obj_cookie_01 add-action eat range 1 effect delete_self result "..." passive "..."
+            edit-object obj_cookie_01 remove-action eat
         """
         print(edit_object_from_args(self.world, arg))
 

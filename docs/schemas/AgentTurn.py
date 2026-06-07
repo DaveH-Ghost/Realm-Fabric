@@ -9,9 +9,9 @@ The real V0.1 implementation lives here:
     src/llm/schemas.py
 
 **V0.2** replaces single-action `AgentTurn` on the LLM path with
-`AgentNavigationTurn` + `AgentActionTurn` (see docs/schemas/ and
-v0.2-implementation-readiness-checklist.md). This file remains a snapshot
-of the pre-V0.2 one-action-per-call model.
+`AgentNavigationTurn` + `AgentActionTurn` (implemented in `src/llm/schemas.py`;
+see docs/schemas/ and v0.2-implementation-readiness-checklist.md). This file
+remains a snapshot of the pre-V0.2 one-action-per-call model.
 
 For current runtime imports (until v0.2.0 ships), use:
     from src.llm.schemas import AgentTurn

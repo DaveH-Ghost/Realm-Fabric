@@ -344,6 +344,7 @@ def test_reserved_commands_include_run_and_hyphenated():
     assert "run" in cached
     assert "create-agent" in cached
     assert "step-compound" in cached
+    assert "effects" in cached
     assert "?" in cached
 
 

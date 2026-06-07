@@ -54,20 +54,20 @@ These changes improve experimentation while keeping the core "one structured act
 
 ## V0.2
 
-**Status:** ✅ **Design complete** — ready for `[code]` implementation. Authoritative spec: [v0.2-implementation-readiness-checklist.md](v0.2-implementation-readiness-checklist.md). **Runtime is still V0.1** until implementation ships (`v0.2.0` tag).
+**Status:** 🚧 **In progress on `main`** — Sections **1–3 implemented**; Section **4 ship** (`v0.2.0` tag, final doc/version pass) pending. Authoritative spec: [v0.2-implementation-readiness-checklist.md](v0.2-implementation-readiness-checklist.md).
 
 **Focus:** D&D-shaped compound turns (move anywhere, then look and take one action in the same round) and the first **declarative object interact** behaviors — without the full memory subsystem (deferred to V0.2.5). Builds on V0.1 multi-agent observation and manual control.
 
 **Agreed implementation order:** (1) coordinate-based move → (2) compound turns (two-phase LLM) → (3) custom object actions → (4) cross-cutting integration, tests, docs at ship.
 
-### 1. Coordinate-based move
+### 1. Coordinate-based move — ✅ Implemented
 - **Replace** cardinal one-step move with **coordinate targeting** — canonical `"x,y"` (e.g. `2,3`); parser silently accepts `"(x,y)"` variants.
-- **Teleport** to in-bounds tile on the 5×5 grid; same-tile move succeeds with no `passive_result` update.
+- Move to in-bounds tile on the 5×5 grid; same-tile move succeeds with no `passive_result` update.
 - **Remove** `north` / `east` / `south` / `west` entirely (breaking change).
 - Single `move()` entry point in `src/actions/move.py` for simulation, stepper, and future pathing.
 - Updated prompts, few-shots, `passive_result` strings, and manual step parity.
 
-### 2. Compound agent turns
+### 2. Compound agent turns — ✅ Implemented
 - One agent turn: **navigation LLM** → optional move → **action LLM** → optional one look → optional one turn action (`speak` or `interact`).
 - **Always two LLM calls** per `run` / typing an agent name; nav parse failure aborts the whole turn (no `session_turn` increment).
 - **Schemas:** `AgentNavigationTurn` (`move_target`) + `AgentActionTurn` (`look_target`, `turn_action`, interact fields). **`AgentTurn` removed** from the LLM path.
@@ -77,19 +77,19 @@ These changes improve experimentation while keeping the core "one structured act
 - **Speak limit:** 500 characters (5 sentences unchanged).
 - V0.1 memory unchanged (10 turns, `looked_at`, single `passive_result`); compound `TurnRecord.steps` are hooks for V0.2.5.
 
-### 3. Custom object actions (declarative interact)
+### 3. Custom object actions (declarative interact) — ✅ Implemented
 - `Object.actions: dict[str, ObjectAction]` — name, Chebyshev **range**, `result` / `passive_result` templates (`{actor}`, `{object}`), ordered **effects** list.
-- **Effect registry** (e.g. `src/object_effects.py`); V0.2 ships **`delete_self`** only; **`effects: []`** allowed for result-only interacts.
+- **Effect registry** (e.g. `src/object_effects.py`); V0.2 ships **`delete_self`** and **`random_move_self`**; **`effects: []`** allowed for result-only interacts. Initial ball has **`kick`** → `random_move_self`.
 - Listed in the **action-phase** prompt when object is in passive vision and in range (post-move position).
 - World edit: `action` / `range` / `effect` / `result` / `passive` on `create-object`; `add-action` / `remove-action` on `edit-object`.
 - Read-only **`effects`** command lists registered effect names (like `objects` / `agents`).
 - On object removal (`delete_self`, `delete-object`): purge id from all agents' `looked_at` / `ever_looked`.
 
-### 4. Cross-cutting (at implementation)
+### 4. Cross-cutting (ship checklist — pending `v0.2.0`)
 - **`ERR:*` codes** including `INVALID_COORDINATES`, interact codes; no hard prompt truncation in V0.2.
 - Logging: `Turn N [nav]` and `Turn N [action]`; `state` shows step breakdown.
-- Tests: `test_coordinate_move.py`, `test_compound_turn.py`, `test_object_actions.py` + updates to existing suite.
-- Release **`v0.2.0`** when complete.
+- Tests: `test_coordinate_move.py`, `test_compound_turn.py`, `test_object_actions.py` + updates to existing suite (**152 tests** green).
+- Release **`v0.2.0`** when Section 4 ship checklist complete (`pyproject.toml` version bump, final doc pass).
 
 **Explicitly out of V0.2:** memory manager, beliefs/goals database, tiered memory policies, heard-dialogue buffers, persistence — see V0.2.5. Pathing, blockers, speak targeting, relationships, automatic turn sequencing, GUI (V0.3).
 

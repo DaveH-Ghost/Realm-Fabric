@@ -2,16 +2,16 @@
 
 A grid-based agent simulation framework designed around structured output and narrative roleplay.
 
-**Current Status:** **V0.1 shipped** (`v0.1.0`) — generalized perception, world editing, passive/detailed descriptions (`pdesc` / `desc`), multi-agent stepper (`switch`, `run`, per-agent turn numbers), **agent-to-agent passive vision**, and **observable actions** (`passive_result`). **V0.2 design is complete** (checklist Sections 0–4 agreed); implementation has not started — the stepper and runtime below still reflect V0.1 until `v0.2.0` ships.
+**Current Status:** **V0.1 shipped** (`v0.1.0`). **V0.2 is in progress on `main`:** Sections **1–3 implemented** (coordinate move, compound two-phase turns, declarative object interact + effect registry). **Section 4 ship** (`v0.2.0` tag, `pyproject.toml` bump) is still pending — runtime and docs below describe the current stepper unless noted.
 
 **Documentation:**
 
-- [V0.2 implementation checklist](docs/v0.2-implementation-readiness-checklist.md) — **authoritative V0.2 spec** (design complete, ready for code)
-- [V0.1 implementation checklist](docs/v0.1-implementation-readiness-checklist.md) — design reference for shipped V0.1 behavior
-- [Roadmap](docs/ROADMAP.md) — version plans (V0.1 ✅, V0.2, V0.2.5, V0.3)
+- [V0.2 implementation checklist](docs/v0.2-implementation-readiness-checklist.md) — **authoritative V0.2 spec** (Sections 0–4 agreed; 1–3 implemented)
+- [V0.1 implementation checklist](docs/v0.1-implementation-readiness-checklist.md) — design reference for shipped V0.1 behavior (partially superseded by V0.2)
+- [Roadmap](docs/ROADMAP.md) — version plans (V0.1 ✅, V0.2 🚧, V0.2.5, V0.3)
 - [Long-term goals](LONG_TERM_GOALS.md) — aspirational features
 - [V0 implementation checklist](docs/v0-implementation-readiness-checklist.md) — V0 historical design reference
-- [Schema design references](docs/schemas/) — `AgentTurn` (V0.1); `AgentNavigationTurn` / `AgentActionTurn` (V0.2 planned)
+- [Schema design references](docs/schemas/) — `AgentTurn` (pre-V0.2); **`AgentNavigationTurn` / `AgentActionTurn`** (V0.2 — implemented in `src/llm/schemas.py`)
 
 ## Running / Testing (without LLM)
 
@@ -28,38 +28,50 @@ A grid-based agent simulation framework designed around structured output and na
   ```powershell
    uv run python src/main.py
   ```
-   Few-shot examples are disabled by default for token efficiency (saves ~50% tokens). Use `--with-fewshots` if you want the 4 examples included.
+   Few-shot examples are disabled by default for token efficiency. Use `--with-fewshots` to include navigation and action phase examples.
    Inside the `(realm)` prompt you can:
   - `list` — overview of all agents and objects (no turn consumed)
-  - `objects` — list all objects with ids (for `edit-object` / `delete-object`)
+  - `objects` — list all objects with ids and action names (for `edit-object` / `delete-object`)
   - `agents` — list all agents with ids and active marker
-  - `state` — active agent context (memory, turn count, few-shots)
+  - `effects` — list registered object interaction effects (`delete_self`, `random_move_self`, …)
+  - `state` — active agent context (memory, turn count, compound step breakdown, few-shots)
   - `vision` — see what the active agent currently perceives
-  - `prompt` — see the full prompt the LLM would receive
-  - `step look obj_ball_01` — manually drive the agent (great for testing)
-  - `run` — LLM turn for the **active** agent (requires OPENROUTER_API_KEY)
+  - `prompt` — show navigation and action prompts (`prompt nav` / `prompt action` for one phase)
+  - `step-compound …` — manual compound turn (move / look / speak / interact)
+  - `step-nav` / `step-action` — debug one phase without a full turn record (see `help`)
+  - `run` — two-phase LLM turn for the **active** agent (requires OPENROUTER_API_KEY)
   - `Explorer` — (type an agent's name) to run an LLM turn for that agent
-  - `switch Goblin` — change active agent for `vision` / `state` / `prompt` / `step` / `run` without a turn or LLM call
+  - `switch Goblin` — change active agent for `vision` / `state` / `prompt` / manual steps / `run` without a turn or LLM call
   - `fewshots on/off` — toggle few-shot examples (OFF by default)
   - `quit`
 
-### World editing (V0.1)
+### World editing (V0.1 + V0.2 object actions)
 
-Listing and editing commands do **not** consume a turn. Use `list`, `objects`, or `agents` to look up entity ids before editing.
+Listing and editing commands do **not** consume a turn. Use `list`, `objects`, `agents`, or `effects` to look up ids and effect names before editing.
 
 ```
 list
 objects
 agents
+effects
 create-object name "Crate" pdesc "A crate." desc "A wooden crate." at 0,0
+create-object name "Cookie" pdesc "A cookie." desc "Tasty." at 2,2 action eat range 1 effect delete_self result "You ate the cookie." passive "{actor} ate the cookie."
 edit-object obj_sign_01 pdesc "A sign on the wall." desc "Updated sign text."
 edit-object obj_ball_01 pos 3,3
+edit-object obj_cookie_01 add-action smell range 1 result "Nice smell." passive "{actor} smells it."
+edit-object obj_cookie_01 remove-action smell
 delete-object obj_crate_01
 create-agent name "Goblin" pdesc "A short figure." desc "A grumpy goblin." personality "You are a grumpy goblin." at 0,3
 edit-agent agent_01 desc "Updated appearance."
 edit-agent agent_01 personality "Updated LLM personality."
 edit-agent agent_01 name "Scout"
 delete-agent agent_goblin_01
+```
+
+The initial **ceramic ball** includes a built-in **`kick`** action (`range 1`, `random_move_self`). Example manual turn:
+
+```
+step-compound 2,3 interact obj_ball_01 kick
 ```
 
 The old V0 `sign` command is removed. Update the sign with:
@@ -72,39 +84,46 @@ Objects and agents share **`pdesc`** (glance) and **`desc`** (detailed, hidden b
 
 ### Multi-agent (V0.1 Section 3)
 
-Typical LLM workflow with two agents:
+Typical LLM workflow with two agents (each `run` / agent name = **two LLM calls**: navigation, then action):
 
 ```
 switch Goblin    # inspect Goblin's vision/state without a turn
-run              # LLM turn for the active agent (Goblin)
+run              # compound LLM turn for the active agent (Goblin)
 switch Explorer
-Explorer         # typing a name also runs an LLM turn for that agent
+Explorer         # typing a name also runs a compound LLM turn for that agent
+```
+
+Manual compound turn without the API:
+
+```
+step-compound 2,3 look obj_ball_01 speak Hello.
+step-compound - interact obj_ball_01 kick
 ```
 
 - Create agents with `create-agent`; list with `agents` or `list`
-- **`run`** — LLM turn for the **active** agent (no arguments; use after `switch`)
-- **`switch <name>`** — change active agent without a turn (`vision`, `state`, `prompt`, `step`, `run`)
-- **Typing an agent's name** — LLM turn for that agent; sets them active (even if the LLM call fails)
+- **`run`** — two-phase LLM turn for the **active** agent (navigation then action; use after `switch`)
+- **`switch <name>`** — change active agent without a turn (`vision`, `state`, `prompt`, manual steps, `run`)
+- **Typing an agent's name** — two-phase LLM turn for that agent; sets them active (even if the LLM call fails)
 - Agent display names must be **unique** and **cannot match stepper commands** (e.g. `vision`, `run`, `list`, `create-agent`) — validated automatically via `src/stepper_commands.py`
 - Commands are **case-insensitive** (`Run`, `Switch Goblin`, etc.)
 - Deleting the active agent reassigns to the first remaining agent and prints `Active agent: …`
 - Turn numbers in each agent's memory are **per-agent** (1, 2, 3…); `session_turn` in logs is a global session label only
 - Other agents appear in passive vision (`pdesc` + hidden `desc` until `look`); `personality` is LLM-only; agents do not see themselves
 
-### V0.2 (planned — design complete, not yet in runtime)
+### V0.2 (implemented on main — `v0.2.0` tag pending)
 
-The [V0.2 checklist](docs/v0.2-implementation-readiness-checklist.md) is fully agreed. When implemented (`v0.2.0`), expect these **breaking** changes:
-
-| Area | V0.1 (current) | V0.2 (planned) |
-|------|----------------|----------------|
-| Move | Cardinal one step (`north`, …) | Coordinate teleport (`"x,y"` on 0–4 grid) |
+| Area | V0.1 (`v0.1.0`) | V0.2 (current runtime) |
+|------|-----------------|------------------------|
+| Move | Cardinal one step (`north`, …) | Coordinate move to `"x,y"` on 0–4 grid |
 | LLM turn | One call, one action (`AgentTurn`) | Two calls: navigation then action (`AgentNavigationTurn` + `AgentActionTurn`) |
-| Turn shape | Move, look, or speak — one per turn | Optional move → optional one look → optional speak **or** object interact |
+| Turn shape | Move, look, or speak — one per turn | Optional move → optional one look → speak **or** object interact |
 | Manual step | `step move\|look\|speak` | `step-compound` (+ optional `step-nav` / `step-action`) |
-| Objects | Look only | Declarative **interact** actions (e.g. cookie `eat` + `delete_self` effect) |
+| Objects | Look only | Declarative **interact** + effect registry (`delete_self`, `random_move_self`; ball `kick`) |
 | Speak limit | 280 characters | 500 characters (5 sentences unchanged) |
 
-**Unchanged in V0.2:** 5×5 grid, manual human control (`switch`, `run`, typing agent names), world editing, multi-agent passive vision, V0.1-style memory (10 turns, single `passive_result`). Full memory subsystem → **V0.2.5**; GUI → **V0.3**.
+**Unchanged:** 5×5 grid, manual human control (`switch`, `run`, typing agent names), world editing, multi-agent passive vision, V0.1-style memory (10 turns, single `passive_result`). Full memory subsystem → **V0.2.5**; GUI → **V0.3**.
+
+See [V0.2 checklist](docs/v0.2-implementation-readiness-checklist.md) for the full spec and Section 4 ship checklist.
 
 ## Environment Variables & .env Files (Beginner Guide)
 
@@ -189,8 +208,8 @@ uv run python src/main.py
 
 You can still use almost everything:
 
-- All the manual commands (`step ...`, `vision`, `state`, etc.) work perfectly.
-- The only thing that requires an `OPENROUTER_API_KEY` is an LLM turn: type an agent's name (e.g. `Explorer`) or use `run` after selecting the active agent.
+- All the manual commands (`step-compound`, `vision`, `state`, etc.) work perfectly.
+- The only thing that requires an `OPENROUTER_API_KEY` is an LLM turn: type an agent's name (e.g. `Explorer`) or use `run` after selecting the active agent. Each turn makes **two** LLM calls (navigation, then action).
 
 This design is intentional so you can explore and test the system without needing any paid services.
 
@@ -213,7 +232,7 @@ That's the whole magic.
 
 ## Running tests
 
-Tests use [pytest](https://docs.pytest.org/) and run **without** an API key or network access. They cover world setup, the `AgentTurn` schema, simulation turns, V0.1 perception and invalidation, world editing, and multi-agent stepper behavior (101 tests).
+Tests use [pytest](https://docs.pytest.org/) and run **without** an API key or network access. They cover V0.1 perception/editing/multi-agent behavior plus V0.2 coordinate move, compound turns, and object interact (**152 tests**).
 
 ### Run all tests
 
@@ -245,12 +264,15 @@ uv run pytest -x
 
 | File | Focus |
 |------|--------|
-| `tests/test_schema.py` | `AgentTurn` Pydantic validation (valid/invalid move, look, speak) |
+| `tests/test_schema.py` | `AgentNavigationTurn` / `AgentActionTurn` Pydantic validation |
+| `tests/test_coordinate_move.py` | Coordinate move parser, bounds, schema |
+| `tests/test_compound_turn.py` | Compound orchestration, `TurnRecord.steps`, step-compound parser |
+| `tests/test_object_actions.py` | Effect registry, interact range/vision, `delete_self`, ball `kick` |
 | `tests/test_world.py` | Initial world state, grid rules, passive vision baseline |
-| `tests/test_simulation.py` | `step_turn`, actions, memory side effects, prompt builder |
+| `tests/test_simulation.py` | Compound turns, memory side effects, prompts |
 | `tests/test_perception.py` | V0.1 `[?]` / stale vision for objects and cross-agent invalidation |
-| `tests/test_world_edit.py` | V0.1 world editing commands (create/edit/delete, listings, id generation) |
-| `tests/test_multi_agent.py` | V0.1 multi-agent (`switch`, `run`, agent vision, `passive_result`, personality privacy, per-agent turns) |
+| `tests/test_world_edit.py` | World editing commands (create/edit/delete, listings, object actions) |
+| `tests/test_multi_agent.py` | Multi-agent stepper (`switch`, `run`, agent vision, `passive_result`, LLM mocks) |
 
 ### First-time setup
 

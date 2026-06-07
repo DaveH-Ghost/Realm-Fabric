@@ -1,6 +1,6 @@
 # Version 0 Implementation Readiness Checklist
 
-> **Historical document.** V0 is shipped (tag `v0`). For **current runtime** (v0.1.0) — generalized stale perception, world editing, multi-agent passive observation, observable actions (`passive_result`), removed `sign` command — see [v0.1-implementation-readiness-checklist.md](v0.1-implementation-readiness-checklist.md) and [ROADMAP.md](ROADMAP.md). **V0.2** (design complete, not yet implemented) will replace cardinal move and single-action `AgentTurn` with coordinate teleport and two-phase compound turns; see [v0.2-implementation-readiness-checklist.md](v0.2-implementation-readiness-checklist.md).
+> **Historical document.** V0 is shipped (tag `v0`). For **V0.1** (tag `v0.1.0`) see [v0.1-implementation-readiness-checklist.md](v0.1-implementation-readiness-checklist.md). **V0.2** Sections 1–3 are **implemented on `main`** (coordinate move, compound turns, object interact); **`v0.2.0` tag pending** — see [v0.2-implementation-readiness-checklist.md](v0.2-implementation-readiness-checklist.md) and [ROADMAP.md](ROADMAP.md).
 
 **Purpose:**  
 This checklist defines everything we must design, decide, and document *before* we wrote V0 code. It remains a design reference for the original single-agent foundation.

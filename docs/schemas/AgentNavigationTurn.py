@@ -1,12 +1,10 @@
 """
 AgentNavigationTurn Schema - V0.2 (Design Reference)
 
-!!! NOT YET IMPLEMENTED !!!
+Authoritative runtime: `src/llm/schemas.py`
 
-Authoritative spec: docs/v0.2-implementation-readiness-checklist.md (Section 2).
-
-When V0.2 ships, the runtime implementation will live in src/llm/schemas.py
-(or equivalent). This file is for planning review only.
+This file mirrors the navigation-phase schema for planning review.
+See docs/v0.2-implementation-readiness-checklist.md (Section 2).
 
 Navigation phase output — always the first LLM call per agent turn.
 Post-move action phase uses AgentActionTurn.

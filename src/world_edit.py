@@ -15,6 +15,8 @@ from typing import Optional
 from src.agent import Agent
 from src.memory import Memory
 from src.object import Object
+from src.object_action import ObjectAction
+from src.object_effects import validate_effect_name
 from src.stepper_commands import (
     agent_name_conflicts_with_commands,
     reserved_agent_name_message,
@@ -132,7 +134,13 @@ def format_objects_list(world: World) -> str:
         lines.append("  No objects in world.")
     else:
         for obj in objects:
-            lines.append(f"  - {obj.name} ({obj.id}) at {obj.position}")
+            action_suffix = ""
+            if obj.actions:
+                names = ", ".join(sorted(obj.actions))
+                action_suffix = f" actions: {names}"
+            lines.append(
+                f"  - {obj.name} ({obj.id}) at {obj.position}{action_suffix}"
+            )
     return "\n".join(lines)
 
 
@@ -153,19 +161,85 @@ def format_full_list(world: World, active_agent: Optional[Agent]) -> str:
     return f"{format_agents_list(world, active_agent)}\n\n{format_objects_list(world)}"
 
 
+def parse_object_action_fields(
+    fields: dict[str, str],
+) -> tuple[dict[str, ObjectAction] | None, Optional[str]]:
+    """
+    Build actions dict from optional action/range/effect/result/passive fields.
+
+    When ``action`` is absent, returns an empty dict. When present, requires
+    result and passive; range defaults to 0; effect is optional.
+    """
+    if "action" not in fields:
+        return {}, None
+
+    name = fields["action"]
+    if not name.strip():
+        return None, "Action name must not be empty."
+
+    range_raw = fields.get("range", "0")
+    try:
+        action_range = int(range_raw)
+    except ValueError:
+        return None, f"Range must be an integer (got {range_raw!r})."
+    if action_range < 0:
+        return None, "Range must be non-negative."
+
+    result = fields.get("result")
+    passive = fields.get("passive")
+    if not result:
+        return None, "Missing required field: result (when action is set)"
+    if not passive:
+        return None, "Missing required field: passive (when action is set)"
+
+    effects: list[str] = []
+    effect_name = fields.get("effect")
+    if effect_name:
+        err = validate_effect_name(effect_name)
+        if err:
+            return None, err
+        effects = [effect_name]
+
+    action = ObjectAction(
+        name=name,
+        range=action_range,
+        result=result,
+        passive_result=passive,
+        effects=effects,
+    )
+    return {name: action}, None
+
+
 def create_object_from_args(world: World, arg: str) -> tuple[Optional[Object], str]:
     """
     Parse and create an object from command arguments.
 
     Usage: name "..." [pdesc "..."] [desc "..."] at x,y
+           [action NAME range N [effect EFFECT] result "..." passive "..."]
     """
     tokens, err = tokenize_args(arg)
     if err:
         return None, err
     if not tokens:
-        return None, 'Usage: create-object name "..." [pdesc "..."] [desc "..."] at x,y'
+        return None, (
+            'Usage: create-object name "..." [pdesc "..."] [desc "..."] at x,y '
+            '[action NAME range N [effect EFFECT] result "..." passive "..."]'
+        )
 
-    fields, err = parse_field_tokens(tokens, {"name", "desc", "pdesc", "at"})
+    fields, err = parse_field_tokens(
+        tokens,
+        {
+            "name",
+            "desc",
+            "pdesc",
+            "at",
+            "action",
+            "range",
+            "effect",
+            "result",
+            "passive",
+        },
+    )
     if err:
         return None, err
     if "name" not in fields:
@@ -181,6 +255,11 @@ def create_object_from_args(world: World, arg: str) -> tuple[Optional[Object], s
     if not world.is_valid_position(position):
         return None, f"Invalid position {position}. Grid is 0-4 in both axes."
 
+    actions, err = parse_object_action_fields(fields)
+    if err:
+        return None, err
+    assert actions is not None
+
     desc = fields.get("desc", "")
     pdesc = fields.get("pdesc", "")
     obj_id = generate_object_id(world, fields["name"])
@@ -190,12 +269,52 @@ def create_object_from_args(world: World, arg: str) -> tuple[Optional[Object], s
         description=desc,
         position=position,
         passive_description=pdesc,
+        actions=actions,
     )
     world.add_object(obj)
+    action_note = ""
+    if actions:
+        action_note = f" Action(s): {', '.join(sorted(actions))}."
     return obj, (
-        f'Created object {obj_id} "{fields["name"]}" at {position}. '
+        f'Created object {obj_id} "{fields["name"]}" at {position}.{action_note} '
         f"Use 'objects' or 'list' to see all object ids."
     )
+
+
+def _edit_object_add_action(obj: Object, tokens: list[str]) -> str:
+    """Parse add-action subcommand on edit-object."""
+    if len(tokens) < 3:
+        return (
+            'Usage: edit-object <id> add-action <name> range N '
+            '[effect E] result "..." passive "..."'
+        )
+
+    action_name = tokens[2]
+    fields, err = parse_field_tokens(
+        tokens[3:], {"range", "effect", "result", "passive"}
+    )
+    if err:
+        return err
+    fields["action"] = action_name
+    actions, err = parse_object_action_fields(fields)
+    if err:
+        return err
+    assert actions is not None
+    if action_name in obj.actions:
+        return f"Object {obj.id} already has action '{action_name}'."
+    obj.actions[action_name] = actions[action_name]
+    return f"Added action '{action_name}' to {obj.id}."
+
+
+def _edit_object_remove_action(obj: Object, tokens: list[str]) -> str:
+    """Parse remove-action subcommand on edit-object."""
+    if len(tokens) < 3:
+        return "Usage: edit-object <id> remove-action <name>"
+    action_name = tokens[2]
+    if action_name not in obj.actions:
+        return f"Object {obj.id} has no action '{action_name}'."
+    del obj.actions[action_name]
+    return f"Removed action '{action_name}' from {obj.id}."
 
 
 def edit_object_from_args(world: World, arg: str) -> str:
@@ -203,12 +322,17 @@ def edit_object_from_args(world: World, arg: str) -> str:
     Parse and edit an object.
 
     Usage: <object_id> [desc "..."] [name "..."] [pos x,y] ...
+           <object_id> add-action <name> range N [effect E] result "..." passive "..."
+           <object_id> remove-action <name>
     """
     tokens, err = tokenize_args(arg)
     if err:
         return err
     if not tokens:
-        return 'Usage: edit-object <id> [pdesc "..."] [desc "..."] [name "..."] [pos x,y] ...'
+        return (
+            'Usage: edit-object <id> [pdesc "..."] [desc "..."] [name "..."] [pos x,y] ... '
+            '| add-action ... | remove-action <name>'
+        )
 
     object_id = tokens[0]
     if not object_id.startswith("obj_"):
@@ -220,6 +344,13 @@ def edit_object_from_args(world: World, arg: str) -> str:
     obj = world.get_object_by_id(object_id)
     if obj is None:
         return f"Object '{object_id}' not found. Use 'objects' or 'list' to look up ids."
+
+    if len(tokens) > 1:
+        sub = tokens[1].lower()
+        if sub == "add-action":
+            return _edit_object_add_action(obj, tokens)
+        if sub == "remove-action":
+            return _edit_object_remove_action(obj, tokens)
 
     fields, err = parse_field_tokens(tokens[1:], {"name", "desc", "pdesc", "pos"})
     if err:

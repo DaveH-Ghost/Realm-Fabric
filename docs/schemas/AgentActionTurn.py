@@ -1,12 +1,10 @@
 """
 AgentActionTurn Schema - V0.2 (Design Reference)
 
-!!! NOT YET IMPLEMENTED !!!
+Authoritative runtime: `src/llm/schemas.py`
 
-Authoritative spec: docs/v0.2-implementation-readiness-checklist.md (Sections 2–3).
-
-When V0.2 ships, the runtime implementation will live in src/llm/schemas.py
-(or equivalent). This file is for planning review only.
+This file mirrors the action-phase schema for planning review.
+See docs/v0.2-implementation-readiness-checklist.md (Sections 2–3).
 
 Action phase output — always the second LLM call per agent turn.
 Prompt uses post-move passive vision + available interact list.

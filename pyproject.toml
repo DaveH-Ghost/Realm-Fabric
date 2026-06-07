@@ -1,7 +1,7 @@
 [project]
 name = "realm-fabric"
 version = "0.1.0"
-description = "Grid-based agent simulation framework for reliable structured LLM output (V0.1 shipped; V0.2 design complete)"
+description = "Grid-based agent simulation framework for reliable structured LLM output (V0.1 shipped; V0.2 Sections 1–3 on main; v0.2.0 tag pending)"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
