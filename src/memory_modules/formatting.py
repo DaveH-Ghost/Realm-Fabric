@@ -1,23 +1,66 @@
 """Shared text formatting for memory module render output."""
 
+from __future__ import annotations
+
 from src.memory_modules.base import WitnessedEvent
-from src.turn_record import TurnRecord, TurnStep
+from src.turn_record import StepKind, TurnRecord, TurnStep
+
+REASONING_WINDOW = 3
+
+STEP_SALIENCE: dict[StepKind, int] = {
+    "speak": 10,
+    "interact": 7,
+    "look": 3,
+    "move": 1,
+}
+
+WITNESS_SALIENCE = STEP_SALIENCE["speak"]
 
 
-def format_step(step: TurnStep) -> str:
-    label = step.kind
-    if step.target:
-        label += f" → {step.target}"
-    return f"  - {label}: {step.result}"
+def step_salience(kind: StepKind) -> int:
+    return STEP_SALIENCE.get(kind, 0)
 
 
-def format_own_turn(turn: TurnRecord) -> list[str]:
+def should_include_reasoning(turn_index: int, total_turns: int) -> bool:
+    """True when this stored turn is among the newest REASONING_WINDOW turns."""
+    if total_turns <= 0:
+        return False
+    return turn_index >= total_turns - REASONING_WINDOW
+
+
+def join_step_results(steps: list[TurnStep]) -> str:
+    """Join step result lines in execution order."""
+    parts = [step.result for step in steps if step.result.strip()]
+    return "\n".join(parts)
+
+
+def select_salient_steps(steps: list[TurnStep], *, in_recency_floor: bool) -> list[TurnStep]:
+    """
+    Pick which step results to include in a salient turn's Result line.
+
+    Recency-floor turns keep all steps; older turns keep speak/interact only.
+    """
+    if in_recency_floor:
+        return [step for step in steps if step.result.strip()]
+    return [
+        step
+        for step in steps
+        if step.result.strip() and step.kind in ("speak", "interact")
+    ]
+
+
+def format_own_turn(
+    turn: TurnRecord,
+    *,
+    include_reasoning: bool = True,
+    result_text: str | None = None,
+) -> list[str]:
     lines = [f"Turn {turn.turn_number}:"]
-    if turn.reasoning:
+    if include_reasoning and turn.reasoning:
         lines.append(f"Reasoning: {turn.reasoning}")
-    for step in turn.steps:
-        lines.append(format_step(step))
-    lines.append(f"Result: {turn.result}")
+    result = turn.result if result_text is None else result_text
+    if result.strip():
+        lines.append(f"Result: {result}")
     return lines
 
 

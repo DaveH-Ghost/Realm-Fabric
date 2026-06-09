@@ -9,7 +9,7 @@ from src.memory_modules.salient_turns import (
     DEFAULT_CHAR_BUDGET,
     OMISSION_LINE,
     SalientTurnsModule,
-    score_turn,
+    storage_salience,
     validate_char_budget,
 )
 from src.turn_record import TurnRecord, TurnStep
@@ -81,11 +81,46 @@ def _look_turn(turn_number: int, target: str = "obj_ball_01") -> TurnRecord:
     )
 
 
-def test_score_turn_weights():
-    assert score_turn(_move_turn(1), []) == 0
-    assert score_turn(_look_turn(1), []) == 2
-    assert score_turn(_speak_turn(1), []) == 3
-    assert score_turn(_move_turn(1), [_witness("Goblin moves.")]) == 1
+def _compound_turn(turn_number: int) -> TurnRecord:
+    return TurnRecord(
+        turn_number=turn_number,
+        steps=[
+            TurnStep(
+                kind="move",
+                reasoning="move",
+                target="1,2",
+                content=None,
+                result="You moved to (1, 2).",
+            ),
+            TurnStep(
+                kind="look",
+                reasoning="look",
+                target="agent_01",
+                content=None,
+                result="You looked at the explorer.",
+            ),
+            TurnStep(
+                kind="speak",
+                reasoning="speak",
+                target=None,
+                content="Hello!",
+                result='You said: "Hello!"',
+            ),
+        ],
+        result=(
+            "You moved to (1, 2).\n"
+            "You looked at the explorer.\n"
+            'You said: "Hello!"'
+        ),
+        reasoning="Chat with the explorer.",
+    )
+
+
+def test_storage_salience_uses_peak_step():
+    assert storage_salience(_move_turn(1)) == 1
+    assert storage_salience(_look_turn(1)) == 3
+    assert storage_salience(_speak_turn(1)) == 10
+    assert storage_salience(_compound_turn(1)) == 10
 
 
 def test_validate_char_budget_rejects_out_of_range():
@@ -126,7 +161,7 @@ def test_recency_floor_protects_recent_move_only_in_storage():
 
 
 def test_render_respects_char_budget():
-    module = SalientTurnsModule(char_budget=280, recency_floor=1, storage_window=20)
+    module = SalientTurnsModule(char_budget=220, recency_floor=1, storage_window=20)
     module.record_turn(
         _speak_turn(1, content="A" * 80, reasoning="old"),
         _record_ctx(turn_number=1),
@@ -141,10 +176,58 @@ def test_render_respects_char_budget():
     )
 
     text = module.render(_render_ctx())
-    assert len(text) <= 280 + len(OMISSION_LINE) + 4
+    assert len(text) <= 220 + len(OMISSION_LINE) + 4
     assert "Turn 3:" in text
     assert "Turn 1:" not in text
     assert OMISSION_LINE in text
+
+
+def test_condensed_turn_format_without_step_list():
+    module = SalientTurnsModule(char_budget=5000)
+    module.record_turn(_compound_turn(1), _record_ctx(turn_number=1))
+
+    text = module.render(_render_ctx())
+    assert "  - move" not in text
+    assert "Result:" in text
+    assert 'You said: "Hello!"' in text
+
+
+def test_reasoning_only_in_newest_three_turns():
+    module = SalientTurnsModule(char_budget=5000, storage_window=10)
+    for i in range(1, 6):
+        module.record_turn(
+            _speak_turn(i, content=f"t{i}", reasoning=f"reason-{i}"),
+            _record_ctx(turn_number=i),
+        )
+
+    text = module.render(_render_ctx())
+    assert "Reasoning: reason-3" in text
+    assert "Reasoning: reason-4" in text
+    assert "Reasoning: reason-5" in text
+    assert "Reasoning: reason-1" not in text
+    assert "Reasoning: reason-2" not in text
+
+
+def test_old_compound_turn_drops_move_and_look_fragments():
+    module = SalientTurnsModule(char_budget=5000, storage_window=10, recency_floor=1)
+    module.record_turn(_compound_turn(1), _record_ctx(turn_number=1))
+    module.record_turn(_move_turn(2), _record_ctx(turn_number=2))
+
+    text = module.render(_render_ctx())
+    turn_one = text.split("Turn 2:")[0]
+    assert "You moved to (1, 2)." not in turn_one
+    assert "You looked at the explorer." not in turn_one
+    assert 'You said: "Hello!"' in turn_one
+
+
+def test_recency_floor_turn_keeps_all_compound_fragments():
+    module = SalientTurnsModule(char_budget=5000, storage_window=10, recency_floor=2)
+    module.record_turn(_compound_turn(1), _record_ctx(turn_number=1))
+    module.record_turn(_move_turn(2), _record_ctx(turn_number=2))
+
+    text = module.render(_render_ctx())
+    turn_two_section = text.split("Turn 2:")[1]
+    assert "You moved to (2, 2)." in turn_two_section
 
 
 def test_render_includes_witnessed_events():

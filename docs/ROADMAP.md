@@ -91,13 +91,13 @@ These changes improve experimentation while keeping the core "one structured act
 - Tests: `test_coordinate_move.py`, `test_compound_turn.py`, `test_object_actions.py`, `test_v0_2_ship.py` + updates to existing suite.
 - Release **`v0.2.0`** — `pyproject.toml` version bump, docs synced.
 
-**Explicitly out of V0.2:** memory manager, beliefs/goals database, tiered memory policies, heard-dialogue buffers, persistence — see V0.2.5. Pathing, blockers, speak targeting, relationships, automatic turn sequencing, GUI (V0.3).
+**Explicitly out of V0.2:** memory manager, beliefs/goals database, pluggable memory modules, heard-dialogue buffers, persistence — delivered in **V0.2.5**. Pathing, blockers, speak targeting, relationships, automatic turn sequencing, GUI (V0.3).
 
 ## V0.2.5
 
 **Status:** In progress — see [v0.2.5-changelog.md](v0.2.5-changelog.md) (changelog, not a pre-implementation checklist).
 
-**Focus:** Memory as a first-class subsystem — required before V0.3. Addresses long-term roleplay, session/campaign continuity, and future D&D scale (e.g. low-token “minion” agents vs rich PC memory).
+**Focus:** Memory as a first-class subsystem — required before V0.3. **Pluggable memory modules** per agent (`recent_turns`, `salient_turns`, … via `create-agent memory`) replace a separate “tiered policy” layer — e.g. a minion can use `salient_turns` with a low budget, a PC can use `recent_turns` or a richer module later.
 
 ### 0.2.5a — Single LLM compound turn — ✅ Implemented
 - One LLM call per agent turn via `AgentCompoundTurn` (replaces two-phase nav + action schemas).
@@ -115,16 +115,22 @@ These changes improve experimentation while keeping the core "one structured act
 
 ### 0.2.5c — Salient turns memory module — ✅ Implemented
 - **`salient_turns`** module: same ingest as `recent_turns`; salience-weighted storage (50-turn cap); char-budget render (default 2500).
-- Scoring favors speak/interact, look, and witnessed turns; move-only turns evicted first; recency floor protects last 2 turns in storage.
 - **`create-agent memory salient_turns memory-budget N`** (200–8000); budget-only implies salient; **`recent_turns` remains default**.
 - Shared `formatting.py` for module render output; `tests/test_salient_turns.py`.
+- **Render/scoring refined in 0.2.5d** — step-level salience and condensed turn format (see changelog).
 
-### Planned themes (high level, after 0.2.5c)
+### 0.2.5d — Condensed memory & prompt look fixes — ✅ Implemented
+- **Both modules:** turn render is `Turn N` + optional `Reasoning:` (newest 3 only) + `Result:` — no per-step duplicate lines.
+- **`recent_turns`:** always full composite `Result:`.
+- **`salient_turns`:** step-fragment `Result:` (speak 10 / interact 7 / look 3 / move 1); older turns drop move/look; witness blocks at speak tier in budget selection.
+- **Prompt:** look rule points at provided list; **`You can look at:`** lists **`[?]`** entities only.
+
+### Planned themes (high level, after 0.2.5d)
 - **Persistent memory store** (database): memories with IDs, priorities, and types; serializable for save/load later.
 - **Goals and tasks** linked to memory IDs (feeds LONG_TERM_GOALS “beliefs, relationships, goals, pursuit”).
-- **Tiered memory policies** per agent archetype (`pc`, `npc`, `minion`) controlling prompt budget and consolidation depth.
 - **Memory manager** LLM: consolidation/promotion/pruning into the store (not ad-hoc prompt buffers).
 - **Prompt assembler** reads from the store under token budget.
+- **New memory modules** as needed (same `MemoryModule` protocol; no separate archetype-tier policy layer).
 
 V0.2 compound turns and object interact should log in a shape that V0.2.5 can ingest without rework.
 

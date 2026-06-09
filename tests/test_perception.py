@@ -210,6 +210,66 @@ def test_format_object_vision_desc_all_states():
     )
 
 
+def test_get_available_look_targets_only_question_mark_entities():
+    """Look list includes only entities whose vision line shows [?]."""
+    from src.perception import get_available_look_targets
+
+    world = create_initial_world()
+    agent = world.get_agent()
+
+    targets = get_available_look_targets(agent, world)
+    assert targets == ["obj_ball_01", "obj_sign_01"]
+
+    perform_look(agent, world, "obj_ball_01")
+    assert get_available_look_targets(agent, world) == ["obj_sign_01"]
+
+    perform_look(agent, world, "obj_sign_01")
+    assert get_available_look_targets(agent, world) == []
+
+    world.invalidate_object_knowledge("obj_ball_01")
+    assert get_available_look_targets(agent, world) == ["obj_ball_01"]
+
+
+def test_get_available_look_targets_excludes_passive_only_objects():
+    """Objects without hidden detail ([?]) are omitted from the look list."""
+    from src.perception import get_available_look_targets
+
+    world = create_initial_world()
+    agent = world.get_agent()
+    world.add_object(
+        Object(
+            id="obj_scenery_01",
+            name="Crack",
+            description="",
+            passive_description="A crack in the floor.",
+            position=(1, 1),
+        )
+    )
+
+    targets = get_available_look_targets(agent, world)
+    assert "obj_scenery_01" not in targets
+    assert "obj_ball_01" in targets
+
+
+def test_build_compound_prompt_look_rule_and_filtered_targets():
+    from src.llm.prompt import build_compound_prompt
+
+    world = create_initial_world()
+    agent = world.get_agent()
+    prompt = build_compound_prompt(agent, world)
+
+    assert (
+        "look: optional; a list of objects you can look at will be provided."
+        in prompt
+    )
+    assert "You can look at: obj_ball_01, obj_sign_01" in prompt
+
+    perform_look(agent, world, "obj_ball_01")
+    perform_look(agent, world, "obj_sign_01")
+    prompt = build_compound_prompt(agent, world)
+    assert "You can look at: (nothing visible to examine)" in prompt
+
+
 def test_reset_looked_at_clears_both_sets():
     """reset_looked_at clears both looked_at and ever_looked."""
     memory = Memory()

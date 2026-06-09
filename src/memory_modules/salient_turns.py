@@ -11,9 +11,14 @@ from src.memory_modules.base import (
     WitnessedEvent,
 )
 from src.memory_modules.formatting import (
+    WITNESS_SALIENCE,
     format_own_turn,
     format_witnessed_events,
     join_lines,
+    join_step_results,
+    select_salient_steps,
+    should_include_reasoning,
+    step_salience,
 )
 from src.turn_record import TurnRecord
 
@@ -34,17 +39,11 @@ def validate_char_budget(value: int) -> None:
         )
 
 
-def score_turn(turn: TurnRecord, witnessed_before: list[WitnessedEvent]) -> int:
-    """Higher score = more important to retain."""
-    score = 0
-    if witnessed_before:
-        score += 1
-    for step in turn.steps:
-        if step.kind in ("speak", "interact"):
-            score += 3
-        elif step.kind == "look":
-            score += 2
-    return score
+def storage_salience(turn: TurnRecord) -> int:
+    """Peak step salience for storage eviction (move-only turns score lowest)."""
+    if not turn.steps:
+        return 0
+    return max(step_salience(step.kind) for step in turn.steps)
 
 
 @dataclass
@@ -58,8 +57,8 @@ class _RenderBlock:
 @dataclass
 class SalientTurnsModule:
     """
-    Ingest like recent_turns; retain by salience in storage; render chronologically
-    within ``char_budget`` (recency floor first, then highest salience).
+    Ingest like recent_turns; retain by peak step salience in storage; render
+    chronologically within ``char_budget`` with step-level trimming on older turns.
     """
 
     module_id: str = "salient_turns"
@@ -86,7 +85,7 @@ class SalientTurnsModule:
         self._pending.clear()
         self._witnessed_before.append(witnessed)
         self._turns.append(record)
-        self._salience_scores.append(score_turn(record, witnessed))
+        self._salience_scores.append(storage_salience(record))
         self._total_turns += 1
         self._evict_storage_if_needed()
 
@@ -119,30 +118,57 @@ class SalientTurnsModule:
     def _build_render_blocks(self) -> list[_RenderBlock]:
         blocks: list[_RenderBlock] = []
         order = 0
-        recency_start = max(0, len(self._turns) - self.recency_floor)
+        total = len(self._turns)
+        recency_start = max(0, total - self.recency_floor)
 
         for index, turn in enumerate(self._turns):
+            in_recency_floor = index >= recency_start
             witnessed = (
                 self._witnessed_before[index]
                 if index < len(self._witnessed_before)
                 else []
             )
-            parts: list[str] = []
             if witnessed:
-                parts.extend(
-                    format_witnessed_events(
-                        witnessed,
-                        f"Before turn {turn.turn_number}, you observed:",
+                blocks.append(
+                    _RenderBlock(
+                        order=order,
+                        text=join_lines(
+                            format_witnessed_events(
+                                witnessed,
+                                f"Before turn {turn.turn_number}, you observed:",
+                            )
+                        ),
+                        salience=WITNESS_SALIENCE,
+                        in_recency_floor=in_recency_floor,
                     )
                 )
-                parts.append("")
-            parts.extend(format_own_turn(turn))
+                order += 1
+
+            selected_steps = select_salient_steps(
+                turn.steps, in_recency_floor=in_recency_floor
+            )
+            result_text = join_step_results(selected_steps)
+            include_reasoning = should_include_reasoning(index, total)
+            if not result_text and not (include_reasoning and turn.reasoning):
+                continue
+
+            block_salience = (
+                max(step_salience(step.kind) for step in selected_steps)
+                if selected_steps
+                else 0
+            )
             blocks.append(
                 _RenderBlock(
                     order=order,
-                    text=join_lines(parts),
-                    salience=self._salience_scores[index],
-                    in_recency_floor=index >= recency_start,
+                    text=join_lines(
+                        format_own_turn(
+                            turn,
+                            include_reasoning=include_reasoning,
+                            result_text=result_text,
+                        )
+                    ),
+                    salience=block_salience,
+                    in_recency_floor=in_recency_floor,
                 )
             )
             order += 1
@@ -156,7 +182,7 @@ class SalientTurnsModule:
                 _RenderBlock(
                     order=order,
                     text=join_lines(format_witnessed_events(self._pending, heading)),
-                    salience=1,
+                    salience=WITNESS_SALIENCE,
                     in_recency_floor=True,
                 )
             )

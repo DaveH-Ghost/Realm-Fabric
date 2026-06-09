@@ -190,6 +190,30 @@ def perform_look(agent: Agent, world: World, target_id: str) -> ActionOutcome:
     )
 
 
+def _vision_desc_shows_question_mark(
+    memory: Memory, entity_id: str, passive: str, detailed: str
+) -> bool:
+    """True when passive vision would prefix the entity with [?]."""
+    return format_vision_desc(memory, entity_id, passive, detailed).startswith(
+        "[?]"
+    )
+
+
 def get_available_look_targets(agent: Agent, world: World) -> list[str]:
-    """Return entity IDs the agent can currently use the look action on."""
-    return get_visible_look_target_ids(agent, world)
+    """Return entity IDs marked [?] in passive vision (hidden detail to examine)."""
+    memory = agent.memory
+    targets: list[str] = []
+    for obj in world.get_objects():
+        if _vision_desc_shows_question_mark(
+            memory, obj.id, obj.passive_description, obj.description
+        ):
+            targets.append(obj.id)
+    for other in world.agents:
+        if other.id == agent.id:
+            continue
+        if _vision_desc_shows_question_mark(
+            memory, other.id, other.passive_description, other.description
+        ):
+            targets.append(other.id)
+    targets.sort()
+    return targets

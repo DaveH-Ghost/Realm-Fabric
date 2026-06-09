@@ -14,6 +14,7 @@ from src.memory_modules.formatting import (
     format_own_turn,
     format_witnessed_events,
     join_lines,
+    should_include_reasoning,
 )
 from src.turn_record import TurnRecord
 
@@ -53,6 +54,7 @@ class RecentTurnsModule:
             return ""
 
         lines: list[str] = []
+        total = len(self._turns)
         for index, turn in enumerate(self._turns):
             witnessed = self._witnessed_before[index] if index < len(self._witnessed_before) else []
             if witnessed:
@@ -63,7 +65,12 @@ class RecentTurnsModule:
                     )
                 )
                 lines.append("")
-            lines.extend(format_own_turn(turn))
+            lines.extend(
+                format_own_turn(
+                    turn,
+                    include_reasoning=should_include_reasoning(index, total),
+                )
+            )
             lines.append("")
 
         if self._pending:

@@ -94,7 +94,7 @@ Important rules:
 - You plan from your **current** position and vision. Your move runs first; look and turn action happen **after** that move.
 - Only pick look/interact targets you expect to be valid after moving.
 - move: use move_target "x,y" (e.g. "2,3"), or null to stay. You cannot move outside the grid.
-- look: optional; entities in passive vision only (you do not see yourself).
+- look: optional; a list of objects you can look at will be provided.
 - Hidden detail is marked "[?]"; stale examined knowledge is "[?] [changed]".
 - Other agents show their most recent observable action on their vision line.
 - speak: up to five sentences when turn_action is "speak".

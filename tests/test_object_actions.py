@@ -139,6 +139,27 @@ def test_create_object_accepts_random_move_self_effect():
     assert "Created object" in msg
 
 
+def test_interact_templates_substitute_start_and_end(monkeypatch):
+    world = create_initial_world()
+    explorer = world.get_agent()
+    explorer.position = (2, 3)
+    ball = world.get_object_by_id("obj_ball_01")
+    assert ball.position == (2, 2)
+
+    monkeypatch.setattr(
+        "src.object_effects.random.choice",
+        lambda _positions: (4, 0),
+    )
+
+    outcome = interact(explorer, world, "obj_ball_01", "kick")
+    assert outcome.result == (
+        "You kick the Ceramic Ball. It rolls from (2, 2) to (4, 0)."
+    )
+    assert outcome.passive_result == (
+        "Explorer kicks the Ceramic Ball. It rolls from (2, 2) to (4, 0)."
+    )
+
+
 def test_failed_interact_after_move_shows_move_in_passive_result():
     world = create_initial_world()
     cookie = _create_cookie(world)
@@ -393,8 +414,14 @@ def test_random_move_self_moves_ball(monkeypatch):
 
     assert ball.position == (0, 4)
     assert ball.position != original
-    assert "You kick the Ceramic Ball. It lands on a random tile." in record.result
-    assert explorer.passive_result == "Explorer kicks the Ceramic Ball. It lands on a random tile."
+    assert (
+        "You kick the Ceramic Ball. It rolls from (2, 2) to (0, 4)."
+        in record.result
+    )
+    assert (
+        explorer.passive_result
+        == "Explorer kicks the Ceramic Ball. It rolls from (2, 2) to (0, 4)."
+    )
     assert world.get_object_by_id("obj_ball_01") is ball
 
 
@@ -432,4 +459,4 @@ def test_step_compound_kick_ball_moves(monkeypatch):
 
     ball = stepper.world.get_object_by_id("obj_ball_01")
     assert ball.position == (4, 0)
-    assert "You kick the Ceramic Ball. It lands on a random tile." in stepper.agent.memory.turns[-1].result
+    assert "You kick the Ceramic Ball. It rolls from (2, 2) to (4, 0)." in stepper.agent.memory.turns[-1].result

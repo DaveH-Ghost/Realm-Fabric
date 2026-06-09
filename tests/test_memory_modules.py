@@ -44,7 +44,21 @@ def test_recent_turns_records_and_renders_own_turn():
     text = module.render(_render_ctx())
     assert "Turn 1:" in text
     assert "Reasoning: thoughts" in text
+    assert "Result:" in text
     assert 'You said: "Hi."' in text
+    assert "  - speak" not in text
+
+
+def test_reasoning_drops_after_third_newest_turn():
+    module = RecentTurnsModule()
+    for i in range(1, 6):
+        module.record_turn(_turn(i, reasoning=f"reason-{i}"), _record_ctx("agent_01", i))
+
+    text = module.render(_render_ctx())
+    assert "Reasoning: reason-3" in text
+    assert "Reasoning: reason-5" in text
+    assert "Reasoning: reason-1" not in text
+    assert "Reasoning: reason-2" not in text
 
 
 def test_recent_turns_window_caps_at_ten():
