@@ -95,7 +95,7 @@ These changes improve experimentation while keeping the core "one structured act
 
 ## V0.2.5
 
-**Status:** In progress — see [v0.2.5-changelog.md](v0.2.5-changelog.md) (changelog, not a pre-implementation checklist).
+**Status:** **0.2.5e** implemented in code (`0.2.5`); **0.2.5f** refactor planned — see [v0.2.5-changelog.md](v0.2.5-changelog.md).
 
 **Focus:** Memory as a first-class subsystem — required before V0.3. **Pluggable memory modules** per agent (`recent_turns`, `salient_turns`, … via `create-agent memory`) replace a separate “tiered policy” layer — e.g. a minion can use `salient_turns` with a low budget, a PC can use `recent_turns` or a richer module later.
 
@@ -124,13 +124,26 @@ These changes improve experimentation while keeping the core "one structured act
 - **`recent_turns`:** always full composite `Result:`.
 - **`salient_turns`:** step-fragment `Result:` (speak 10 / interact 7 / look 3 / move 1); older turns drop move/look; witness blocks at speak tier in budget selection.
 - **Prompt:** look rule points at provided list; **`You can look at:`** lists **`[?]`** entities only.
+- **Interact templates:** `{start}` / `{end}` for object position before/after effects (ball kick).
 
-### Planned themes (high level, after 0.2.5d)
+### 0.2.5e — Rolling summary memory module — ✅ Implemented
+- **`rolling_summary`:** verbatim detail (tail + turns since last consolidation) + **`Summary:`** block from periodic LLM merge.
+- Defaults: **interval 10**, **max 8000** chars, **detail tail 3** (tail kept in prompt, excluded from next merge).
+- **`create-agent memory rolling_summary`** + optional **`memory-summary-interval`** / **`memory-summary-max`** / **`memory-summary-tail`**.
+- **Background consolidation** with turn gating (`TurnGatedMemoryModule`); sync retry on failure; **`MemoryConsolidationError`** if retry fails.
+- Extra LLM call per agent on each interval (`src/llm/memory_summary.py`, plain text); logged as **`[memory_summary]`**.
+- Facade: **`get_detail_turns()`**; **`stored_turns`** is detail buffer only for this module (summary is separate).
+
+### 0.2.5f — Memory module refactor — Planned
+- Extract **`ConsolidationRunner`** from `RollingSummaryModule` (threading/state machine).
+- Split **`formatting.py`** into common / salient / summary helpers.
+
+### Planned themes (high level, after 0.2.5f)
 - **Persistent memory store** (database): memories with IDs, priorities, and types; serializable for save/load later.
 - **Goals and tasks** linked to memory IDs (feeds LONG_TERM_GOALS “beliefs, relationships, goals, pursuit”).
-- **Memory manager** LLM: consolidation/promotion/pruning into the store (not ad-hoc prompt buffers).
+- **Richer consolidation** into the store (beyond the single rolling summary string in `rolling_summary`).
 - **Prompt assembler** reads from the store under token budget.
-- **New memory modules** as needed (same `MemoryModule` protocol; no separate archetype-tier policy layer).
+- **New memory modules** as needed (same `MemoryModule` protocol; per-agent module choice replaces archetype-tier policies).
 
 V0.2 compound turns and object interact should log in a shape that V0.2.5 can ingest without rework.
 

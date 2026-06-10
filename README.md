@@ -8,7 +8,8 @@ A grid-based agent simulation framework designed around structured output and na
 
 - [V0.2 implementation checklist](docs/v0.2-implementation-readiness-checklist.md) — **authoritative V0.2 spec** (implemented; as-shipped reference)
 - [V0.1 implementation checklist](docs/v0.1-implementation-readiness-checklist.md) — design reference for shipped V0.1 behavior (partially superseded by V0.2)
-- [Roadmap](docs/ROADMAP.md) — version plans (V0.1 ✅, V0.2 ✅, V0.2.5, V0.3)
+- [Roadmap](docs/ROADMAP.md) — version plans (V0.1 ✅, V0.2 ✅, V0.2.5 in progress, V0.3)
+- [V0.2.5 changelog](docs/v0.2.5-changelog.md) — incremental memory / prompt slices (0.2.5a–f)
 - [Long-term goals](LONG_TERM_GOALS.md) — aspirational features
 - [V0 implementation checklist](docs/v0-implementation-readiness-checklist.md) — V0 historical design reference
 - [Schema design references](docs/schemas/) — `AgentTurn` (pre-V0.2); **`AgentNavigationTurn` / `AgentActionTurn`** (V0.2 — implemented in `src/llm/schemas.py`)
@@ -36,9 +37,10 @@ A grid-based agent simulation framework designed around structured output and na
   - `objects` — list all objects with ids and action names (for `edit-object` / `delete-object`)
   - `agents` — list all agents with ids and active marker
   - `effects` — list registered object interaction effects (`delete_self`, `random_move_self`, …)
-  - `state` — active agent context (memory, turn count, compound step breakdown, few-shots)
+  - `memory-modules` — list pluggable memory module ids (V0.2.5)
+  - `state` — active agent context (memory module, turn count, compound step breakdown, few-shots)
   - `vision` — see what the active agent currently perceives
-  - `prompt` — show navigation and action prompts (`prompt nav` / `prompt action` for one phase)
+  - `prompt` — show the compound turn prompt for the active agent
   - `step-compound …` — manual compound turn (move / look / speak / interact)
   - `step-nav` / `step-action` — debug one phase without a full turn record (see `help`)
   - `run` — two-phase LLM turn for the **active** agent (requires OPENROUTER_API_KEY)
@@ -64,6 +66,8 @@ edit-object obj_cookie_01 add-action smell range 1 result "Nice smell." passive 
 edit-object obj_cookie_01 remove-action smell
 delete-object obj_crate_01
 create-agent name "Goblin" pdesc "A short figure." desc "A grumpy goblin." personality "You are a grumpy goblin." at 0,3
+create-agent name "Archivist" personality "You remember everything." memory rolling_summary memory-summary-interval 15 memory-summary-tail 3 at 1,1
+create-agent name "Scribe" personality "Quiet." memory salient_turns memory-budget 2500 at 2,2
 edit-agent agent_01 desc "Updated appearance."
 edit-agent agent_01 personality "Updated LLM personality."
 edit-agent agent_01 name "Scout"
@@ -86,7 +90,7 @@ Objects and agents share **`pdesc`** (glance) and **`desc`** (detailed, hidden b
 
 ### Multi-agent (V0.1 Section 3)
 
-Typical LLM workflow with two agents (each `run` / agent name = **two LLM calls**: navigation, then action):
+Typical LLM workflow with two agents (each `run` / agent name = **one compound LLM call** per turn):
 
 ```
 switch Goblin    # inspect Goblin's vision/state without a turn
@@ -103,14 +107,22 @@ step-compound - interact obj_ball_01 kick
 ```
 
 - Create agents with `create-agent`; list with `agents` or `list`
-- **`run`** — two-phase LLM turn for the **active** agent (navigation then action; use after `switch`)
+- **`run`** — compound LLM turn for the **active** agent (use after `switch`)
 - **`switch <name>`** — change active agent without a turn (`vision`, `state`, `prompt`, manual steps, `run`)
-- **Typing an agent's name** — two-phase LLM turn for that agent; sets them active (even if the LLM call fails)
+- **Typing an agent's name** — compound LLM turn for that agent; sets them active (even if the LLM call fails)
 - Agent display names must be **unique** and **cannot match stepper commands** (e.g. `vision`, `run`, `list`, `create-agent`) — validated automatically via `src/stepper_commands.py`
 - Commands are **case-insensitive** (`Run`, `Switch Goblin`, etc.)
 - Deleting the active agent reassigns to the first remaining agent and prints `Active agent: …`
 - Turn numbers in each agent's memory are **per-agent** (1, 2, 3…); `session_turn` in logs is a global session label only
 - Other agents appear in passive vision (`pdesc` + hidden `desc` until `look`); `personality` is LLM-only; agents do not see themselves
+
+### V0.2.5 memory modules (see [changelog](docs/v0.2.5-changelog.md))
+
+- **`memory-modules`** — list registered modules and valid **create-agent** flags; default is **`recent_turns`** (last 10 own turns + witnessed actions).
+- **`salient_turns`** — salience-weighted retention + char budget (`memory-budget` on create-agent).
+- **`rolling_summary`** — verbatim detail + rolling LLM summary every **N** turns (default 10); keeps last **3** turns in detail after each summary; **background consolidation** gates the next turn until merge succeeds; optional **`memory-summary-interval`**, **`memory-summary-max`**, **`memory-summary-tail`**.
+- Module id set **only at `create-agent`**; prompt section label is **`Memory:`**.
+- **`state`** shows module-specific config; for `rolling_summary` includes consolidation state and detail turn numbers.
 
 ### V0.2 (current runtime — `v0.2.0`)
 
@@ -212,7 +224,7 @@ uv run realm
 You can still use almost everything:
 
 - All the manual commands (`step-compound`, `vision`, `state`, etc.) work perfectly.
-- The only thing that requires an `OPENROUTER_API_KEY` is an LLM turn: type an agent's name (e.g. `Explorer`) or use `run` after selecting the active agent. Each turn makes **two** LLM calls (navigation, then action).
+- The only thing that requires an `OPENROUTER_API_KEY` is an LLM turn: type an agent's name (e.g. `Explorer`) or use `run` after selecting the active agent. Each turn makes **one** compound LLM call (plus an extra **memory summary** call on interval boundaries for `rolling_summary` agents).
 
 This design is intentional so you can explore and test the system without needing any paid services.
 
@@ -235,7 +247,7 @@ That's the whole magic.
 
 ## Running tests
 
-Tests use [pytest](https://docs.pytest.org/) and run **without** an API key or network access (**162 tests**). They cover V0.1 perception/editing/multi-agent behavior plus V0.2 coordinate move, compound turns, object interact, and ship integration checks.
+Tests use [pytest](https://docs.pytest.org/) and run **without** an API key or network access (**231 tests**). They cover V0.1 perception/editing/multi-agent behavior plus V0.2 coordinate move, compound turns, object interact, memory modules, rolling summary, and ship integration checks.
 
 ### Run all tests
 
@@ -267,7 +279,7 @@ uv run pytest -x
 
 | File | Focus |
 |------|--------|
-| `tests/test_schema.py` | `AgentNavigationTurn` / `AgentActionTurn` Pydantic validation |
+| `tests/test_schema.py` | `AgentCompoundTurn` Pydantic validation |
 | `tests/test_v0_2_ship.py` | Section 4 ship criteria (version, help, state, logging, ERR codes) |
 | `tests/test_coordinate_move.py` | Coordinate move parser, bounds, schema |
 | `tests/test_compound_turn.py` | Compound orchestration, `TurnRecord.steps`, step-compound parser |
@@ -277,6 +289,9 @@ uv run pytest -x
 | `tests/test_perception.py` | V0.1 `[?]` / stale vision for objects and cross-agent invalidation |
 | `tests/test_world_edit.py` | World editing commands (create/edit/delete, listings, object actions) |
 | `tests/test_multi_agent.py` | Multi-agent stepper (`switch`, `run`, agent vision, `passive_result`, LLM mocks) |
+| `tests/test_memory_modules.py` | Pluggable memory modules, registry, witnesses, `get_detail_turns` |
+| `tests/test_salient_turns.py` | Salience scoring, char budget, fragment render |
+| `tests/test_rolling_summary.py` | Rolling summary, async consolidation, detail tail, gating |
 
 ### First-time setup
 

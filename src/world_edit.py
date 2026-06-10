@@ -413,12 +413,27 @@ def delete_object_by_id(world: World, object_id: str) -> str:
 
 
 def _build_agent_memory(fields: dict[str, str]) -> tuple[Optional[Memory], Optional[str]]:
-    """Construct Memory from create-agent fields (memory + optional memory-budget)."""
+    """Construct Memory from create-agent fields (memory + optional module config)."""
     memory_module_id = fields.get("memory")
     memory_budget_raw = fields.get("memory-budget")
+    summary_interval_raw = fields.get("memory-summary-interval")
+    summary_max_raw = fields.get("memory-summary-max")
+    summary_tail_raw = fields.get("memory-summary-tail")
 
     if memory_budget_raw is not None and memory_module_id not in (None, "salient_turns"):
         return None, "memory-budget is only valid with memory salient_turns."
+
+    if (
+        summary_interval_raw is not None
+        or summary_max_raw is not None
+        or summary_tail_raw is not None
+    ):
+        if memory_module_id not in (None, "rolling_summary"):
+            return (
+                None,
+                "memory-summary-interval, memory-summary-max, and memory-summary-tail "
+                "are only valid with memory rolling_summary.",
+            )
 
     module_config: dict[str, int] = {}
     if memory_budget_raw is not None:
@@ -427,12 +442,41 @@ def _build_agent_memory(fields: dict[str, str]) -> tuple[Optional[Memory], Optio
         except ValueError:
             return None, "memory-budget must be an integer."
 
-    if memory_module_id is None and memory_budget_raw is None:
+    if summary_interval_raw is not None:
+        try:
+            module_config["summary_interval"] = int(summary_interval_raw)
+        except ValueError:
+            return None, "memory-summary-interval must be an integer."
+
+    if summary_max_raw is not None:
+        try:
+            module_config["max_summary_chars"] = int(summary_max_raw)
+        except ValueError:
+            return None, "memory-summary-max must be an integer."
+
+    if summary_tail_raw is not None:
+        try:
+            module_config["summary_tail"] = int(summary_tail_raw)
+        except ValueError:
+            return None, "memory-summary-tail must be an integer."
+
+    if (
+        memory_module_id is None
+        and memory_budget_raw is None
+        and summary_interval_raw is None
+        and summary_max_raw is None
+        and summary_tail_raw is None
+    ):
         return Memory(), None
 
-    resolved_id = memory_module_id or (
-        "salient_turns" if memory_budget_raw is not None else "recent_turns"
-    )
+    resolved_id = memory_module_id
+    if resolved_id is None:
+        if memory_budget_raw is not None:
+            resolved_id = "salient_turns"
+        elif summary_interval_raw is not None or summary_max_raw is not None or summary_tail_raw is not None:
+            resolved_id = "rolling_summary"
+        else:
+            resolved_id = "recent_turns"
     try:
         return Memory(module_id=resolved_id, **module_config), None
     except ValueError as exc:
@@ -443,7 +487,7 @@ def create_agent_from_args(world: World, arg: str) -> tuple[Optional[Agent], str
     """
     Parse and create an agent.
 
-    Usage: name "..." [pdesc "..."] [desc "..."] [personality "..."] [memory MODULE_ID] [memory-budget N] at x,y
+    Usage: name "..." [pdesc "..."] [desc "..."] [personality "..."] [memory MODULE_ID] [memory-budget N] [memory-summary-interval N] [memory-summary-max N] [memory-summary-tail N] at x,y
     """
     tokens, err = tokenize_args(arg)
     if err:
@@ -451,11 +495,24 @@ def create_agent_from_args(world: World, arg: str) -> tuple[Optional[Agent], str
     if not tokens:
         return None, (
             'Usage: create-agent name "..." [pdesc "..."] [desc "..."] '
-            '[personality "..."] [memory MODULE_ID] [memory-budget N] at x,y'
+            '[personality "..."] [memory MODULE_ID] [memory-budget N] '
+            '[memory-summary-interval N] [memory-summary-max N] [memory-summary-tail N] at x,y'
         )
 
     fields, err = parse_field_tokens(
-        tokens, {"name", "pdesc", "desc", "personality", "memory", "memory-budget", "at"}
+        tokens,
+        {
+            "name",
+            "pdesc",
+            "desc",
+            "personality",
+            "memory",
+            "memory-budget",
+            "memory-summary-interval",
+            "memory-summary-max",
+            "memory-summary-tail",
+            "at",
+        },
     )
     if err:
         return None, err

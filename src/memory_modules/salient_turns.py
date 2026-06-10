@@ -245,4 +245,5 @@ class SalientTurnsModule:
 
     @property
     def stored_turns(self) -> list[TurnRecord]:
+        """Own turns in storage (up to ``storage_window``); render may compress older turns."""
         return list(self._turns)

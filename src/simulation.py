@@ -175,7 +175,7 @@ def commit_turn_record(
     if passive:
         agent.passive_result = passive
 
-    agent.memory.record_turn(record, agent_id=agent.id)
+    agent.memory.record_turn(record, agent_id=agent.id, agent_name=agent.name)
 
     witness_session = session_turn if session_turn is not None else record.turn_number
     from src.observations import broadcast_actor_turn

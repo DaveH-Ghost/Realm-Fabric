@@ -205,12 +205,31 @@ class ManualStepper(cmd.Cmd):
             f"Active agent: {self.agent.name} ({self.agent.id}) at {self.agent.position}"
         )
         from src.memory_modules.registry import format_memory_module_label
+        from src.memory_modules.rolling_summary import RollingSummaryModule
         from src.memory_modules.salient_turns import SalientTurnsModule
 
         print(format_memory_module_label(self.agent.memory.module))
         if isinstance(self.agent.memory.module, SalientTurnsModule):
             print(f"Memory char budget: {self.agent.memory.module.char_budget}")
-        print(f"Memory turns: {self.agent.memory.turn_count}")
+        if isinstance(self.agent.memory.module, RollingSummaryModule):
+            module = self.agent.memory.module
+            print(f"Memory summary interval: {module.summary_interval}")
+            print(f"Memory summary max chars: {module.max_summary_chars}")
+            print(f"Memory summary detail tail: {module.summary_tail}")
+            print(f"Memory consolidation: {module.consolidation_state}")
+            last_summarized = module.last_summarized_turn_number
+            print(
+                "Memory last summarized at turn: "
+                f"{last_summarized if last_summarized else '(never)'}"
+            )
+            detail_numbers = [t.turn_number for t in module.stored_turns]
+            print(
+                "Memory detail turns: "
+                f"{detail_numbers if detail_numbers else '(none)'}"
+            )
+            if module.summary:
+                print(f"Rolling summary length: {len(module.summary)} chars")
+        print(f"Memory own turns (total): {self.agent.memory.turn_count}")
         print(f"Looked at (current): {sorted(self.agent.memory.looked_at)}")
         print(f"Ever looked at: {sorted(self.agent.memory.ever_looked)}")
         print(f"Few-shots in prompts: {'on' if self.include_examples else 'off'}")
@@ -290,6 +309,8 @@ class ManualStepper(cmd.Cmd):
         Usage:
             create-agent name "Goblin" pdesc "A short figure." desc "A grumpy goblin." personality "You are a grumpy goblin." at 0,3
             create-agent name "Scribe" personality "Quiet." memory salient_turns memory-budget 2500 at 2,2
+            create-agent name "Archivist" personality "..." memory rolling_summary at 1,1
+            create-agent name "Archivist" personality "..." memory rolling_summary memory-summary-interval 15 memory-summary-max 5000 memory-summary-tail 3 at 1,1
         """
         agent, message = create_agent_from_args(self.world, arg)
         if agent is not None:
@@ -424,8 +445,21 @@ class ManualStepper(cmd.Cmd):
         for step in steps:
             print(step.result)
 
+    def _gate_agent_turn(self, agent: "Agent") -> bool:
+        """Return False if the agent cannot act yet (e.g. memory consolidation)."""
+        from src.memory_modules.rolling_summary import MemoryConsolidationError
+
+        try:
+            agent.memory.ensure_ready_for_turn()
+        except MemoryConsolidationError as exc:
+            print(f"\nCannot run turn for {agent.name}: {exc}")
+            return False
+        return True
+
     def _run_manual_compound(self, turn: AgentCompoundTurn) -> None:
         agent = self.agent
+        if not self._gate_agent_turn(agent):
+            return
         turn_number = next_turn_number_for_agent(agent)
         record = run_compound_turn(
             agent, self.world, turn, turn_number, session_turn=self.session_turn + 1
@@ -501,6 +535,8 @@ class ManualStepper(cmd.Cmd):
     def _run_llm_turn_for_agent(self, agent: "Agent"):
         """Single LLM call for one compound agent turn."""
         self.agent = agent
+        if not self._gate_agent_turn(agent):
+            return
         print(f"\n=== Running LLM for {agent.name} ===")
 
         try:

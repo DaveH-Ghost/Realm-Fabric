@@ -10,13 +10,10 @@ from src.memory_modules.base import (
     MemoryRenderContext,
     WitnessedEvent,
 )
-from src.memory_modules.formatting import (
-    format_own_turn,
-    format_witnessed_events,
-    join_lines,
-    should_include_reasoning,
-)
+from src.memory_modules.formatting import format_stored_turns_block, join_lines
 from src.turn_record import TurnRecord
+
+DEFAULT_WINDOW = 10
 
 
 @dataclass
@@ -27,7 +24,7 @@ class RecentTurnsModule:
     """
 
     module_id: str = "recent_turns"
-    window: int = 10
+    window: int = DEFAULT_WINDOW
 
     _turns: list[TurnRecord] = field(default_factory=list, repr=False)
     _witnessed_before: list[list[WitnessedEvent]] = field(default_factory=list, repr=False)
@@ -50,37 +47,9 @@ class RecentTurnsModule:
 
     def render(self, ctx: MemoryRenderContext) -> str:
         del ctx
-        if not self._turns and not self._pending:
-            return ""
-
-        lines: list[str] = []
-        total = len(self._turns)
-        for index, turn in enumerate(self._turns):
-            witnessed = self._witnessed_before[index] if index < len(self._witnessed_before) else []
-            if witnessed:
-                lines.extend(
-                    format_witnessed_events(
-                        witnessed,
-                        f"Before turn {turn.turn_number}, you observed:",
-                    )
-                )
-                lines.append("")
-            lines.extend(
-                format_own_turn(
-                    turn,
-                    include_reasoning=should_include_reasoning(index, total),
-                )
-            )
-            lines.append("")
-
-        if self._pending:
-            if self._turns:
-                heading = f"Since turn {self._turns[-1].turn_number}, you observed:"
-            else:
-                heading = "You observed:"
-            lines.extend(format_witnessed_events(self._pending, heading))
-
-        return join_lines(lines)
+        return join_lines(
+            format_stored_turns_block(self._turns, self._witnessed_before, self._pending)
+        )
 
     @property
     def total_turns(self) -> int:
@@ -88,4 +57,5 @@ class RecentTurnsModule:
 
     @property
     def stored_turns(self) -> list[TurnRecord]:
+        """Last ``window`` own turns kept verbatim in the prompt detail buffer."""
         return list(self._turns)

@@ -101,6 +101,41 @@ def get_structured_turn(
     )
 
 
+def get_text_completion(
+    prompt: str,
+    model: Optional[str] = None,
+    temperature: float = 0.7,
+) -> LLMResponse:
+    """Send prompt to LLM; entire message content is the response text."""
+    client = get_llm_client()
+    model = model or DEFAULT_MODEL
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=temperature,
+    )
+
+    content = response.choices[0].message.content
+    if not content or not content.strip():
+        raise RuntimeError("LLM returned empty content")
+
+    text = content.strip()
+    usage = getattr(response, "usage", None)
+    prompt_tokens = getattr(usage, "prompt_tokens", None) if usage else None
+    completion_tokens = getattr(usage, "completion_tokens", None) if usage else None
+    total_tokens = getattr(usage, "total_tokens", None) if usage else None
+
+    return LLMResponse(
+        parsed=text,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+        total_tokens=total_tokens,
+        model=model,
+        raw_response=text,
+    )
+
+
 def get_compound_turn(prompt: str, **kwargs) -> LLMResponse:
     from src.llm.schemas import AgentCompoundTurn
 

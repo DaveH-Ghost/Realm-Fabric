@@ -225,6 +225,7 @@ def test_known_module_ids_lists_recent_turns():
     ids = known_module_ids()
     assert "recent_turns" in ids
     assert "salient_turns" in ids
+    assert "rolling_summary" in ids
 
 
 def test_format_memory_modules_list():
@@ -233,6 +234,32 @@ def test_format_memory_modules_list():
     text = format_memory_modules_list()
     assert "recent_turns" in text
     assert "salient_turns" in text
+    assert "rolling_summary" in text
+    assert "create-agent flags: (none)" in text
+    assert "create-agent flags: memory-budget N" in text
+    assert "memory-summary-interval N" in text
+
+
+def test_get_detail_turns_matches_stored_turns():
+    memory = Memory(module_id="recent_turns")
+    turn = TurnRecord(turn_number=1, steps=[], result="ok", reasoning="r")
+    memory.record_turn(turn, agent_id="agent_01")
+    assert memory.get_detail_turns() == memory.get_recent_turns() == memory.turns
+
+
+def test_recent_turns_is_not_turn_gated():
+    from src.memory_modules.base import TurnGatedMemoryModule
+
+    memory = Memory(module_id="recent_turns")
+    assert not isinstance(memory.module, TurnGatedMemoryModule)
+    memory.ensure_ready_for_turn()
+
+
+def test_rolling_summary_is_turn_gated():
+    from src.memory_modules.base import TurnGatedMemoryModule
+
+    memory = Memory(module_id="rolling_summary")
+    assert isinstance(memory.module, TurnGatedMemoryModule)
 
 
 def test_agents_list_shows_memory_module():

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from src.turn_record import TurnRecord
 
@@ -27,6 +27,7 @@ class WitnessedEvent:
 class MemoryRecordContext:
     agent_id: str
     turn_number: int
+    agent_name: str = ""
 
 
 @dataclass(frozen=True)
@@ -60,4 +61,19 @@ class MemoryModule(Protocol):
 
     @property
     def stored_turns(self) -> list[TurnRecord]:
-        """Own turns kept in the module window (debug / state command)."""
+        """
+        Own turns kept verbatim in the prompt detail buffer.
+
+        Meaning is module-specific: full retained window (``recent_turns``),
+        salience-selected storage (``salient_turns``), or post-consolidation
+        detail only (``rolling_summary`` — see that module's ``summary`` property
+        for consolidated history).
+        """
+
+
+@runtime_checkable
+class TurnGatedMemoryModule(Protocol):
+    """Memory module that may block turn start until async work completes."""
+
+    def ensure_ready_for_turn(self) -> None:
+        """Block until the module is ready to record another own turn."""

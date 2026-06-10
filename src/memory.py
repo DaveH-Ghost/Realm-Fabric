@@ -6,6 +6,7 @@ from src.memory_modules.base import (
     MemoryObserveContext,
     MemoryRecordContext,
     MemoryRenderContext,
+    TurnGatedMemoryModule,
     WitnessedEvent,
 )
 from src.memory_modules.registry import create_module
@@ -59,7 +60,7 @@ class Memory:
 
     @property
     def turns(self) -> list[TurnRecord]:
-        """Own turns stored in the prompt memory module (windowed)."""
+        """Verbatim detail turns in the prompt memory module (module-specific window)."""
         return self._module.stored_turns
 
     @property
@@ -82,10 +83,14 @@ class Memory:
             return "No memories yet."
         return body.strip()
 
-    def record_turn(self, record: TurnRecord, *, agent_id: str) -> None:
+    def record_turn(self, record: TurnRecord, *, agent_id: str, agent_name: str = "") -> None:
         self._module.record_turn(
             record,
-            MemoryRecordContext(agent_id=agent_id, turn_number=record.turn_number),
+            MemoryRecordContext(
+                agent_id=agent_id,
+                turn_number=record.turn_number,
+                agent_name=agent_name,
+            ),
         )
 
     def record_observation(self, event: WitnessedEvent, *, observer_id: str) -> None:
@@ -98,10 +103,20 @@ class Memory:
         """Record a committed turn. Prefer passing agent_id when available."""
         self.record_turn(record, agent_id=agent_id)
 
-    def get_recent_turns(self, count: int = 10) -> list[TurnRecord]:
-        """Return up to the last ``count`` own turns from the module window."""
+    def get_detail_turns(self, count: int = 10) -> list[TurnRecord]:
+        """
+        Return up to the last ``count`` turns from the module's verbatim detail buffer.
+
+        This is what appears (in full or compressed form) in the Memory: prompt section.
+        For ``rolling_summary``, older turns may exist only in the consolidated summary
+        block—not in this list.
+        """
         turns = self._module.stored_turns
         return list(turns[-count:])
+
+    def get_recent_turns(self, count: int = 10) -> list[TurnRecord]:
+        """Alias for :meth:`get_detail_turns` (kept for backward compatibility)."""
+        return self.get_detail_turns(count)
 
     def mark_looked_at(self, object_id: str) -> None:
         self._looked_at.add(object_id)
@@ -119,6 +134,11 @@ class Memory:
     def clear_examination(self, object_id: str) -> None:
         self._looked_at.discard(object_id)
         self._ever_looked.discard(object_id)
+
+    def ensure_ready_for_turn(self) -> None:
+        """Wait for memory consolidation when the module requires it."""
+        if isinstance(self._module, TurnGatedMemoryModule):
+            self._module.ensure_ready_for_turn()
 
     def reset_looked_at(self) -> None:
         self._looked_at.clear()
