@@ -6,10 +6,10 @@ Implementation of the `speak` action for V0.
 
 from src.action_outcome import ActionOutcome
 from src.agent import Agent
-from src.world import World
+from src.area import Area
 
 
-def speak(agent: Agent, world: World, content: str) -> ActionOutcome:
+def speak(agent: Agent, area: Area, content: str) -> ActionOutcome:
     """The agent speaks the given content (always observable to others)."""
     text = content or ""
     return ActionOutcome(

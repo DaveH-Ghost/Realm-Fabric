@@ -19,8 +19,8 @@ from src.memory_modules.rolling_summary import (
     validate_summary_tail,
 )
 from src.turn_record import TurnRecord, TurnStep
-from src.world import create_initial_world
-from src.world_edit import create_agent_from_args
+from src.area import create_initial_area
+from src.area_edit import create_agent_from_args
 
 
 def _record_ctx(
@@ -40,8 +40,8 @@ def _observe_ctx(observer_id: str = "agent_01") -> MemoryObserveContext:
 
 
 def _render_ctx():
-    world = create_initial_world()
-    return MemoryRenderContext(agent=world.get_agent(), world=world)
+    area = create_initial_area()
+    return MemoryRenderContext(agent=area.get_agent(), area=area)
 
 
 def _speak_turn(turn_number: int, *, content: str = "Hi.") -> TurnRecord:
@@ -181,9 +181,9 @@ def test_create_module_rejects_summary_config_for_recent_turns():
 
 
 def test_create_agent_rolling_summary():
-    world = create_initial_world()
+    area = create_initial_area()
     agent, msg = create_agent_from_args(
-        world,
+        area,
         'name "Archivist" personality "x" memory rolling_summary at 2,2',
     )
     assert agent is not None
@@ -194,9 +194,9 @@ def test_create_agent_rolling_summary():
 
 
 def test_create_agent_custom_summary_interval():
-    world = create_initial_world()
+    area = create_initial_area()
     agent, msg = create_agent_from_args(
-        world,
+        area,
         'name "Archivist" personality "x" memory rolling_summary '
         "memory-summary-interval 15 memory-summary-max 5000 at 2,2",
     )
@@ -492,9 +492,9 @@ def test_detail_tail_accumulates_new_turns_until_next_summary():
 
 
 def test_create_agent_custom_summary_tail():
-    world = create_initial_world()
+    area = create_initial_area()
     agent, msg = create_agent_from_args(
-        world,
+        area,
         'name "Archivist" personality "x" memory rolling_summary memory-summary-tail 1 at 2,2',
     )
     assert agent is not None

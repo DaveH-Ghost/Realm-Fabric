@@ -9,7 +9,7 @@ from src.turn_record import TurnRecord
 
 if TYPE_CHECKING:
     from src.agent import Agent
-    from src.world import World
+    from src.area import Area
 
 
 @dataclass(frozen=True)
@@ -38,7 +38,7 @@ class MemoryObserveContext:
 @dataclass(frozen=True)
 class MemoryRenderContext:
     agent: Agent
-    world: World
+    area: Area
 
 
 class MemoryModule(Protocol):

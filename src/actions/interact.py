@@ -15,7 +15,7 @@ from src.object import Object
 from src.object_action import ObjectAction
 from src.object_effects import apply_effects
 from src.perception import is_object_in_passive_vision
-from src.world import World
+from src.area import Area
 
 
 def _format_template(
@@ -38,12 +38,12 @@ def _format_template(
 
 def interact(
     agent: Agent,
-    world: World,
+    area: Area,
     target_id: str,
     action_name: str,
 ) -> ActionOutcome:
     """Execute an object interaction from the action phase."""
-    obj = world.get_object_by_id(target_id)
+    obj = area.get_object_by_id(target_id)
     if obj is None:
         return ActionOutcome(result="That object does not exist.")
 
@@ -55,7 +55,7 @@ def interact(
             ),
         )
 
-    if not is_object_in_passive_vision(agent, world, target_id):
+    if not is_object_in_passive_vision(agent, area, target_id):
         return ActionOutcome(
             result=f"You can't reach {obj.name} from here.",
         )
@@ -69,7 +69,7 @@ def interact(
 
     start_position = obj.position
     if action.effects:
-        apply_effects(world, agent, obj, list(action.effects))
+        apply_effects(area, agent, obj, list(action.effects))
     end_position = obj.position
 
     template_kwargs = {

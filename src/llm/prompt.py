@@ -1,16 +1,15 @@
 """
 prompt.py
 
-Single-call prompt construction for V0.2.5 compound turns.
+Default compound-turn prompt assembly for V0.2.5+.
+
+Game/application projects should prefer ``build_prompt_context`` and compose
+their own templates; this module keeps the built-in reference prompt.
 """
 
 from src.agent import Agent
-from src.perception import (
-    build_passive_vision,
-    get_available_interactions,
-    get_available_look_targets,
-)
-from src.world import World
+from src.llm.prompt_context import PromptContext, build_prompt_context
+from src.area import Area
 
 
 FEW_SHOT_COMPOUND_EXAMPLES = """
@@ -60,7 +59,7 @@ Example 3: Move only
 Context:
 Passive Vision:
 You are at (1, 1).
-You may move to any coordinate (x, y) where x and y are integers from 0 to 4.
+You may move to any coordinate (x, y) where x is an integer from 0 to 4 and y is an integer from 0 to 4.
 
 Output:
 {
@@ -77,126 +76,48 @@ Output:
 """.strip()
 
 
-def _character_block(agent: Agent) -> str:
-    return (
-        f"You are {agent.name}.\n"
-        f"Your personality: {agent.personality}\n\n"
-        f"Your detailed description: {agent.description}"
-    )
-
-
-def _get_compound_system_instructions() -> str:
-    return """You exist inside a small, controlled 5x5 grid room. Your coordinates range from (0,0) in the southwest corner to (4,4) in the northeast. Y increases northward.
-
-Each turn you may plan a **compound turn** executed in this order:
-1. **Move** (optional): move to any in-bounds grid coordinate (x, y), or stay (move_target null).
-2. **Look** (optional): examine one entity from passive vision (at most one look_target).
-3. **Turn action** (optional): speak, interact with a listed object action, or none.
-
-Important rules:
-- You plan from your **current** position and vision. Your move runs first; look and turn action happen **after** that move.
-- Only pick look/interact targets you expect to be valid after moving.
-- move: use move_target "x,y" (e.g. "2,3"), or null to stay. You cannot move outside the grid.
-- look: optional; a list of objects you can look at will be provided.
-- Hidden detail is marked "[?]"; stale examined knowledge is "[?] [changed]".
-- Other agents show their most recent observable action on their vision line.
-- speak: up to five sentences when turn_action is "speak".
-- interact: turn_action "interact" with target object id + action_name when listed below.
-- You need to be adjacent or on the same tile as most objects to interact with them.
-- turn_action "none": end after optional move/look without speaking or interacting.
-
-Always respond with a single, valid JSON object. Do not add any text before or after the JSON."""
-
-
-def _get_move_block() -> str:
-    return (
-        "You may move to any coordinate (x, y) where x and y are integers from 0 to 4."
-    )
-
-
-def _format_interact_block(agent: Agent, world: World) -> str:
-    interactions = get_available_interactions(agent, world)
-    if not interactions:
-        return ""
-    lines = ["Object interactions available this turn:"]
-    for action_name, obj_id, obj, action in interactions:
-        if action.range == 0:
-            range_label = "same tile"
-        else:
-            range_label = f"range {action.range}"
-        lines.append(f"- {action_name} {obj_id} ({obj.name}) — {range_label}")
-    return "\n".join(lines)
-
-
-def _get_available_block(agent: Agent, world: World) -> str:
-    targets = get_available_look_targets(agent, world)
-    lines = []
-    if targets:
-        lines.append("You can look at: " + ", ".join(targets))
-    else:
-        lines.append("You can look at: (nothing visible to examine)")
-    interact_block = _format_interact_block(agent, world)
-    if interact_block:
-        lines.append("")
-        lines.append(interact_block)
-    lines.append("")
-    lines.append(
-        'Turn action: set turn_action to "speak" (with content), "interact" '
-        '(with target + action_name when available), or "none".'
-    )
-    return "\n".join(lines)
-
-
-def _compound_output_format() -> str:
-    return (
-        "Respond with ONLY a valid JSON object matching this exact structure "
-        "(no extra text, no markdown):\n"
-        "{\n"
-        '  "reasoning": "Your private thoughts for the full turn (max 400 characters).",\n'
-        '  "move_target": "2,3" | null,\n'
-        '  "look_target": "obj_ball_01" | null,\n'
-        '  "turn_action": "speak" | "interact" | "none",\n'
-        '  "target": "obj_cookie_01" | null,\n'
-        '  "action_name": "eat" | null,\n'
-        '  "content": "spoken text or null",\n'
-        '  "confidence": "curious" | "certain" | ... (1-3 words),\n'
-        '  "emotion": "focused" | "calm" | ... (1-3 words)\n'
-        "}"
-    )
-
-
-def build_compound_prompt(
-    agent: Agent, world: World, include_examples: bool = False
+def assemble_default_compound_prompt(
+    ctx: PromptContext, *, include_examples: bool = False
 ) -> str:
-    """Build the single LLM prompt for one compound agent turn."""
+    """Assemble the reference compound prompt from a ``PromptContext``."""
     parts = [
-        _character_block(agent),
+        ctx.character,
         "",
         "Passive Vision:",
-        build_passive_vision(agent, world),
+        ctx.passive_vision,
         "",
-        _get_compound_system_instructions(),
+        ctx.grid_description,
         "",
-        world.get_room_description(),
+        ctx.compound_rules,
         "",
-        _get_move_block(),
+        ctx.area_description,
         "",
-        _get_available_block(agent, world),
+        ctx.move_instructions,
+        "",
+        ctx.look_and_interact,
         "",
         "Memory:",
-        agent.memory.render_prompt_block(agent, world),
+        ctx.memory,
         "",
         "Plan your full compound turn (move, then look, then turn action).",
         "",
         "You may speak up to five sentences. Spoken text should be things you say out loud.",
         "",
-        _compound_output_format(),
+        ctx.output_format,
     ]
     if include_examples:
         parts.extend(["", "Here are compound turn examples:", FEW_SHOT_COMPOUND_EXAMPLES])
     return "\n".join(parts).strip()
 
 
-def build_prompt(agent: Agent, world: World, include_examples: bool = False) -> str:
+def build_compound_prompt(
+    agent: Agent, area: Area, include_examples: bool = False
+) -> str:
+    """Build the default compound LLM prompt for one agent turn."""
+    ctx = build_prompt_context(agent, area)
+    return assemble_default_compound_prompt(ctx, include_examples=include_examples)
+
+
+def build_prompt(agent: Agent, area: Area, include_examples: bool = False) -> str:
     """Alias for the compound turn prompt."""
-    return build_compound_prompt(agent, world, include_examples=include_examples)
+    return build_compound_prompt(agent, area, include_examples=include_examples)

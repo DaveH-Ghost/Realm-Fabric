@@ -13,8 +13,8 @@ from src.memory_modules.salient_turns import (
     validate_char_budget,
 )
 from src.turn_record import TurnRecord, TurnStep
-from src.world import create_initial_world
-from src.world_edit import create_agent_from_args
+from src.area import create_initial_area
+from src.area_edit import create_agent_from_args
 
 
 def _record_ctx(agent_id: str = "agent_01", turn_number: int = 1) -> MemoryRecordContext:
@@ -26,8 +26,8 @@ def _observe_ctx(observer_id: str = "agent_01") -> MemoryObserveContext:
 
 
 def _render_ctx():
-    world = create_initial_world()
-    return MemoryRenderContext(agent=world.get_agent(), world=world)
+    area = create_initial_area()
+    return MemoryRenderContext(agent=area.get_agent(), area=area)
 
 
 def _move_turn(turn_number: int) -> TurnRecord:
@@ -253,9 +253,9 @@ def test_create_module_rejects_budget_for_recent_turns():
 
 
 def test_create_agent_salient_turns_with_memory_budget():
-    world = create_initial_world()
+    area = create_initial_area()
     agent, msg = create_agent_from_args(
-        world,
+        area,
         'name "Scribe" personality "x" memory salient_turns memory-budget 1800 at 2,2',
     )
     assert agent is not None
@@ -265,9 +265,9 @@ def test_create_agent_salient_turns_with_memory_budget():
 
 
 def test_create_agent_memory_budget_without_module_implies_salient():
-    world = create_initial_world()
+    area = create_initial_area()
     agent, msg = create_agent_from_args(
-        world,
+        area,
         'name "Scribe" personality "x" memory-budget 2200 at 2,2',
     )
     assert agent is not None
@@ -276,9 +276,9 @@ def test_create_agent_memory_budget_without_module_implies_salient():
 
 
 def test_create_agent_rejects_budget_with_recent_turns():
-    world = create_initial_world()
+    area = create_initial_area()
     agent, msg = create_agent_from_args(
-        world,
+        area,
         'name "Scribe" personality "x" memory recent_turns memory-budget 2200 at 2,2',
     )
     assert agent is None
@@ -286,9 +286,9 @@ def test_create_agent_rejects_budget_with_recent_turns():
 
 
 def test_create_agent_rejects_invalid_memory_budget():
-    world = create_initial_world()
+    area = create_initial_area()
     agent, msg = create_agent_from_args(
-        world,
+        area,
         'name "Scribe" personality "x" memory salient_turns memory-budget huge at 2,2',
     )
     assert agent is None

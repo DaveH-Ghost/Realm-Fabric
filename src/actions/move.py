@@ -10,10 +10,10 @@ No pathing, blockers, or tiles-passed-through updates yet (future pathing hooks 
 from src.action_outcome import ActionOutcome
 from src.agent import Agent
 from src.coordinates import CoordinateParseError, format_coordinate, parse_coordinate_target
-from src.world import World
+from src.area import Area
 
 
-def move(agent: Agent, world: World, target: str) -> ActionOutcome:
+def move(agent: Agent, area: Area, target: str) -> ActionOutcome:
     """Move the agent to the parsed coordinate target."""
     try:
         x, y = parse_coordinate_target(target)
@@ -25,7 +25,7 @@ def move(agent: Agent, world: World, target: str) -> ActionOutcome:
     new_pos = (x, y)
     label = format_coordinate(x, y)
 
-    if not world.is_valid_position(new_pos):
+    if not area.is_valid_position(new_pos):
         return ActionOutcome(
             result=(
                 "This action wasn't recognized, ERR:INVALID_COORDINATES, "

@@ -6,42 +6,147 @@ from src.memory import Memory
 from src.object import Object
 from src.object_action import ObjectAction
 
+DEFAULT_AREA_DESCRIPTION = (
+    "You are in a small room with a hardwood floor and four wooden walls."
+)
 
-class World:
+
+@dataclass(frozen=True)
+class GridBounds:
+    """Playable grid bounds (inclusive on all sides)."""
+
+    min_x: int = 0
+    min_y: int = 0
+    max_x: int = 4
+    max_y: int = 4
+
+    def __post_init__(self) -> None:
+        if self.min_x > self.max_x or self.min_y > self.max_y:
+            raise ValueError(
+                f"Invalid grid bounds: min ({self.min_x}, {self.min_y}) "
+                f"exceeds max ({self.max_x}, {self.max_y})"
+            )
+
+    @classmethod
+    def square(
+        cls,
+        size: int,
+        *,
+        min_x: int = 0,
+        min_y: int = 0,
+    ) -> GridBounds:
+        """Build a square grid of ``size`` tiles per side."""
+        if size < 1:
+            raise ValueError(f"Grid size must be at least 1 (got {size})")
+        return cls(
+            min_x=min_x,
+            min_y=min_y,
+            max_x=min_x + size - 1,
+            max_y=min_y + size - 1,
+        )
+
+    @property
+    def width(self) -> int:
+        return self.max_x - self.min_x + 1
+
+    @property
+    def height(self) -> int:
+        return self.max_y - self.min_y + 1
+
+
+class Area:
     """
-    Represents the entire simulation world.
+    Represents one playable grid area.
 
-    The World holds all state:
-    - All agents (V0.1: multiple agents with independent memory)
-    - All objects in the environment
-    - Grid rules and boundaries
-
-    The default initial world (create_initial_world) matches V0:
-    - 5x5 grid (coordinates 0-4 in both x and y)
-    - (0, 0) is the southwest corner. Y increases northward.
-    - One starting agent (Explorer), a ceramic ball, and a wooden sign.
-    - Additional agents and objects may be added at runtime via stepper commands.
-    - No blocking objects. Agents can occupy the same tile as objects or each other.
-    - Room boundaries are not represented as objects. They are described
-      to the agent via a static room description string in the prompt.
+    Grid bounds and room description are set at construction time so different
+    games/scenarios can share the same engine without forking ``Area``.
     """
 
-    # Grid constants (as defined in the V0 readiness checklist)
-    WIDTH: int = 5
-    HEIGHT: int = 5
-    MIN_COORD: int = 0
-    MAX_COORD: int = 4
-
-    def __init__(self):
+    def __init__(
+        self,
+        *,
+        bounds: GridBounds | None = None,
+        area_description: str = DEFAULT_AREA_DESCRIPTION,
+    ) -> None:
+        grid = bounds if bounds is not None else GridBounds()
+        self.bounds = grid
+        self.area_description = area_description
         self.agents: list[Agent] = []
         self.objects: list[Object] = []
 
+    # Legacy aliases (square-grid tests and object_effects)
+    @property
+    def min_x(self) -> int:
+        return self.bounds.min_x
+
+    @property
+    def min_y(self) -> int:
+        return self.bounds.min_y
+
+    @property
+    def max_x(self) -> int:
+        return self.bounds.max_x
+
+    @property
+    def max_y(self) -> int:
+        return self.bounds.max_y
+
+    @property
+    def MIN_COORD(self) -> int:
+        return self.bounds.min_x
+
+    @property
+    def MAX_COORD(self) -> int:
+        return self.bounds.max_x
+
+    @property
+    def WIDTH(self) -> int:
+        return self.bounds.width
+
+    @property
+    def HEIGHT(self) -> int:
+        return self.bounds.height
+
+    def format_grid_bounds_message(self) -> str:
+        """Short bounds text for validation errors and prompts."""
+        if (
+            self.min_x == self.min_y
+            and self.max_x == self.max_y
+            and self.min_x == 0
+        ):
+            return f"Grid is {self.min_x}-{self.max_x} in both axes."
+        return (
+            f"Grid x is {self.min_x}-{self.max_x}, "
+            f"y is {self.min_y}-{self.max_y}."
+        )
+
+    def format_move_coordinate_rule(self) -> str:
+        """Tell the agent which coordinates are in bounds."""
+        if self.min_x == self.max_x and self.min_y == self.max_y:
+            label = f"({self.min_x}, {self.min_y})"
+            return f"You may move only to {label}."
+        return (
+            "You may move to any coordinate (x, y) where "
+            f"x is an integer from {self.min_x} to {self.max_x} and "
+            f"y is an integer from {self.min_y} to {self.max_y}."
+        )
+
+    def format_grid_description(self) -> str:
+        """Opening line describing grid size and coordinate system."""
+        w, h = self.WIDTH, self.HEIGHT
+        return (
+            f"You exist inside a controlled {w}x{h} grid. "
+            f"Your coordinates range from ({self.min_x}, {self.min_y}) in the "
+            f"southwest corner to ({self.max_x}, {self.max_y}) in the northeast. "
+            "Y increases northward."
+        )
+
     def add_agent(self, agent: Agent) -> None:
-        """Add an agent to the world."""
+        """Add an agent to the area."""
         self.agents.append(agent)
 
     def add_object(self, obj: Object) -> None:
-        """Add an object to the world."""
+        """Add an object to the area."""
         self.objects.append(obj)
 
     def remove_object(self, object_id: str) -> bool:
@@ -66,7 +171,7 @@ class World:
         return False
 
     def get_agents(self) -> list[Agent]:
-        """Return a copy of all agents in the world."""
+        """Return a copy of all agents in the area."""
         return list(self.agents)
 
     def get_agent(self) -> Optional[Agent]:
@@ -81,7 +186,7 @@ class World:
         return self.agents[0]
 
     def get_agent_by_id(self, agent_id: str) -> Optional[Agent]:
-        """Return the agent with the given ID, if it exists in the world."""
+        """Return the agent with the given ID, if it exists in the area."""
         for agent in self.agents:
             if agent.id == agent_id:
                 return agent
@@ -103,34 +208,31 @@ class World:
         return None
 
     def get_object_by_id(self, object_id: str) -> Optional[Object]:
-        """Return the object with the given ID, if it exists in the world."""
+        """Return the object with the given ID, if it exists in the area."""
         for obj in self.objects:
             if obj.id == object_id:
                 return obj
         return None
 
     def get_objects(self) -> list[Object]:
-        """Return all objects currently in the world."""
+        """Return all objects currently in the area."""
         return self.objects
 
     def is_valid_position(self, position: tuple[int, int]) -> bool:
         """Check whether a position is inside the playable grid."""
         x, y = position
         return (
-            self.MIN_COORD <= x <= self.MAX_COORD
-            and self.MIN_COORD <= y <= self.MAX_COORD
+            self.min_x <= x <= self.max_x and self.min_y <= y <= self.max_y
         )
 
-    def get_room_description(self) -> str:
+    def get_area_description(self) -> str:
         """
-        Return the static room description shown to the agent every turn.
+        Return the static area description shown to the agent every turn.
 
-        In V0, walls and room boundaries are conveyed through this text
-        rather than being modeled as objects.
+        Walls and boundaries are conveyed through this text rather than as
+        objects unless a game models them explicitly.
         """
-        return (
-            "You are in a small room with a hardwood floor and four wooden walls."
-        )
+        return self.area_description
 
     def invalidate_entity_knowledge(self, entity_id: str) -> None:
         """
@@ -167,21 +269,40 @@ class World:
         self.clear_entity_examination_history(object_id)
 
 
-# =============================================================================
-# Initial World State (as defined in the V0 readiness checklist)
-# =============================================================================
+def create_area(
+    *,
+    width: int = 5,
+    height: int = 5,
+    min_x: int = 0,
+    min_y: int = 0,
+    area_description: str = DEFAULT_AREA_DESCRIPTION,
+) -> Area:
+    """Create an empty area with the given grid size and area text."""
+    return Area(
+        bounds=GridBounds(
+            min_x=min_x,
+            min_y=min_y,
+            max_x=min_x + width - 1,
+            max_y=min_y + height - 1,
+        ),
+        area_description=area_description,
+    )
 
-def create_initial_world() -> World:
+
+def create_initial_area() -> Area:
     """
-    Create and return the starting world state.
+    Create and return the starting demo area.
 
     Same layout as V0 (Explorer at (1,1), ball at (2,2), sign at (2,4)).
     Explorer uses the V0.1 three-layer text model: `passive_description`,
     `description`, and `personality` (V0's single description field split).
     """
-    world = World()
+    area = create_area(
+        width=5,
+        height=5,
+        area_description=DEFAULT_AREA_DESCRIPTION,
+    )
 
-    # Create the agent
     agent = Agent(
         id="agent_01",
         name="Explorer",
@@ -199,9 +320,8 @@ def create_initial_world() -> World:
         memory=Memory(),
         last_action=None,
     )
-    world.add_agent(agent)
+    area.add_agent(agent)
 
-    # Create the ceramic ball
     ball = Object(
         id="obj_ball_01",
         name="Ceramic Ball",
@@ -217,7 +337,7 @@ def create_initial_world() -> World:
             ),
         },
     )
-    world.add_object(ball)
+    area.add_object(ball)
 
     sign = Object(
         id="obj_sign_01",
@@ -228,6 +348,6 @@ def create_initial_world() -> World:
         ),
         position=(2, 4),
     )
-    world.add_object(sign)
+    area.add_object(sign)
 
-    return world
+    return area

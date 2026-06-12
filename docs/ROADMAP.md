@@ -155,25 +155,55 @@ V0.2 compound turns and object interact should log in a shape that V0.2.5 can in
 
 ## V0.3
 
-**Focus:** Basic graphical user interface for visualization and direct interaction. Prepares the data model for visual rendering. **Depends on V0.2.5** (`0.2.5` release-ready; tag pending).
+**Focus:** **V0.3.0** — engine refactor (Session API, snapshots, GameProfile, CLI on Session). **V0.3.1** — example web project built on the engine. **Depends on V0.2.5** (`v0.2.5`).
 
-- **GUI**:
-  - A clickable grid view of the world.
-  - Clicking on a tile opens a context menu.
-  - The menu allows running commands on that tile/location (e.g. create object/agent here, edit nearby entities, inspect, delete, move things, etc.).
-  - The GUI will coexist with (or augment) the existing ManualStepper for LLM/agent turns and logging.
+See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e).
 
-- **Image / rendering support**:
-  - `Object` and `Agent` dataclasses will gain a new field (e.g. `image: Optional[str] = None` or similar) to specify an image, sprite path, or asset identifier.
-  - This field will be used by the GUI to draw the entity on its tile.
-  - Core logic (perception, actions, memory, prompts) will ignore the image field for now (it is purely for visualization).
-  - Initial world and editing commands will support setting the image field.
+### V0.3.0 — Engine — ⬜ In progress
 
-Larger items (richer agent interactions, object behaviors, full D&D-style systems, Roll20 integration, lorebooks, etc.) remain in LONG_TERM_GOALS.md and can be pulled into specific versions when we decide they are ready.
+- **`Session`** — single entry point for turns, area-edit commands, active agent, prompts (holds one **`Area`** today)
+- **JSON snapshot** — web-ready area state (agents, objects, grid; derived passive vision for active agent)
+- **`GameProfile`** — prompt templates + default area factory (SillyTavern-style customization without forking sim code)
+- **CLI refactor** — `ManualStepper` delegates to `Session` (reference client)
+- **Public package API** — importable engine for downstream projects
+- **`Area`** — configurable `GridBounds` + `area_description` (`create_area`, `create_initial_area`)
+- **Tests** — `tests/test_session.py`, `tests/test_area_config.py`; same pytest suite, no separate “web test” harness
+
+### V0.3.1 — Example web project — ⬜ Planned (separate tag)
+
+- Separate app (e.g. **`realm-studio`**) depending on `realm-fabric>=0.3.0`
+- Local web UI: clickable grid, tile context menu → session commands, turn log panel
+- Optional FastAPI + minimal `TestClient` integration test; engine coverage stays in pytest
+
+### V0.3.2+ — ⬜ Planned
+
+- **`appearance`** / sprite asset keys on `Agent` and `Object` (visualization only; sim ignores)
+- Multiplayer hooks (rooms, server-authoritative session)
+
+Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) remain in [LONG_TERM_GOALS.md](../LONG_TERM_GOALS.md).
+
+## V0.4
+
+**Focus:** **Multi-area sessions** — one `Session` can own multiple **`Area`** instances; agents can move between areas. Builds on V0.3 engine + web example.
+
+**Status:** ⬜ **Planned**
+
+### Multi-area session
+
+- **`Session`** holds a map of areas (e.g. by `area_id`) plus each agent’s **current area**
+- **Area transfer API** — move an agent from one area to another (and optionally to a coordinate in the destination area)
+- **Prompt / perception** scoped to the agent’s **current area** only (passive vision, interact list, bounds)
+- **Cross-area** — no shared passive vision by default; portals/exits modeled as objects or explicit transfer commands (TBD in design)
+- **Snapshot** includes all areas + agent locations for save/load and multiplayer (extends **0.3.0b**)
+
+### Explicitly out of V0.4 (initial slice)
+
+- Automatic pathfinding across areas
+- Persistent world database (still **0.2.5+** / store themes unless pulled forward)
 
 ---
 
 **Notes**
-- Prefer adding sections to the [V0.2.5 changelog](v0.2.5-changelog.md) over a readiness checklist for V0.2.5+.
+- Prefer adding sections to the [V0.2.5 changelog](v0.2.5-changelog.md) or [V0.3.0 changelog](v0.3.0-changelog.md) over a readiness checklist for new versions.
 - When a version is **implemented**, move relevant items to "Achieved" in LONG_TERM_GOALS.md and update this roadmap.
 - This document is meant to be living — edit it as plans evolve.

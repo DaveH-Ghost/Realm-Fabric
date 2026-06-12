@@ -1,7 +1,7 @@
 """
-world_edit.py
+area_edit.py
 
-Parsing, validation, and world mutations for V0.1 editing commands.
+Parsing, validation, and area mutations for V0.1 editing commands.
 Used by the manual stepper in main.py.
 """
 
@@ -22,7 +22,7 @@ from src.stepper_commands import (
     agent_name_conflicts_with_commands,
     reserved_agent_name_message,
 )
-from src.world import World
+from src.area import Area
 
 
 @dataclass
@@ -48,10 +48,10 @@ def slugify_display_name(name: str) -> str:
     return slug or "new"
 
 
-def generate_object_id(world: World, display_name: str) -> str:
+def generate_object_id(area: Area, display_name: str) -> str:
     """Auto-generate a unique object id from a display name."""
     slug = slugify_display_name(display_name)
-    existing = {obj.id for obj in world.objects}
+    existing = {obj.id for obj in area.objects}
     counter = 1
     while True:
         candidate = f"obj_{slug}_{counter:02d}"
@@ -60,10 +60,10 @@ def generate_object_id(world: World, display_name: str) -> str:
         counter += 1
 
 
-def generate_agent_id(world: World, display_name: str) -> str:
+def generate_agent_id(area: Area, display_name: str) -> str:
     """Auto-generate a unique agent id from a display name."""
     slug = slugify_display_name(display_name)
-    existing = {agent.id for agent in world.agents}
+    existing = {agent.id for agent in area.agents}
     counter = 1
     while True:
         candidate = f"agent_{slug}_{counter:02d}"
@@ -73,11 +73,11 @@ def generate_agent_id(world: World, display_name: str) -> str:
 
 
 def agent_name_taken(
-    world: World, name: str, exclude_agent_id: Optional[str] = None
+    area: Area, name: str, exclude_agent_id: Optional[str] = None
 ) -> bool:
     """Return True if another agent already has this name (case-insensitive)."""
     name_lower = name.lower()
-    for agent in world.agents:
+    for agent in area.agents:
         if exclude_agent_id and agent.id == exclude_agent_id:
             continue
         if agent.name.lower() == name_lower:
@@ -127,12 +127,12 @@ def parse_field_tokens(
     return fields, None
 
 
-def format_objects_list(world: World) -> str:
+def format_objects_list(area: Area) -> str:
     """Format the objects listing block."""
-    lines = ["Objects in world:"]
-    objects = world.get_objects()
+    lines = ["Objects in area:"]
+    objects = area.get_objects()
     if not objects:
-        lines.append("  No objects in world.")
+        lines.append("  No objects in area.")
     else:
         for obj in objects:
             action_suffix = ""
@@ -145,13 +145,13 @@ def format_objects_list(world: World) -> str:
     return "\n".join(lines)
 
 
-def format_agents_list(world: World, active_agent: Optional[Agent]) -> str:
+def format_agents_list(area: Area, active_agent: Optional[Agent]) -> str:
     """Format the agents listing block."""
-    lines = ["Agents in world:"]
-    if not world.agents:
-        lines.append("  No agents in world.")
+    lines = ["Agents in area:"]
+    if not area.agents:
+        lines.append("  No agents in area.")
     else:
-        for agent in world.agents:
+        for agent in area.agents:
             marker = " (active)" if agent is active_agent else ""
             lines.append(
                 f"  - {agent.name} ({agent.id}) at {agent.position}"
@@ -160,9 +160,9 @@ def format_agents_list(world: World, active_agent: Optional[Agent]) -> str:
     return "\n".join(lines)
 
 
-def format_full_list(world: World, active_agent: Optional[Agent]) -> str:
+def format_full_list(area: Area, active_agent: Optional[Agent]) -> str:
     """Format agents then objects (same as running agents + objects)."""
-    return f"{format_agents_list(world, active_agent)}\n\n{format_objects_list(world)}"
+    return f"{format_agents_list(area, active_agent)}\n\n{format_objects_list(area)}"
 
 
 def parse_object_action_fields(
@@ -214,7 +214,7 @@ def parse_object_action_fields(
     return {name: action}, None
 
 
-def create_object_from_args(world: World, arg: str) -> tuple[Optional[Object], str]:
+def create_object_from_args(area: Area, arg: str) -> tuple[Optional[Object], str]:
     """
     Parse and create an object from command arguments.
 
@@ -256,8 +256,8 @@ def create_object_from_args(world: World, arg: str) -> tuple[Optional[Object], s
         return None, err
     assert position is not None
 
-    if not world.is_valid_position(position):
-        return None, f"Invalid position {position}. Grid is 0-4 in both axes."
+    if not area.is_valid_position(position):
+        return None, f"Invalid position {position}. {area.format_grid_bounds_message()}"
 
     actions, err = parse_object_action_fields(fields)
     if err:
@@ -266,7 +266,7 @@ def create_object_from_args(world: World, arg: str) -> tuple[Optional[Object], s
 
     desc = fields.get("desc", "")
     pdesc = fields.get("pdesc", "")
-    obj_id = generate_object_id(world, fields["name"])
+    obj_id = generate_object_id(area, fields["name"])
     obj = Object(
         id=obj_id,
         name=fields["name"],
@@ -275,7 +275,7 @@ def create_object_from_args(world: World, arg: str) -> tuple[Optional[Object], s
         passive_description=pdesc,
         actions=actions,
     )
-    world.add_object(obj)
+    area.add_object(obj)
     action_note = ""
     if actions:
         action_note = f" Action(s): {', '.join(sorted(actions))}."
@@ -321,7 +321,7 @@ def _edit_object_remove_action(obj: Object, tokens: list[str]) -> str:
     return f"Removed action '{action_name}' from {obj.id}."
 
 
-def edit_object_from_args(world: World, arg: str) -> str:
+def edit_object_from_args(area: Area, arg: str) -> str:
     """
     Parse and edit an object.
 
@@ -345,7 +345,7 @@ def edit_object_from_args(world: World, arg: str) -> str:
             f"Use 'objects' or 'list' to look up ids."
         )
 
-    obj = world.get_object_by_id(object_id)
+    obj = area.get_object_by_id(object_id)
     if obj is None:
         return f"Object '{object_id}' not found. Use 'objects' or 'list' to look up ids."
 
@@ -375,9 +375,9 @@ def edit_object_from_args(world: World, arg: str) -> str:
     if "desc" in fields and fields["desc"] != obj.description:
         obj.description = fields["desc"]
         if fields["desc"]:
-            world.invalidate_object_knowledge(object_id)
+            area.invalidate_object_knowledge(object_id)
         else:
-            world.clear_object_examination_history(object_id)
+            area.clear_object_examination_history(object_id)
         changes.append("desc")
 
     if "pos" in fields:
@@ -385,8 +385,8 @@ def edit_object_from_args(world: World, arg: str) -> str:
         if err:
             return err
         assert position is not None
-        if not world.is_valid_position(position):
-            return f"Invalid position {position}. Grid is 0-4 in both axes."
+        if not area.is_valid_position(position):
+            return f"Invalid position {position}. {area.format_grid_bounds_message()}"
         if position != obj.position:
             obj.position = position
             changes.append("pos")
@@ -397,7 +397,7 @@ def edit_object_from_args(world: World, arg: str) -> str:
     return f"Updated object {object_id} ({', '.join(changes)})."
 
 
-def delete_object_by_id(world: World, object_id: str) -> str:
+def delete_object_by_id(area: Area, object_id: str) -> str:
     """Delete an object by id."""
     object_id = object_id.strip()
     if not object_id:
@@ -407,7 +407,7 @@ def delete_object_by_id(world: World, object_id: str) -> str:
             f"Commands require object id (e.g. obj_ball_01), not display name. "
             f"Use 'objects' or 'list' to look up ids."
         )
-    if not world.remove_object(object_id):
+    if not area.remove_object(object_id):
         return f"Object '{object_id}' not found. Use 'objects' or 'list' to look up ids."
     return f"Deleted object {object_id}."
 
@@ -483,7 +483,7 @@ def _build_agent_memory(fields: dict[str, str]) -> tuple[Optional[Memory], Optio
         return None, str(exc)
 
 
-def create_agent_from_args(world: World, arg: str) -> tuple[Optional[Agent], str]:
+def create_agent_from_args(area: Area, arg: str) -> tuple[Optional[Agent], str]:
     """
     Parse and create an agent.
 
@@ -524,7 +524,7 @@ def create_agent_from_args(world: World, arg: str) -> tuple[Optional[Agent], str
     if agent_name_conflicts_with_commands(fields["name"]):
         return None, reserved_agent_name_message(fields["name"])
 
-    if agent_name_taken(world, fields["name"]):
+    if agent_name_taken(area, fields["name"]):
         return None, f"Agent name '{fields['name']}' is already in use."
 
     position, err = parse_position(fields["at"])
@@ -532,8 +532,8 @@ def create_agent_from_args(world: World, arg: str) -> tuple[Optional[Agent], str
         return None, err
     assert position is not None
 
-    if not world.is_valid_position(position):
-        return None, f"Invalid position {position}. Grid is 0-4 in both axes."
+    if not area.is_valid_position(position):
+        return None, f"Invalid position {position}. {area.format_grid_bounds_message()}"
 
     pdesc = fields.get("pdesc", "")
     desc = fields.get("desc", "")
@@ -543,7 +543,7 @@ def create_agent_from_args(world: World, arg: str) -> tuple[Optional[Agent], str
         return None, mem_err
     assert memory is not None
 
-    agent_id = generate_agent_id(world, fields["name"])
+    agent_id = generate_agent_id(area, fields["name"])
     agent = Agent(
         id=agent_id,
         name=fields["name"],
@@ -554,7 +554,7 @@ def create_agent_from_args(world: World, arg: str) -> tuple[Optional[Agent], str
         memory=memory,
         last_action=None,
     )
-    world.add_agent(agent)
+    area.add_agent(agent)
     module_note = f" {format_memory_module_label(memory.module)}"
     return agent, (
         f'Created agent {agent_id} "{fields["name"]}" at {position}.{module_note}'
@@ -562,7 +562,7 @@ def create_agent_from_args(world: World, arg: str) -> tuple[Optional[Agent], str
     )
 
 
-def edit_agent_from_args(world: World, arg: str) -> EditAgentResult:
+def edit_agent_from_args(area: Area, arg: str) -> EditAgentResult:
     """
     Parse and edit an agent.
 
@@ -592,7 +592,7 @@ def edit_agent_from_args(world: World, arg: str) -> EditAgentResult:
             ),
         )
 
-    agent = world.get_agent_by_id(agent_id)
+    agent = area.get_agent_by_id(agent_id)
     if agent is None:
         return EditAgentResult(
             ok=False,
@@ -622,7 +622,7 @@ def edit_agent_from_args(world: World, arg: str) -> EditAgentResult:
                 ok=False,
                 message=reserved_agent_name_message(fields["name"]),
             )
-        if agent_name_taken(world, fields["name"], exclude_agent_id=agent_id):
+        if agent_name_taken(area, fields["name"], exclude_agent_id=agent_id):
             return EditAgentResult(
                 ok=False,
                 message=f"Agent name '{fields['name']}' is already in use.",
@@ -637,9 +637,9 @@ def edit_agent_from_args(world: World, arg: str) -> EditAgentResult:
     if "desc" in fields and fields["desc"] != agent.description:
         agent.description = fields["desc"]
         if fields["desc"]:
-            world.invalidate_entity_knowledge(agent_id)
+            area.invalidate_entity_knowledge(agent_id)
         else:
-            world.clear_entity_examination_history(agent_id)
+            area.clear_entity_examination_history(agent_id)
         changes.append("desc")
 
     if "personality" in fields and fields["personality"] != agent.personality:
@@ -651,10 +651,10 @@ def edit_agent_from_args(world: World, arg: str) -> EditAgentResult:
         if err:
             return EditAgentResult(ok=False, message=err)
         assert position is not None
-        if not world.is_valid_position(position):
+        if not area.is_valid_position(position):
             return EditAgentResult(
                 ok=False,
-                message=f"Invalid position {position}. Grid is 0-4 in both axes.",
+                message=f"Invalid position {position}. {area.format_grid_bounds_message()}",
             )
         if position != agent.position:
             agent.position = position
@@ -671,7 +671,7 @@ def edit_agent_from_args(world: World, arg: str) -> EditAgentResult:
     )
 
 
-def delete_agent_by_id(world: World, agent_id: str) -> DeleteAgentResult:
+def delete_agent_by_id(area: Area, agent_id: str) -> DeleteAgentResult:
     """Delete an agent by id. Rejects deleting the last agent."""
     agent_id = agent_id.strip()
     if not agent_id:
@@ -685,20 +685,20 @@ def delete_agent_by_id(world: World, agent_id: str) -> DeleteAgentResult:
             ),
         )
 
-    agent = world.get_agent_by_id(agent_id)
+    agent = area.get_agent_by_id(agent_id)
     if agent is None:
         return DeleteAgentResult(
             ok=False,
             message=f"Agent '{agent_id}' not found. Use 'agents' or 'list' to look up ids.",
         )
 
-    if len(world.agents) <= 1:
+    if len(area.agents) <= 1:
         return DeleteAgentResult(
             ok=False,
-            message="Cannot delete the last agent in the world.",
+            message="Cannot delete the last agent in the area.",
         )
 
-    world.remove_agent(agent_id)
+    area.remove_agent(agent_id)
     return DeleteAgentResult(
         ok=True,
         message=f"Deleted agent {agent_id}.",

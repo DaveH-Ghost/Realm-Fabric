@@ -9,7 +9,7 @@ Responsibilities:
 - Provide look logic: validate targets, return descriptions, update memory.
 
 The viewing agent sees objects and other agents in passive vision (not itself).
-Walls/room boundaries are conveyed via the separate room description from World.
+Walls/room boundaries are conveyed via the separate room description from Area.
 """
 
 from src.action_outcome import ActionOutcome
@@ -18,7 +18,7 @@ from src.grid import chebyshev_distance
 from src.memory import Memory
 from src.object import Object
 from src.object_action import ObjectAction
-from src.world import World
+from src.area import Area
 
 
 def format_vision_desc(
@@ -76,7 +76,7 @@ def format_agent_vision_desc(other: Agent, memory: Memory) -> str:
     return fragment
 
 
-def build_passive_vision(agent: Agent, world: World) -> str:
+def build_passive_vision(agent: Agent, area: Area) -> str:
     """
     Build the passive vision block for the given agent.
 
@@ -87,14 +87,14 @@ def build_passive_vision(agent: Agent, world: World) -> str:
     lines = [f"You are at {agent.position}."]
     memory = agent.memory
 
-    for obj in world.get_objects():
+    for obj in area.get_objects():
         desc = format_object_vision_desc(obj, memory)
         if desc:
             lines.append(f"{obj.name} ({obj.id}), {obj.position} - {desc}")
         else:
             lines.append(f"{obj.name} ({obj.id}), {obj.position}")
 
-    for other in world.agents:
+    for other in area.agents:
         if other.id == agent.id:
             continue
         desc = format_agent_vision_desc(other, memory)
@@ -106,29 +106,29 @@ def build_passive_vision(agent: Agent, world: World) -> str:
     return "\n".join(lines)
 
 
-def get_visible_look_target_ids(agent: Agent, world: World) -> list[str]:
+def get_visible_look_target_ids(agent: Agent, area: Area) -> list[str]:
     """
     Return entity IDs (objects and other agents) visible in passive vision.
 
     Used to validate look targets, including entries marked with [?].
     """
-    ids = [obj.id for obj in world.get_objects()]
-    ids.extend(other.id for other in world.agents if other.id != agent.id)
+    ids = [obj.id for obj in area.get_objects()]
+    ids.extend(other.id for other in area.agents if other.id != agent.id)
     return ids
 
 
-def get_visible_object_ids(agent: Agent, world: World) -> list[str]:
+def get_visible_object_ids(agent: Agent, area: Area) -> list[str]:
     """Return object IDs visible in passive vision."""
-    return [obj.id for obj in world.get_objects()]
+    return [obj.id for obj in area.get_objects()]
 
 
-def is_object_in_passive_vision(agent: Agent, world: World, object_id: str) -> bool:
+def is_object_in_passive_vision(agent: Agent, area: Area, object_id: str) -> bool:
     """Return True if the object appears in the agent's passive vision."""
-    return object_id in get_visible_object_ids(agent, world)
+    return object_id in get_visible_object_ids(agent, area)
 
 
 def get_available_interactions(
-    agent: Agent, world: World
+    agent: Agent, area: Area
 ) -> list[tuple[str, str, Object, ObjectAction]]:
     """
     Return in-range object interactions for the action-phase prompt.
@@ -136,8 +136,8 @@ def get_available_interactions(
     Each entry is (action_name, object_id, object, action).
     """
     results: list[tuple[str, str, Object, ObjectAction]] = []
-    visible = set(get_visible_object_ids(agent, world))
-    for obj in world.get_objects():
+    visible = set(get_visible_object_ids(agent, area))
+    for obj in area.get_objects():
         if obj.id not in visible:
             continue
         for action_name, action in obj.actions.items():
@@ -147,25 +147,25 @@ def get_available_interactions(
     return results
 
 
-def perform_look(agent: Agent, world: World, target_id: str) -> ActionOutcome:
+def perform_look(agent: Agent, area: Area, target_id: str) -> ActionOutcome:
     """
     Execute the "look" action on an object or another agent.
 
     Returns first-person result for the actor and third-person passive_result
     when the target is visible (even if there is no detailed text to learn).
     """
-    visible_ids = get_visible_look_target_ids(agent, world)
+    visible_ids = get_visible_look_target_ids(agent, area)
     if target_id not in visible_ids:
         return ActionOutcome(result="You don't see anything like that to look at.")
 
     if target_id.startswith("obj_"):
-        obj = world.get_object_by_id(target_id)
+        obj = area.get_object_by_id(target_id)
         if obj is None:
             return ActionOutcome(result="You don't see anything like that to look at.")
         name = obj.name
         detailed = obj.description
     elif target_id.startswith("agent_"):
-        other = world.get_agent_by_id(target_id)
+        other = area.get_agent_by_id(target_id)
         if other is None or other.id == agent.id:
             return ActionOutcome(result="You don't see anything like that to look at.")
         name = other.name
@@ -199,16 +199,16 @@ def _vision_desc_shows_question_mark(
     )
 
 
-def get_available_look_targets(agent: Agent, world: World) -> list[str]:
+def get_available_look_targets(agent: Agent, area: Area) -> list[str]:
     """Return entity IDs marked [?] in passive vision (hidden detail to examine)."""
     memory = agent.memory
     targets: list[str] = []
-    for obj in world.get_objects():
+    for obj in area.get_objects():
         if _vision_desc_shows_question_mark(
             memory, obj.id, obj.passive_description, obj.description
         ):
             targets.append(obj.id)
-    for other in world.agents:
+    for other in area.agents:
         if other.id == agent.id:
             continue
         if _vision_desc_shows_question_mark(

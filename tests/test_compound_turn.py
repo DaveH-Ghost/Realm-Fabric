@@ -14,8 +14,8 @@ from src.simulation import (
     next_turn_number_for_agent,
     run_compound_turn,
 )
-from src.world import create_initial_world
-from src.world_edit import create_agent_from_args
+from src.area import create_initial_area
+from src.area_edit import create_agent_from_args
 
 
 def compound(
@@ -40,13 +40,13 @@ def compound(
 
 
 def test_nav_null_action_speak_only():
-    world = create_initial_world()
-    agent = world.get_agent()
+    area = create_initial_area()
+    agent = area.get_agent()
     start = agent.position
 
     record = run_compound_turn(
         agent,
-        world,
+        area,
         compound(turn_action="speak", content="Hello."),
         turn_number=1,
     )
@@ -58,12 +58,12 @@ def test_nav_null_action_speak_only():
 
 
 def test_move_look_speak_in_order():
-    world = create_initial_world()
-    agent = world.get_agent()
+    area = create_initial_area()
+    agent = area.get_agent()
 
     record = run_compound_turn(
         agent,
-        world,
+        area,
         compound(
             move_target="2,3",
             look_target="obj_ball_01",
@@ -81,24 +81,24 @@ def test_move_look_speak_in_order():
 
 def test_post_move_look_on_same_tile_as_object():
     """After moving onto the ball's tile, look succeeds with full detail."""
-    world = create_initial_world()
-    agent = world.get_agent()
+    area = create_initial_area()
+    agent = area.get_agent()
 
-    execute_nav_phase(agent, world, compound(move_target="2,2"))
+    execute_nav_phase(agent, area, compound(move_target="2,2"))
     steps = execute_action_phase(
-        agent, world, compound(look_target="obj_ball_01", turn_action="none")
+        agent, area, compound(look_target="obj_ball_01", turn_action="none")
     )
     assert steps[0].result.startswith("You looked at")
     assert "scuffs" in steps[0].result
 
 
 def test_invalid_look_after_valid_move_keeps_move():
-    world = create_initial_world()
-    agent = world.get_agent()
+    area = create_initial_area()
+    agent = area.get_agent()
 
     record = run_compound_turn(
         agent,
-        world,
+        area,
         compound(
             move_target="2,3",
             look_target="obj_missing_99",
@@ -113,12 +113,12 @@ def test_invalid_look_after_valid_move_keeps_move():
 
 
 def test_turn_record_has_structured_steps():
-    world = create_initial_world()
-    agent = world.get_agent()
+    area = create_initial_area()
+    agent = area.get_agent()
 
     record = run_compound_turn(
         agent,
-        world,
+        area,
         compound(
             move_target="2,3",
             look_target="obj_ball_01",
@@ -135,12 +135,12 @@ def test_turn_record_has_structured_steps():
 
 
 def test_passive_result_look_wins_over_move():
-    world = create_initial_world()
-    agent = world.get_agent()
+    area = create_initial_area()
+    agent = area.get_agent()
 
     run_compound_turn(
         agent,
-        world,
+        area,
         compound(move_target="2,2", look_target="obj_ball_01", turn_action="none"),
         turn_number=1,
     )
@@ -150,18 +150,18 @@ def test_passive_result_look_wins_over_move():
 
 
 def test_passive_result_speak_wins_over_move_and_look():
-    world = create_initial_world()
-    explorer = world.get_agent()
+    area = create_initial_area()
+    explorer = area.get_agent()
     create_agent_from_args(
-        world,
+        area,
         'name "Goblin" pdesc "A goblin." desc "x" personality "x" at 0,3',
     )
-    goblin = world.get_agent_by_name("Goblin")
+    goblin = area.get_agent_by_name("Goblin")
     goblin.position = (1, 1)
 
     run_compound_turn(
         goblin,
-        world,
+        area,
         compound(
             move_target="2,3",
             look_target="obj_ball_01",
@@ -171,7 +171,7 @@ def test_passive_result_speak_wins_over_move_and_look():
         next_turn_number_for_agent(goblin),
     )
 
-    vision = build_passive_vision(explorer, world)
+    vision = build_passive_vision(explorer, area)
     assert "Goblin (agent_goblin_01), (2, 3)" in vision
     assert 'Goblin says: "Hi."' in vision
     assert "moves to" not in vision
@@ -196,9 +196,9 @@ def test_step_compound_parser():
 
 
 def test_compound_prompt_includes_turn_fields():
-    world = create_initial_world()
-    agent = world.get_agent()
-    prompt = build_compound_prompt(agent, world)
+    area = create_initial_area()
+    agent = area.get_agent()
+    prompt = build_compound_prompt(agent, area)
     assert "compound turn" in prompt.lower()
     assert "move_target" in prompt
     assert "turn_action" in prompt

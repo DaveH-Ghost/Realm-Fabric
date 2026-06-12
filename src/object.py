@@ -6,7 +6,7 @@ from src.object_action import ObjectAction
 @dataclass
 class Object:
     """
-    Represents a simple, single-tile object in the world.
+    Represents a simple, single-tile object in the area.
 
     Objects occupy one grid tile and carry two optional description layers (V0.1):
     - passive_description: visible at a glance (no look required)

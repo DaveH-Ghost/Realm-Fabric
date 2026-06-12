@@ -6,8 +6,8 @@ from src.memory import Memory, TurnRecord, TurnStep
 from src.memory_modules.base import WitnessedEvent
 from src.memory_modules.recent_turns import RecentTurnsModule
 from src.simulation import next_turn_number_for_agent, run_compound_turn
-from src.world import create_initial_world
-from src.world_edit import create_agent_from_args
+from src.area import create_initial_area
+from src.area_edit import create_agent_from_args
 
 
 def _turn(turn_number: int, *, reasoning: str = "thoughts") -> TurnRecord:
@@ -33,9 +33,9 @@ def test_recent_turns_renders_empty_as_blank():
 
 
 def test_memory_facade_empty_prompt_block():
-    world = create_initial_world()
-    agent = world.get_agent()
-    assert agent.memory.render_prompt_block(agent, world) == "No memories yet."
+    area = create_initial_area()
+    agent = area.get_agent()
+    assert agent.memory.render_prompt_block(agent, area) == "No memories yet."
 
 
 def test_recent_turns_records_and_renders_own_turn():
@@ -96,70 +96,70 @@ def test_pending_witnesses_show_since_last_turn():
 
 
 def test_prompt_uses_memory_section():
-    world = create_initial_world()
-    agent = world.get_agent()
+    area = create_initial_area()
+    agent = area.get_agent()
     run_compound_turn(
         agent,
-        world,
+        area,
         AgentCompoundTurn(reasoning="x", turn_action="speak", content="Hello."),
         turn_number=1,
     )
-    prompt = build_compound_prompt(agent, world)
+    prompt = build_compound_prompt(agent, area)
     assert "Memory:" in prompt
     assert "Recent history:" not in prompt
     assert "Turn 1:" in prompt
 
 
 def test_multi_agent_witness_ingested_into_observer_memory():
-    world = create_initial_world()
-    explorer = world.get_agent()
+    area = create_initial_area()
+    explorer = area.get_agent()
     create_agent_from_args(
-        world,
+        area,
         'name "Goblin" pdesc "A goblin." desc "x" personality "x" at 0,3',
     )
-    goblin = world.get_agent_by_name("Goblin")
+    goblin = area.get_agent_by_name("Goblin")
 
     run_compound_turn(
         explorer,
-        world,
+        area,
         AgentCompoundTurn(reasoning="intro", turn_action="speak", content="Hello."),
         turn_number=1,
         session_turn=1,
     )
     run_compound_turn(
         goblin,
-        world,
+        area,
         AgentCompoundTurn(reasoning="reply", turn_action="speak", content="Hi back."),
         turn_number=1,
         session_turn=2,
     )
 
-    memory_text = explorer.memory.render_prompt_block(explorer, world)
+    memory_text = explorer.memory.render_prompt_block(explorer, area)
     assert 'Goblin says: "Hi back."' in memory_text
     assert "Since turn 1, you observed:" in memory_text
 
 
 def test_actor_does_not_witness_own_action():
-    world = create_initial_world()
-    agent = world.get_agent()
+    area = create_initial_area()
+    agent = area.get_agent()
     run_compound_turn(
         agent,
-        world,
+        area,
         AgentCompoundTurn(reasoning="solo", turn_action="speak", content="Alone."),
         turn_number=1,
     )
-    memory_text = agent.memory.render_prompt_block(agent, world)
+    memory_text = agent.memory.render_prompt_block(agent, area)
     assert "Since turn" not in memory_text
     assert 'Explorer says: "Alone."' not in memory_text.split("Turn 1:")[0]
 
 
 def test_turn_count_uses_total_not_window_size():
-    world = create_initial_world()
-    agent = world.get_agent()
+    area = create_initial_area()
+    agent = area.get_agent()
     for i in range(1, 12):
         run_compound_turn(
             agent,
-            world,
+            area,
             AgentCompoundTurn(reasoning="x", turn_action="none"),
             turn_number=i,
         )
@@ -183,8 +183,8 @@ def _observe_ctx(observer_id: str):
 def _render_ctx():
     from src.memory_modules.base import MemoryRenderContext
 
-    world = create_initial_world()
-    return MemoryRenderContext(agent=world.get_agent(), world=world)
+    area = create_initial_area()
+    return MemoryRenderContext(agent=area.get_agent(), area=area)
 
 
 def _witness_event(text: str) -> WitnessedEvent:
@@ -198,9 +198,9 @@ def _witness_event(text: str) -> WitnessedEvent:
 
 
 def test_create_agent_with_explicit_memory_module():
-    world = create_initial_world()
+    area = create_initial_area()
     agent, msg = create_agent_from_args(
-        world,
+        area,
         'name "Scribe" personality "Quiet." memory recent_turns at 2,2',
     )
     assert agent is not None
@@ -209,9 +209,9 @@ def test_create_agent_with_explicit_memory_module():
 
 
 def test_create_agent_unknown_memory_module_rejected():
-    world = create_initial_world()
+    area = create_initial_area()
     agent, msg = create_agent_from_args(
-        world,
+        area,
         'name "Scribe" personality "Quiet." memory summarizing at 2,2',
     )
     assert agent is None
@@ -263,14 +263,14 @@ def test_rolling_summary_is_turn_gated():
 
 
 def test_agents_list_shows_memory_module():
-    world = create_initial_world()
+    area = create_initial_area()
     create_agent_from_args(
-        world,
+        area,
         'name "Scribe" personality "x" memory recent_turns at 0,0',
     )
-    from src.world_edit import format_agents_list
+    from src.area_edit import format_agents_list
 
-    text = format_agents_list(world, world.get_agent())
+    text = format_agents_list(area, area.get_agent())
     assert "memory=recent_turns" in text
 
 

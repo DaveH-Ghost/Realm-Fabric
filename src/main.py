@@ -6,13 +6,13 @@ Entry point for manual stepping in V0.2.5 (single LLM call per compound turn).
 Supports:
 - step-compound         : manually simulate one compound turn (move / look / speak)
 - step-nav / step-action: debug isolated phases without LLM
-- list / objects / agents : list world entities (read-only, no turn)
+- list / objects / agents : list area entities (read-only, no turn)
 - create-object / edit-object / delete-object : edit objects at runtime
 - create-agent / edit-agent / delete-agent   : edit agents at runtime
 - run                   : LLM turn for the active agent
 - switch <name>         : change active agent without a turn (no LLM)
 - quit / exit           : leave the simulation.
-- vision / state        : print current passive vision or agent/world state.
+- vision / state        : print current passive vision or agent/area state.
 
 Typing an agent's name (e.g. "Explorer") runs an LLM turn for that agent.
 Use switch to inspect another agent's vision/state without consuming a turn.
@@ -51,7 +51,7 @@ if _project_root not in sys.path:
 import cmd
 
 from src.log_utils import close_file_logging, log_error, log_turn, setup_file_logging
-from src.world import create_initial_world
+from src.area import create_initial_area
 from src.compound_stepper import parse_compound_step_arg
 from src.simulation import (
     execute_action_phase,
@@ -62,7 +62,7 @@ from src.simulation import (
 from src.llm.schemas import AgentCompoundTurn
 from src.llm.prompt import build_compound_prompt
 from src.perception import build_passive_vision
-from src.world_edit import (
+from src.area_edit import (
     create_agent_from_args,
     create_object_from_args,
     delete_agent_by_id,
@@ -89,7 +89,7 @@ class ManualStepper(cmd.Cmd):
         "- 'run' : LLM turn for the active agent\n"
         "- Type an agent's name (e.g. 'Explorer') : LLM turn for that agent\n"
         "- 'switch <name>' : change active agent (no turn, no LLM)\n"
-        "- 'list' / 'objects' / 'agents' / 'effects' : list world entities (no turn)\n"
+        "- 'list' / 'objects' / 'agents' / 'effects' : list area entities (no turn)\n"
         "- 'create-object' / 'edit-object' / 'delete-object' : edit objects (see 'effects')\n"
         "- 'create-agent' / 'edit-agent' / 'delete-agent' : edit agents (see 'memory-modules')\n"
         "- 'prompt' : show the full prompt that would be sent to the LLM\n"
@@ -105,11 +105,11 @@ class ManualStepper(cmd.Cmd):
 
     def __init__(self, include_examples: bool = False):
         super().__init__()
-        self.world = create_initial_world()
+        self.area = create_initial_area()
         # Case-insensitive name dispatch for default() and switch
         self.agents: dict[str, "Agent"] = {}
         self._rebuild_agents_dict_from_world()
-        self.agent = self.world.get_agent()  # current active agent
+        self.agent = self.area.get_agent()  # current active agent
         self.session_turn = 0  # console/log label only; not stored in TurnRecord
         self.include_examples = include_examples  # for prompt builder, toggleable for experiments
 
@@ -141,8 +141,8 @@ class ManualStepper(cmd.Cmd):
         return self.agents.get(key)
 
     def _rebuild_agents_dict_from_world(self) -> None:
-        """Rebuild name dispatch dict from world.agents."""
-        self.agents = {a.name.lower(): a for a in self.world.agents}
+        """Rebuild name dispatch dict from area.agents."""
+        self.agents = {a.name.lower(): a for a in self.area.agents}
 
     def do_run(self, arg):
         """
@@ -185,12 +185,12 @@ class ManualStepper(cmd.Cmd):
 
     def do_vision(self, arg):
         """Show current passive vision."""
-        print(build_passive_vision(self.agent, self.world))
+        print(build_passive_vision(self.agent, self.area))
 
     def do_prompt(self, arg):
         """Show the compound turn prompt for the active agent."""
         prompt = build_compound_prompt(
-            self.agent, self.world, include_examples=self.include_examples
+            self.agent, self.area, include_examples=self.include_examples
         )
         print(
             f"[Compound turn prompt - {len(prompt)} chars] "
@@ -199,7 +199,7 @@ class ManualStepper(cmd.Cmd):
         print(prompt)
 
     def do_state(self, arg):
-        """Print basic agent and world state (for the currently active agent)."""
+        """Print basic agent and area state (for the currently active agent)."""
         print(f"Session turns (log label): {self.session_turn}")
         print(
             f"Active agent: {self.agent.name} ({self.agent.id}) at {self.agent.position}"
@@ -242,12 +242,12 @@ class ManualStepper(cmd.Cmd):
                 print(f"  - {step.kind}{target}{content}: {step.result}")
             print(f"Composite result: {last.result}")
         print(f"passive_result: {self.agent.passive_result or '(none)'}")
-        objs = [(o.name, o.id, o.position) for o in self.world.get_objects()]
+        objs = [(o.name, o.id, o.position) for o in self.area.get_objects()]
         print(f"Objects: {objs}")
 
     def do_objects(self, arg):
-        """List all objects in the world (id, name, position, actions). Does not consume a turn."""
-        print(format_objects_list(self.world))
+        """List all objects in the area (id, name, position, actions). Does not consume a turn."""
+        print(format_objects_list(self.area))
 
     def do_effects(self, arg):
         """List registered object interaction effects (read-only). Does not consume a turn."""
@@ -262,23 +262,23 @@ class ManualStepper(cmd.Cmd):
         print(format_memory_modules_list())
 
     def do_agents(self, arg):
-        """List all agents in the world (id, name, position, active marker). Does not consume a turn."""
-        print(format_agents_list(self.world, self.agent))
+        """List all agents in the area (id, name, position, active marker). Does not consume a turn."""
+        print(format_agents_list(self.area, self.agent))
 
     def do_list(self, arg):
         """List all agents and objects (same as running agents then objects). Does not consume a turn."""
-        print(format_full_list(self.world, self.agent))
+        print(format_full_list(self.area, self.agent))
 
     def do_create_object(self, arg):
         """
-        Create a new object in the world.
+        Create a new object in the area.
 
         Usage:
             create-object name "Ceramic Ball" pdesc "A ball on the floor." desc "A worn ball." at 2,2
             create-object name "Cookie" pdesc "A cookie." desc "Tasty." at 2,2 action eat range 1 \\
                 effect delete_self result "You ate the cookie." passive "{actor} ate the cookie."
         """
-        obj, message = create_object_from_args(self.world, arg)
+        obj, message = create_object_from_args(self.area, arg)
         print(message)
 
     def do_edit_object(self, arg):
@@ -291,7 +291,7 @@ class ManualStepper(cmd.Cmd):
             edit-object obj_cookie_01 add-action eat range 1 effect delete_self result "..." passive "..."
             edit-object obj_cookie_01 remove-action eat
         """
-        print(edit_object_from_args(self.world, arg))
+        print(edit_object_from_args(self.area, arg))
 
     def do_delete_object(self, arg):
         """
@@ -300,11 +300,11 @@ class ManualStepper(cmd.Cmd):
         Usage:
             delete-object obj_ball_01
         """
-        print(delete_object_by_id(self.world, arg))
+        print(delete_object_by_id(self.area, arg))
 
     def do_create_agent(self, arg):
         """
-        Create a new agent in the world. Does not change the active agent.
+        Create a new agent in the area. Does not change the active agent.
 
         Usage:
             create-agent name "Goblin" pdesc "A short figure." desc "A grumpy goblin." personality "You are a grumpy goblin." at 0,3
@@ -312,7 +312,7 @@ class ManualStepper(cmd.Cmd):
             create-agent name "Archivist" personality "..." memory rolling_summary at 1,1
             create-agent name "Archivist" personality "..." memory rolling_summary memory-summary-interval 15 memory-summary-max 5000 memory-summary-tail 3 at 1,1
         """
-        agent, message = create_agent_from_args(self.world, arg)
+        agent, message = create_agent_from_args(self.area, arg)
         if agent is not None:
             self._register_agent(agent)
         print(message)
@@ -327,7 +327,7 @@ class ManualStepper(cmd.Cmd):
 
         Memory module cannot be changed here (set only at create-agent).
         """
-        result = edit_agent_from_args(self.world, arg)
+        result = edit_agent_from_args(self.area, arg)
         if result.ok and result.agent is not None and result.old_name_lower:
             self._rename_agent_in_dict(result.old_name_lower, result.agent)
         print(result.message)
@@ -339,12 +339,12 @@ class ManualStepper(cmd.Cmd):
         Usage:
             delete-agent agent_goblin_01
         """
-        result = delete_agent_by_id(self.world, arg.strip())
+        result = delete_agent_by_id(self.area, arg.strip())
         reassigned_active = False
         if result.ok and result.deleted_agent is not None:
             self._unregister_agent(result.deleted_agent)
             if self.agent.id == result.deleted_agent.id:
-                self.agent = self.world.agents[0]
+                self.agent = self.area.agents[0]
                 reassigned_active = True
         print(result.message)
         if reassigned_active:
@@ -419,7 +419,7 @@ class ManualStepper(cmd.Cmd):
             move_target=move_target or None,
             turn_action="none",
         )
-        steps = execute_nav_phase(self.agent, self.world, nav)
+        steps = execute_nav_phase(self.agent, self.area, nav)
         for step in steps:
             print(step.result)
 
@@ -441,7 +441,7 @@ class ManualStepper(cmd.Cmd):
         except Exception as e:
             print(f"Invalid step-action: {e}")
             return
-        steps = execute_action_phase(self.agent, self.world, parsed.turn)
+        steps = execute_action_phase(self.agent, self.area, parsed.turn)
         for step in steps:
             print(step.result)
 
@@ -462,7 +462,7 @@ class ManualStepper(cmd.Cmd):
             return
         turn_number = next_turn_number_for_agent(agent)
         record = run_compound_turn(
-            agent, self.world, turn, turn_number, session_turn=self.session_turn + 1
+            agent, self.area, turn, turn_number, session_turn=self.session_turn + 1
         )
         self.session_turn += 1
         log_turn(
@@ -543,7 +543,7 @@ class ManualStepper(cmd.Cmd):
             from src.llm.client import get_compound_turn
 
             prompt = build_compound_prompt(
-                agent, self.world, include_examples=self.include_examples
+                agent, self.area, include_examples=self.include_examples
             )
             print(
                 f"Prompt: {len(prompt)} chars "
@@ -574,7 +574,7 @@ class ManualStepper(cmd.Cmd):
 
             record = run_compound_turn(
                 agent,
-                self.world,
+                self.area,
                 compound_turn,
                 turn_number,
                 session_turn=pending_session,

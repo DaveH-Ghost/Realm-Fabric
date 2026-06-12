@@ -13,7 +13,7 @@ from src.agent import Agent
 from src.llm.schemas import AgentCompoundTurn
 from src.memory import Memory, StepKind, TurnRecord, TurnStep
 from src.perception import perform_look as do_look
-from src.world import World
+from src.area import Area
 
 
 def next_turn_number_for_agent(agent: Agent) -> int:
@@ -62,13 +62,13 @@ def _make_step(
 
 
 def execute_nav_phase(
-    agent: Agent, world: World, turn: AgentCompoundTurn
+    agent: Agent, area: Area, turn: AgentCompoundTurn
 ) -> list[TurnStep]:
     """Run optional move from compound turn. Commits position changes."""
     if not turn.move_target:
         return []
 
-    outcome = do_move(agent, world, turn.move_target)
+    outcome = do_move(agent, area, turn.move_target)
     return [
         _make_step(
             "move",
@@ -80,13 +80,13 @@ def execute_nav_phase(
 
 
 def execute_action_phase(
-    agent: Agent, world: World, turn: AgentCompoundTurn
+    agent: Agent, area: Area, turn: AgentCompoundTurn
 ) -> list[TurnStep]:
     """Run optional look and turn action from compound turn."""
     steps: list[TurnStep] = []
 
     if turn.look_target:
-        outcome = do_look(agent, world, turn.look_target)
+        outcome = do_look(agent, area, turn.look_target)
         steps.append(
             _make_step(
                 "look",
@@ -97,7 +97,7 @@ def execute_action_phase(
         )
 
     if turn.turn_action == "speak":
-        outcome = do_speak(agent, world, turn.content or "")
+        outcome = do_speak(agent, area, turn.content or "")
         steps.append(
             _make_step(
                 "speak",
@@ -109,7 +109,7 @@ def execute_action_phase(
     elif turn.turn_action == "interact":
         outcome = do_interact(
             agent,
-            world,
+            area,
             turn.target or "",
             turn.action_name or "",
         )
@@ -166,7 +166,7 @@ def commit_turn_record(
     agent: Agent,
     record: TurnRecord,
     turn: AgentCompoundTurn,
-    world: World,
+    area: Area,
     *,
     session_turn: int | None = None,
 ) -> TurnRecord:
@@ -180,7 +180,7 @@ def commit_turn_record(
     witness_session = session_turn if session_turn is not None else record.turn_number
     from src.observations import broadcast_actor_turn
 
-    broadcast_actor_turn(world, agent, session_turn=witness_session)
+    broadcast_actor_turn(area, agent, session_turn=witness_session)
 
     agent.last_action = record.steps[-1].kind if record.steps else None
     return record
@@ -188,7 +188,7 @@ def commit_turn_record(
 
 def run_compound_turn(
     agent: Agent,
-    world: World,
+    area: Area,
     turn: AgentCompoundTurn,
     turn_number: int,
     *,
@@ -201,13 +201,13 @@ def run_compound_turn(
     Pass ``nav_steps`` when navigation was already executed (e.g. debug step-nav).
     """
     if nav_steps is None:
-        nav_steps = execute_nav_phase(agent, world, turn)
+        nav_steps = execute_nav_phase(agent, area, turn)
 
-    action_steps = execute_action_phase(agent, world, turn)
+    action_steps = execute_action_phase(agent, area, turn)
 
     record = finalize_turn_record(turn, nav_steps, action_steps, turn_number)
     return commit_turn_record(
-        agent, record, turn, world, session_turn=session_turn
+        agent, record, turn, area, session_turn=session_turn
     )
 
 

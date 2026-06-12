@@ -8,8 +8,9 @@ A grid-based agent simulation framework designed around structured output and na
 
 - [V0.2 implementation checklist](docs/v0.2-implementation-readiness-checklist.md) — **authoritative V0.2 spec** (implemented; as-shipped reference)
 - [V0.1 implementation checklist](docs/v0.1-implementation-readiness-checklist.md) — design reference for shipped V0.1 behavior (partially superseded by V0.2)
-- [Roadmap](docs/ROADMAP.md) — version plans (V0.1 ✅, V0.2 ✅, V0.2.5 ✅ release-ready, V0.3)
-- [V0.2.5 changelog](docs/v0.2.5-changelog.md) — incremental memory / prompt slices (0.2.5a–g) + release checklist
+- [Roadmap](docs/ROADMAP.md) — version plans (V0.1 ✅, V0.2 ✅, V0.2.5 ✅, V0.3.0 engine planned)
+- [V0.2.5 changelog](docs/v0.2.5-changelog.md) — memory / prompt slices (0.2.5a–g) + release checklist
+- [V0.3.0 changelog](docs/v0.3.0-changelog.md) — engine refactor slices (0.3.0a–e); web example in 0.3.1
 - [Long-term goals](LONG_TERM_GOALS.md) — aspirational features
 - [V0 implementation checklist](docs/v0-implementation-readiness-checklist.md) — V0 historical design reference
 - [Schema design references](docs/schemas/) — `AgentTurn` (pre-V0.2); **`AgentNavigationTurn` / `AgentActionTurn`** (V0.2 — implemented in `src/llm/schemas.py`)
@@ -298,10 +299,10 @@ uv run pytest -x
 | `tests/test_coordinate_move.py` | Coordinate move parser, bounds, schema |
 | `tests/test_compound_turn.py` | Compound orchestration, `TurnRecord.steps`, step-compound parser |
 | `tests/test_object_actions.py` | Effect registry, interact range/vision, `delete_self`, ball `kick` |
-| `tests/test_world.py` | Initial world state, grid rules, passive vision baseline |
+| `tests/test_area.py` | Initial demo area, grid rules, passive vision baseline |
 | `tests/test_simulation.py` | Compound turns, memory side effects, prompts |
 | `tests/test_perception.py` | V0.1 `[?]` / stale vision for objects and cross-agent invalidation |
-| `tests/test_world_edit.py` | World editing commands (create/edit/delete, listings, object actions) |
+| `tests/test_area_edit.py` | Area editing commands (create/edit/delete, listings, object actions) |
 | `tests/test_multi_agent.py` | Multi-agent stepper (`switch`, `run`, agent vision, `passive_result`, LLM mocks) |
 | `tests/test_memory_modules.py` | Pluggable memory modules, registry, witnesses, `get_detail_turns` |
 | `tests/test_salient_turns.py` | Salience scoring, char budget, fragment render |

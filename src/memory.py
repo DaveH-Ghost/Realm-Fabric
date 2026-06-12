@@ -14,7 +14,7 @@ from src.turn_record import StepKind, TurnRecord, TurnStep
 
 if TYPE_CHECKING:
     from src.agent import Agent
-    from src.world import World
+    from src.area import Area
 
 # Re-export turn types for backward compatibility.
 __all__ = [
@@ -76,9 +76,9 @@ class Memory:
         """Total own turns taken (not capped by the prompt window)."""
         return self._module.total_turns
 
-    def render_prompt_block(self, agent: Agent, world: World) -> str:
+    def render_prompt_block(self, agent: Agent, area: Area) -> str:
         """Text body for the Memory: section (empty module → default message)."""
-        body = self._module.render(MemoryRenderContext(agent=agent, world=world))
+        body = self._module.render(MemoryRenderContext(agent=agent, area=area))
         if not body.strip():
             return "No memories yet."
         return body.strip()

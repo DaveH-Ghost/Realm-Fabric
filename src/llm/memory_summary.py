@@ -21,7 +21,7 @@ def build_rolling_summary_prompt(
         if previous_summary.strip()
         else "(No prior summary — this is the first consolidation.)"
     )
-    return f"""You maintain a rolling memory summary for {agent_name} in a grid-world simulation.
+    return f"""You maintain a rolling memory summary for {agent_name} in a grid-area simulation.
 
 Update the agent's memory summary by merging:
 1. The previous summary (if any)
