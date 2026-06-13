@@ -71,7 +71,7 @@ button:hover {
 
 .layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
   gap: 1.25rem;
   align-items: start;
 }
@@ -177,10 +177,99 @@ button:hover {
   border: 1px solid #333;
   border-radius: 6px;
   padding: 0.75rem 1rem;
+  max-height: calc(100vh - 5rem);
+  overflow-y: auto;
+}
+
+.sidebar-section {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #2a2a34;
+}
+
+.sidebar-section h2 {
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-details {
+  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+  color: #9a9aa8;
+}
+
+.sidebar-details summary {
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.panel-text {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #c8c8d4;
+  max-height: 14rem;
+  overflow: auto;
+}
+
+.panel-text-debug {
+  max-height: 20rem;
+  font-size: 0.68rem;
+  color: #a8a8b8;
+}
+
+.panel-empty {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #6a6a78;
+  font-style: italic;
+}
+
+.turn-log {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.turn-log-entry {
+  padding: 0.5rem 0.55rem;
+  background: #1a1a20;
+  border: 1px solid #333;
+  border-radius: 5px;
+  font-size: 0.78rem;
+}
+
+.turn-log-head {
+  color: #9a9aa8;
+  font-size: 0.72rem;
+  margin-bottom: 0.35rem;
+}
+
+.turn-log-composite {
+  margin: 0 0 0.35rem;
+  color: #e8e8ec;
+  line-height: 1.4;
+}
+
+.turn-log-steps {
+  margin: 0;
+  padding-left: 1rem;
+  color: #b8b8c8;
+  font-size: 0.72rem;
+}
+
+.turn-log-steps li {
+  margin-bottom: 0.15rem;
 }
 
 .session-meta {
   margin: 0 0 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #2a2a34;
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0.25rem 0.75rem;

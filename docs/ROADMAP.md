@@ -172,7 +172,7 @@ V0.2 compound turns and object interact should log in a shape that V0.2.5 can in
 
 **Focus:** **V0.3.0** — engine refactor (Session API, snapshots, GameProfile, CLI on Session). **V0.3.1** — example web project built on the engine. **Depends on V0.2.5** (`v0.2.5`).
 
-See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e).
+See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e). See [v0.3.1-changelog.md](v0.3.1-changelog.md) for realm-studio (0.3.1a–f).
 
 ### V0.3.0 — Engine — ✅ Implemented (`0.3.0` in pyproject; tag **`v0.3.0`** pending)
 
@@ -184,17 +184,18 @@ See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e).
 - **`Area`** — configurable `GridBounds` + `area_description`
 - **Tests** — session, snapshot, profile, packaging, CLI parity (274 tests)
 
-### V0.3.1 — Example web project — ⬜ Planned (separate tag)
+### V0.3.1 — Example web project — ✅ Implemented (tag **`v0.3.1`**)
 
 See [v0.3.1-changelog.md](v0.3.1-changelog.md). App path: **`examples/web/realm-studio`**.
 
 - FastAPI wraps `Session`; depends on `realm-fabric>=0.3.0`
-- Local web UI: **grid** with agents/objects; **right-click** create/edit/delete; turn log + passive vision; **Run turn**
-- Optional FastAPI + minimal `TestClient` integration test; engine coverage stays in pytest
+- Local web UI: **grid** with agents/objects; **right-click** create/edit/delete; passive vision + turn log; **Run turn**
+- 13 FastAPI `TestClient` smoke/integration tests; engine coverage stays in root pytest
 
 ### V0.3.2+ — ⬜ Planned
 
-- `**appearance**` / sprite asset keys on `Agent` and `Object` (visualization only; sim ignores)
+- **`appearance`** / sprite asset keys on `Agent` and `Object` (visualization only; sim ignores)
+- **Area-wide GM events** — narrator/event button; all agents perceive as passive/witnessed (see 0.3.2 design)
 - Multiplayer hooks (rooms, server-authoritative session)
 
 Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) remain in [LONG_TERM_GOALS.md](../LONG_TERM_GOALS.md).

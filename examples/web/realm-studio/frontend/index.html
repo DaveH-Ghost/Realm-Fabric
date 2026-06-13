@@ -9,7 +9,7 @@
 <body>
   <header>
     <h1>realm-studio</h1>
-    <p class="subtitle">V0.3.1d — run LLM turns</p>
+    <p class="subtitle">V0.3.1 — realm-studio</p>
     <label class="active-agent-label">
       Active
       <select id="active-agent-select" aria-label="Active agent"></select>
@@ -25,7 +25,26 @@
     <aside class="meta-panel">
       <h2>Session</h2>
       <dl id="session-meta" class="session-meta"></dl>
-      <details class="raw-snapshot">
+
+      <section class="sidebar-section" aria-label="Passive vision">
+        <h2>Passive vision</h2>
+        <p id="passive-vision-empty" class="panel-empty">No vision text for the active agent.</p>
+        <pre id="passive-vision" class="panel-text hidden"></pre>
+      </section>
+
+      <section class="sidebar-section" aria-label="Turn log">
+        <h2>Turn log</h2>
+        <p id="turn-log-empty" class="panel-empty">No turns yet — use Run turn ▶.</p>
+        <ol id="turn-log" class="turn-log"></ol>
+      </section>
+
+      <details id="prompt-debug" class="sidebar-details">
+        <summary>Last prompt (debug)</summary>
+        <p id="last-prompt-empty" class="panel-empty">Run a turn or open this panel to load the current prompt.</p>
+        <pre id="last-prompt" class="panel-text panel-text-debug hidden"></pre>
+      </details>
+
+      <details class="raw-snapshot sidebar-details">
         <summary>Raw snapshot JSON</summary>
         <pre id="snapshot"></pre>
       </details>

@@ -24,7 +24,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="realm-studio",
         description="Example web UI for Realm-Fabric",
-        version="0.1.0",
+        version="0.3.1",
     )
 
     app.add_middleware(
@@ -69,6 +69,20 @@ def create_app() -> FastAPI:
             agent_id=body.agent_id,
             include_examples=body.include_examples,
         )
+
+    @app.get("/api/prompt")
+    def get_prompt(agent_id: str | None = None) -> dict[str, object]:
+        """Build the compound-turn prompt for the active (or specified) agent."""
+        session = get_session_store().session
+        if agent_id is not None and session.get_agent(agent_id) is None:
+            return {"ok": False, "message": f"Agent {agent_id!r} not found."}
+        prompt = session.build_prompt(agent_id)
+        return {
+            "ok": True,
+            "prompt": prompt,
+            "length": len(prompt),
+            "include_examples": session.include_examples,
+        }
 
     @app.get("/")
     def index() -> FileResponse:

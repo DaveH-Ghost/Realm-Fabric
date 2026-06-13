@@ -66,6 +66,7 @@ def run_llm_turn(
             "message": result.message,
             "snapshot": session.snapshot(),
             "steps": _serialize_steps(result.record),
+            "prompt": prompt,
         }
     finally:
         session.include_examples = prev_include

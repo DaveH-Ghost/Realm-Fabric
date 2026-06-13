@@ -1,8 +1,16 @@
 /**
- * realm-studio frontend — grid + context menus + LLM turn (V0.3.1b–d).
+ * realm-studio frontend — grid, edit menus, LLM turn, sidebar panels (V0.3.1b–e).
  */
 
-import { getState, postTurn } from "./api.js";
+import { getPrompt, getState, postTurn } from "./api.js";
+import {
+  appendTurnLogEntry,
+  bindPromptDebug,
+  renderLastPrompt,
+  renderPassiveVision,
+  renderTurnLog,
+  setLastPrompt,
+} from "./panels.js";
 import {
   bindActiveAgentSelect,
   bindGridContextMenu,
@@ -15,6 +23,13 @@ const statusEl = document.getElementById("status");
 const gridEl = document.getElementById("grid");
 const snapshotEl = document.getElementById("snapshot");
 const sessionMetaEl = document.getElementById("session-meta");
+const passiveVisionEl = document.getElementById("passive-vision");
+const passiveVisionEmptyEl = document.getElementById("passive-vision-empty");
+const turnLogEl = document.getElementById("turn-log");
+const turnLogEmptyEl = document.getElementById("turn-log-empty");
+const lastPromptEl = document.getElementById("last-prompt");
+const lastPromptEmptyEl = document.getElementById("last-prompt-empty");
+const promptDebugEl = document.getElementById("prompt-debug");
 const activeAgentSelect = document.getElementById("active-agent-select");
 const runTurnBtn = document.getElementById("run-turn");
 
@@ -103,7 +118,7 @@ function renderSessionMeta(data) {
   const activeLabel = active ? `${active.name} (${active.id})` : data.active_agent_id;
 
   sessionMetaEl.innerHTML = `
-    <dt>Turn</dt><dd>${data.session_turn}</dd>
+    <dt>Session turn</dt><dd>${data.session_turn}</dd>
     <dt>Active agent</dt><dd>${escapeHtml(activeLabel)}</dd>
     <dt>Agents</dt><dd>${data.agents.length}</dd>
     <dt>Objects</dt><dd>${data.objects.length}</dd>
@@ -116,10 +131,15 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+function renderSidebarPanels(data) {
+  renderPassiveVision(data, passiveVisionEl, passiveVisionEmptyEl);
+}
+
 function renderState(data) {
   lastSnapshot = data;
   renderGrid(data);
   renderSessionMeta(data);
+  renderSidebarPanels(data);
   renderActiveAgentSelect(activeAgentSelect, data);
   snapshotEl.textContent = JSON.stringify(data, null, 2);
 }
@@ -142,6 +162,24 @@ function updateStatusLine(data) {
   statusEl.textContent = `Turn ${data.session_turn} — ${active ? active.name : data.active_agent_id}`;
 }
 
+function recordTurnResult(result) {
+  const snap = result.snapshot || lastSnapshot;
+  const active = snap?.agents?.find((a) => a.id === snap.active_agent_id);
+  appendTurnLogEntry({
+    sessionTurn: snap?.session_turn ?? "?",
+    agentName: active?.name ?? "Agent",
+    message: result.message,
+    steps: result.steps,
+  });
+  renderTurnLog(turnLogEl, turnLogEmptyEl);
+  if (result.prompt) {
+    setLastPrompt(result.prompt);
+    if (promptDebugEl.open) {
+      renderLastPrompt(lastPromptEl, lastPromptEmptyEl);
+    }
+  }
+}
+
 async function runTurn() {
   if (turnInFlight) return;
   turnInFlight = true;
@@ -160,6 +198,7 @@ async function runTurn() {
     } else {
       await fetchState();
     }
+    recordTurnResult(result);
     const stepCount = Array.isArray(result.steps) ? result.steps.length : 0;
     const suffix = stepCount ? ` (${stepCount} step${stepCount === 1 ? "" : "s"})` : "";
     showToast(`${result.message}${suffix}`, false);
@@ -178,7 +217,9 @@ initUi({
 });
 bindGridContextMenu(gridEl);
 bindActiveAgentSelect(activeAgentSelect, fetchState);
+bindPromptDebug(promptDebugEl, lastPromptEl, lastPromptEmptyEl, () => getPrompt());
 
 document.getElementById("refresh").addEventListener("click", fetchState);
 runTurnBtn.addEventListener("click", runTurn);
+renderTurnLog(turnLogEl, turnLogEmptyEl);
 fetchState();

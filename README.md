@@ -2,13 +2,13 @@
 
 A grid-based agent simulation framework designed around structured output and narrative roleplay.
 
-**Current Status:** **V0.3.0** engine (`0.3.0` in `pyproject.toml`; tag **`v0.3.0`** pending) — `Session` API, JSON snapshots, `GameProfile` prompt templates, CLI on Session, public `realm_fabric` package. Builds on **V0.2.5** (`v0.2.5`): compound LLM turns, pluggable memory, Passive Vision–first prompt.
+**Current Status:** **V0.3.0** engine (`0.3.0` in `pyproject.toml`) + **V0.3.1** example web app [**realm-studio**](examples/web/realm-studio) (tag **`v0.3.1`** on the example milestone). Engine: `Session` API, JSON snapshots, `GameProfile`, CLI on Session, public `realm_fabric` package. Builds on **V0.2.5** (`v0.2.5`): compound LLM turns, pluggable memory, Passive Vision–first prompt.
 
 **Documentation:**
 
-- [V0.3.1 changelog](docs/v0.3.1-changelog.md) — example web app (`examples/web/realm-studio`); slices 0.3.1a–f
+- [V0.3.1 changelog](docs/v0.3.1-changelog.md) — **realm-studio** web app (0.3.1a–f) ✅
 - [V0.3.0 changelog](docs/v0.3.0-changelog.md) — engine refactor (0.3.0a–e)
-- [Roadmap](docs/ROADMAP.md) — version plans (V0.3.0 ✅ engine; V0.3.1 web example planned)
+- [Roadmap](docs/ROADMAP.md) — version plans (V0.3.0 ✅ engine; V0.3.1 ✅ web example)
 - [V0.2.5 changelog](docs/v0.2.5-changelog.md) — memory / prompt slices (0.2.5a–g)
 - [Long-term goals](LONG_TERM_GOALS.md) — aspirational features
 - [V0 implementation checklist](docs/v0-implementation-readiness-checklist.md) — V0 historical design reference
@@ -22,7 +22,7 @@ A grid-based agent simulation framework designed around structured output and na
 |-------|------------|
 | **`realm_fabric` package** | Public API: `Session`, `GameProfile`, `load_profile`, `PromptContext`, `AgentCompoundTurn`, snapshots |
 | **`realm` CLI** | Reference client (`ManualStepper`) for manual testing — not required for library use |
-| **Your app (0.3.1+)** | [`examples/web/realm-studio`](examples/web/realm-studio) — web UI wrapping `Session` over HTTP |
+| **[realm-studio](examples/web/realm-studio)** | Example web UI (V0.3.1) — grid, right-click edit, LLM **Run turn** over HTTP |
 
 Quick start for a downstream project:
 
@@ -36,7 +36,15 @@ result = session.run_compound_turn(AgentCompoundTurn(...))
 state = session.snapshot()
 ```
 
-**V0.3.1** adds [realm-studio](examples/web/realm-studio) on this API. **0.3.1a** is runnable: `cd examples/web/realm-studio && uv run realm-studio`. See [v0.3.1-changelog](docs/v0.3.1-changelog.md).
+**V0.3.1** ships [realm-studio](examples/web/realm-studio) on this API:
+
+```powershell
+cd examples\web\realm-studio
+uv sync
+uv run realm-studio
+```
+
+Grid + right-click create/edit/delete + **Run turn** (needs `OPENROUTER_API_KEY`). See [realm-studio README](examples/web/realm-studio/README.md) and [v0.3.1-changelog](docs/v0.3.1-changelog.md).
 
 ## Running / Testing (without LLM)
 

@@ -1,4 +1,4 @@
-/** HTTP helpers for realm-studio API (V0.3.1c–d). */
+/** HTTP helpers for realm-studio API (V0.3.1c–e). */
 
 export async function getState() {
   const res = await fetch("/api/state");
@@ -44,6 +44,16 @@ export async function postTurn({ agentId, includeExamples } = {}) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || `HTTP ${res.status}`);
+  }
+  return data;
+}
+
+export async function getPrompt(agentId) {
+  const params = agentId ? `?agent_id=${encodeURIComponent(agentId)}` : "";
+  const res = await fetch(`/api/prompt${params}`);
   const data = await res.json();
   if (!res.ok) {
     throw new Error(data.message || `HTTP ${res.status}`);

@@ -1,4 +1,4 @@
-"""realm-studio API tests (V0.3.1a–d)."""
+"""realm-studio API tests (V0.3.1)."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -55,6 +55,8 @@ def test_index_page(client):
     assert 'id="context-menu"' in response.text
     assert 'id="active-agent-select"' in response.text
     assert 'id="run-turn"' in response.text
+    assert 'id="passive-vision"' in response.text
+    assert 'id="turn-log"' in response.text
 
 
 def _fake_compound_response(_prompt):
@@ -83,6 +85,26 @@ def test_post_turn_success(client, monkeypatch):
     assert isinstance(data["steps"], list)
     assert len(data["steps"]) >= 1
     assert data["snapshot"]["session_turn"] == 1
+    assert "prompt" in data
+    assert len(data["prompt"]) > 100
+
+
+def test_get_prompt(client):
+    response = client.get("/api/prompt")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert len(data["prompt"]) > 100
+    assert data["length"] == len(data["prompt"])
+    assert data["include_examples"] is False
+    assert "You are at" in data["prompt"] or "Explorer" in data["prompt"]
+
+
+def test_get_prompt_unknown_agent(client):
+    response = client.get("/api/prompt", params={"agent_id": "nobody"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is False
 
 
 def test_post_turn_gate_blocked(client, monkeypatch):
@@ -113,6 +135,33 @@ def test_post_turn_missing_api_key(client, monkeypatch):
     data = response.json()
     assert data["ok"] is False
     assert "OPENROUTER_API_KEY" in data["message"]
+
+
+def test_e2e_edit_then_turn(client, monkeypatch):
+    """Smoke: area edit (no turn) then mocked LLM turn updates snapshot."""
+    monkeypatch.setattr(
+        "src.llm.client.get_compound_turn",
+        _fake_compound_response,
+    )
+
+    create = client.post(
+        "/api/command",
+        json={
+            "line": 'create-object name "E2E Crate" pdesc "A crate." desc "Test crate." at 2,2',
+        },
+    )
+    assert create.json()["ok"] is True
+
+    mid = client.get("/api/state").json()
+    assert mid["session_turn"] == 0
+    assert any(o["name"] == "E2E Crate" for o in mid["objects"])
+
+    turn = client.post("/api/turn", json={})
+    data = turn.json()
+    assert data["ok"] is True
+    assert data["snapshot"]["session_turn"] == 1
+    assert "passive_vision" in data["snapshot"]
+    assert isinstance(data["steps"], list)
 
 
 def test_post_command_create_object(client):

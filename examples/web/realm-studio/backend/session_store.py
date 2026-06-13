@@ -20,7 +20,7 @@ def _maybe_dev_stack_seed(session: Session) -> None:
     Temporary dev helper: stack objects on one tile to test grid scrolling.
 
     Enable: REALM_STUDIO_DEV_STACK=1 uv run realm-studio
-    Remove when 0.3.1c provides create-object in the UI.
+    Remove when no longer needed for UI testing.
     """
     flag = os.environ.get(_DEV_STACK_ENV, "").strip().lower()
     if flag not in ("1", "true", "yes", "on"):
