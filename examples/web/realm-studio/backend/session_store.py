@@ -4,9 +4,33 @@ In-memory Session holder for the realm-studio demo (single-player, one process).
 
 from __future__ import annotations
 
+import os
+
 from realm_fabric import Session, load_profile
 
 _store: SessionStore | None = None
+
+_DEV_STACK_ENV = "REALM_STUDIO_DEV_STACK"
+_DEV_STACK_TILE = (3, 3)
+_DEV_STACK_COUNT = 10
+
+
+def _maybe_dev_stack_seed(session: Session) -> None:
+    """
+    Temporary dev helper: stack objects on one tile to test grid scrolling.
+
+    Enable: REALM_STUDIO_DEV_STACK=1 uv run realm-studio
+    Remove when 0.3.1c provides create-object in the UI.
+    """
+    flag = os.environ.get(_DEV_STACK_ENV, "").strip().lower()
+    if flag not in ("1", "true", "yes", "on"):
+        return
+    x, y = _DEV_STACK_TILE
+    for i in range(1, _DEV_STACK_COUNT + 1):
+        session.run_command(
+            f'create-object name "Stack{i}" pdesc "Stack test item {i}." '
+            f'desc "Dev stack object {i}." at {x},{y}'
+        )
 
 
 class SessionStore:
@@ -15,6 +39,7 @@ class SessionStore:
     def __init__(self) -> None:
         profile = load_profile("default_compound")
         self._session = Session.from_profile(profile)
+        _maybe_dev_stack_seed(self._session)
 
     @property
     def session(self) -> Session:

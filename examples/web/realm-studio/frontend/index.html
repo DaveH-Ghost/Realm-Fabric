@@ -9,12 +9,22 @@
 <body>
   <header>
     <h1>realm-studio</h1>
-    <p class="subtitle">V0.3.1a — snapshot API (grid UI in 0.3.1b)</p>
-    <button type="button" id="refresh">Refresh state</button>
+    <p class="subtitle">V0.3.1b — area grid</p>
+    <button type="button" id="refresh">Refresh</button>
     <span id="status" aria-live="polite"></span>
   </header>
-  <main>
-    <pre id="snapshot" aria-label="Session snapshot JSON">Loading…</pre>
+  <main class="layout">
+    <section class="grid-panel" aria-label="Area grid">
+      <div id="grid" class="grid"></div>
+    </section>
+    <aside class="meta-panel">
+      <h2>Session</h2>
+      <dl id="session-meta" class="session-meta"></dl>
+      <details class="raw-snapshot">
+        <summary>Raw snapshot JSON</summary>
+        <pre id="snapshot"></pre>
+      </details>
+    </aside>
   </main>
   <script src="/static/app.js"></script>
 </body>

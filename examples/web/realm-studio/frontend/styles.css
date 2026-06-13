@@ -8,6 +8,7 @@ body {
   padding: 1rem 1.5rem;
   background: #1a1a1e;
   color: #e8e8ec;
+  min-height: 100vh;
 }
 
 header {
@@ -21,6 +22,12 @@ header {
 h1 {
   margin: 0;
   font-size: 1.25rem;
+}
+
+h2 {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  color: #b8b8c8;
 }
 
 .subtitle {
@@ -47,13 +54,144 @@ button:hover {
   color: #7ec87e;
 }
 
-#snapshot {
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.grid-panel {
+  overflow: auto;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--grid-cols, 5), minmax(4.5rem, 1fr));
+  gap: 4px;
+  width: 100%;
+  max-width: min(100%, calc(var(--grid-cols, 5) * 7rem));
+}
+
+.tile {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  min-width: 0;
+  min-height: 0;
+  padding: 0.35rem;
+  background: #252530;
+  border: 1px solid #3a3a48;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tile-coord {
+  font-size: 0.65rem;
+  color: #6a6a78;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.tile-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  justify-content: flex-start;
+  scrollbar-width: thin;
+  scrollbar-color: #4a4a58 #252530;
+}
+
+.tile-stack::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tile-stack::-webkit-scrollbar-thumb {
+  background: #4a4a58;
+  border-radius: 3px;
+}
+
+.chip {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.chip-agent {
+  background: #2d4a3e;
+  border-color: #3d6a54;
+  color: #c8f0d8;
+}
+
+.chip-object {
+  background: #3a3548;
+  border-color: #524a68;
+  color: #d8d0f0;
+}
+
+.chip-active {
+  border-color: #e8c547;
+  box-shadow: 0 0 0 1px #e8c547;
+}
+
+.chip-active-mark {
+  color: #e8c547;
+}
+
+.meta-panel {
   background: #121216;
   border: 1px solid #333;
   border-radius: 6px;
-  padding: 1rem;
-  overflow: auto;
-  max-height: calc(100vh - 6rem);
+  padding: 0.75rem 1rem;
+}
+
+.session-meta {
+  margin: 0 0 1rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.session-meta dt {
+  color: #9a9aa8;
+}
+
+.session-meta dd {
+  margin: 0;
+}
+
+.raw-snapshot summary {
+  cursor: pointer;
   font-size: 0.8rem;
-  line-height: 1.4;
+  color: #9a9aa8;
+  margin-bottom: 0.5rem;
+}
+
+#snapshot {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  overflow: auto;
+  max-height: 40vh;
+  color: #a8a8b8;
 }
