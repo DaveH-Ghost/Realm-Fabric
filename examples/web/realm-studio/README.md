@@ -101,4 +101,4 @@ Adds 10 objects on tile **(3, 3)** to test scrollbars. Omit for the normal demo 
 
 ## What's next
 
-**V0.3.2** — sprites/`appearance`, area-wide GM events, and other UX polish. See [ROADMAP.md](../../../docs/ROADMAP.md).
+**V0.3.2** (planned): GM **area events** and grid **appearance** — see [v0.3.2-changelog](docs/v0.3.2-changelog.md).

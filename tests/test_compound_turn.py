@@ -173,7 +173,7 @@ def test_passive_result_speak_wins_over_move_and_look():
 
     vision = build_passive_vision(explorer, area)
     assert "Goblin (agent_goblin_01), (2, 3)" in vision
-    assert 'Goblin says: "Hi."' in vision
+    assert 'Goblin says: "Hi."' not in vision
     assert "moves to" not in vision
     assert "examines" not in vision
 

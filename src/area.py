@@ -5,6 +5,10 @@ from src.agent import Agent
 from src.memory import Memory
 from src.object import Object
 from src.object_action import ObjectAction
+from src.area_event import (
+    DEFAULT_MAX_RECENT_AREA_EVENTS,
+    AreaEventRecord,
+)
 
 DEFAULT_AREA_DESCRIPTION = (
     "You are in a small room with a hardwood floor and four wooden walls."
@@ -73,6 +77,8 @@ class Area:
         self.area_description = area_description
         self.agents: list[Agent] = []
         self.objects: list[Object] = []
+        self._recent_events: list[AreaEventRecord] = []
+        self._max_recent_events = DEFAULT_MAX_RECENT_AREA_EVENTS
 
     # Legacy aliases (square-grid tests and object_effects)
     @property
@@ -267,6 +273,23 @@ class Area:
     def clear_object_examination_history(self, object_id: str) -> None:
         """Alias for clear_entity_examination_history (objects)."""
         self.clear_entity_examination_history(object_id)
+
+    @property
+    def recent_events(self) -> list[AreaEventRecord]:
+        """Recent area-wide GM/narrator events (oldest first)."""
+        return list(self._recent_events)
+
+    def append_area_event(self, *, session_turn: int, text: str) -> AreaEventRecord:
+        """Append a room-wide event; evict oldest when over capacity."""
+        cleaned = text.strip()
+        if not cleaned:
+            raise ValueError("Area event text cannot be empty.")
+        record = AreaEventRecord(session_turn=session_turn, text=cleaned)
+        self._recent_events.append(record)
+        overflow = len(self._recent_events) - self._max_recent_events
+        if overflow > 0:
+            self._recent_events = self._recent_events[overflow:]
+        return record
 
 
 def create_area(

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from src.memory_modules.base import WitnessedEvent
+from src.area_event import AREA_EVENT_ACTOR_ID
 from src.turn_record import TurnRecord, TurnStep
 
 REASONING_WINDOW = 3
@@ -41,8 +42,11 @@ def format_witnessed_events(events: list[WitnessedEvent], heading: str) -> list[
         return []
     lines = [heading]
     for event in events:
-        pos = f"at {event.actor_position}"
-        lines.append(f"  - {event.text} ({event.actor_name} {pos})")
+        if event.actor_id == AREA_EVENT_ACTOR_ID:
+            lines.append(f"  - {event.text}")
+        else:
+            pos = f"at {event.actor_position}"
+            lines.append(f"  - {event.text} ({event.actor_name} {pos})")
     return lines
 
 

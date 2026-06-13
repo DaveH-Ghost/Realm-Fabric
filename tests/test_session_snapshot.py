@@ -17,6 +17,7 @@ def test_snapshot_default_shape():
     assert snap["active_agent_id"] == "agent_01"
     assert len(snap["agents"]) == 1
     assert len(snap["objects"]) == 2
+    assert snap["recent_events"] == []
 
     explorer = snap["agents"][0]
     assert explorer["id"] == "agent_01"

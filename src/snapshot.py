@@ -75,6 +75,10 @@ def build_area_snapshot(
         "active_agent_id": active_agent_id,
         "agents": [serialize_agent(a, include_private=include_private) for a in area.agents],
         "objects": [serialize_object(o) for o in area.get_objects()],
+        "recent_events": [
+            {"session_turn": event.session_turn, "text": event.text}
+            for event in area.recent_events
+        ],
     }
 
     if include_passive_vision and active_agent_id:

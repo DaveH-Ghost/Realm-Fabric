@@ -183,7 +183,7 @@ def test_failed_interact_after_move_shows_move_in_passive_result():
     assert goblin.passive_result == "Goblin moves to (4, 3)."
     explorer = area.get_agent()
     vision = build_passive_vision(explorer, area)
-    assert "Goblin moves to (4, 3)." in vision
+    assert "Goblin moves to (4, 3)." not in vision
     assert "ate the cookie" not in vision
     assert area.get_object_by_id(cookie.id) is not None
 
@@ -273,7 +273,7 @@ def test_objects_list_after_eat_cookie_gone():
     assert cookie.id not in text
 
 
-def test_explorer_vision_shows_goblin_eat_passive_result():
+def test_explorer_memory_records_goblin_eat_not_passive_vision():
     area = create_initial_area()
     cookie = _create_cookie(area)
     explorer = area.get_agent()
@@ -292,7 +292,9 @@ def test_explorer_vision_shows_goblin_eat_passive_result():
     )
 
     vision = build_passive_vision(explorer, area)
-    assert "Goblin ate the cookie." in vision
+    assert "Goblin ate the cookie." not in vision
+    memory = explorer.memory.render_prompt_block(explorer, area)
+    assert "Goblin ate the cookie." in memory
 
 
 def test_eat_clears_explorer_look_memory_for_cookie():

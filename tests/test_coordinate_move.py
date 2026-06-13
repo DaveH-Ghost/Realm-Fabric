@@ -119,7 +119,7 @@ def test_other_agent_vision_after_successful_move():
 
     vision = build_passive_vision(explorer, area)
     assert "Goblin (agent_goblin_01), (2, 3)" in vision
-    assert "Goblin moves to (2, 3)." in vision
+    assert "Goblin moves to (2, 3)." not in vision
 
 
 def test_nav_phase_via_simulation():

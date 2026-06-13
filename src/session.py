@@ -156,6 +156,29 @@ class Session:
             message=f"Active agent: {agent.name} ({agent.id}) at {agent.position}",
         )
 
+    def emit_area_event(self, text: str) -> SessionResult:
+        """
+        Broadcast a room-wide narrator/GM event to all agents.
+
+        Does not consume a turn or increment ``session_turn``.
+        """
+        cleaned = text.strip()
+        if not cleaned:
+            return SessionResult(ok=False, message="Event text cannot be empty.")
+
+        record = self.area.append_area_event(
+            session_turn=self.session_turn,
+            text=cleaned,
+        )
+        from src.observations import broadcast_area_event
+
+        broadcast_area_event(
+            self.area,
+            session_turn=record.session_turn,
+            text=record.text,
+        )
+        return SessionResult(ok=True, message=f"Area event: {record.text}")
+
     # ------------------------------------------------------------------
     # Prompts
     # ------------------------------------------------------------------
@@ -299,8 +322,9 @@ class Session:
 
         Supports area edits (``create-object``, ``edit-agent``, …) and
         read-only listings (``list``, ``objects``, ``agents``, ``effects``,
-        ``memory-modules``). Does not run ``step-compound`` or LLM turns —
-        use ``run_compound_turn`` for those.
+        ``memory-modules``). ``emit-event`` broadcasts room-wide events.
+        Does not run ``step-compound`` or LLM turns — use ``run_compound_turn``
+        for those.
         """
         line = line.strip()
         if not line:
@@ -322,6 +346,7 @@ class Session:
             "list": self._cmd_list,
             "effects": self._cmd_effects,
             "memory_modules": self._cmd_memory_modules,
+            "emit_event": self._cmd_emit_event,
         }
 
         handler = handlers.get(cmd)
@@ -440,3 +465,15 @@ class Session:
         from src.memory_modules.registry import format_memory_modules_list
 
         return CommandResult(ok=True, message=format_memory_modules_list())
+
+    def _cmd_emit_event(self, arg: str) -> CommandResult:
+        from src.area_event import parse_area_event_arg
+
+        text = parse_area_event_arg(arg)
+        if not text:
+            return CommandResult(
+                ok=False,
+                message='Usage: emit-event "Event description."',
+            )
+        result = self.emit_area_event(text)
+        return CommandResult(ok=result.ok, message=result.message)

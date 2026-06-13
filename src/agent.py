@@ -50,7 +50,8 @@ class Agent:
     """
     Third-person summary of this agent's most recent successful action.
 
-    Appended in other agents' passive vision (e.g. 'Goblin says: "Hello." (confidence: curious, Emotion: intrigued)').
+    Witnessed by other agents via memory modules (``broadcast_actor_turn``).
+    Not shown in passive vision — only static pdesc/desc appear there.
     Replaced on each new successful action; not shown in look or personality.
     """
 

@@ -6,9 +6,10 @@ A grid-based agent simulation framework designed around structured output and na
 
 **Documentation:**
 
+- [V0.3.2 changelog](docs/v0.3.2-changelog.md) — GM area events, appearance tokens (planned)
 - [V0.3.1 changelog](docs/v0.3.1-changelog.md) — **realm-studio** web app (0.3.1a–f) ✅
 - [V0.3.0 changelog](docs/v0.3.0-changelog.md) — engine refactor (0.3.0a–e)
-- [Roadmap](docs/ROADMAP.md) — version plans (V0.3.0 ✅ engine; V0.3.1 ✅ web example)
+- [Roadmap](docs/ROADMAP.md) — version plans (V0.3.0 ✅ engine; V0.3.1 ✅ web example; V0.3.2 planned)
 - [V0.2.5 changelog](docs/v0.2.5-changelog.md) — memory / prompt slices (0.2.5a–g)
 - [Long-term goals](LONG_TERM_GOALS.md) — aspirational features
 - [V0 implementation checklist](docs/v0-implementation-readiness-checklist.md) — V0 historical design reference

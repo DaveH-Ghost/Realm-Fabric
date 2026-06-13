@@ -101,7 +101,7 @@ def test_per_agent_turn_numbers_when_alternating():
     assert [t.turn_number for t in goblin.memory.turns] == [1]
 
 
-def test_speak_visible_in_other_agent_passive_vision():
+def test_speak_visible_in_observer_memory_not_passive_vision():
     area = create_initial_area()
     explorer = area.get_agent()
     create_agent_from_args(
@@ -119,7 +119,10 @@ def test_speak_visible_in_other_agent_passive_vision():
     )
 
     vision = build_passive_vision(explorer, area)
-    assert 'Goblin says: "Hello, Explorer!"' in vision
+    assert 'Goblin says: "Hello, Explorer!"' not in vision
+    assert "Goblin (agent_goblin_01), (0, 3) - [?] A goblin." in vision
+    memory = explorer.memory.render_prompt_block(explorer, area)
+    assert 'Goblin says: "Hello, Explorer!"' in memory
 
 
 def test_passive_result_includes_confidence_and_emotion():
@@ -141,7 +144,7 @@ def test_passive_result_includes_confidence_and_emotion():
     expected = 'Goblin says: "Hello." (confidence: curious, Emotion: amused)'
     assert goblin.passive_result == expected
     vision = build_passive_vision(explorer, area)
-    assert expected in vision
+    assert expected not in vision
 
 
 def test_failed_move_does_not_update_passive_result():
@@ -168,7 +171,7 @@ def test_failed_move_does_not_update_passive_result():
 
     assert goblin.passive_result == 'Goblin says: "Hi."'
     vision = build_passive_vision(explorer, area)
-    assert 'Goblin says: "Hi."' in vision
+    assert 'Goblin says: "Hi."' not in vision
     assert "moves to" not in vision
 
 

@@ -62,6 +62,7 @@ class ManualStepper(cmd.Cmd):
         "- 'list' / 'objects' / 'agents' / 'effects' : list area entities (no turn)\n"
         "- 'create-object' / 'edit-object' / 'delete-object' : edit objects (see 'effects')\n"
         "- 'create-agent' / 'edit-agent' / 'delete-agent' : edit agents (see 'memory-modules')\n"
+        "- 'emit-event \"...\"' : room-wide event all agents perceive (no turn)\n"
         "- 'prompt' : show the full prompt that would be sent to the LLM\n"
         "- 'fewshots on/off' : toggle few-shot examples in prompts (off by default)\n"
         "Sign updates: edit-object obj_sign_01 desc \"new text\" (pdesc for glance text)\n"
@@ -193,6 +194,10 @@ class ManualStepper(cmd.Cmd):
     def do_create_object(self, arg):
         """Create a new object in the area."""
         self._print_command(f"create-object {arg}")
+
+    def do_emit_event(self, arg):
+        """Broadcast a room-wide event to all agents (no turn consumed)."""
+        self._print_command(f"emit-event {arg}")
 
     def do_edit_object(self, arg):
         """Edit an existing object by id."""

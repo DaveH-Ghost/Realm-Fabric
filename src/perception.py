@@ -63,17 +63,12 @@ def format_agent_vision_desc(other: Agent, memory: Memory) -> str:
     """
     Return the description fragment for another agent in passive vision.
 
-    Static pdesc/desc follow object [?] rules. passive_result (last successful
-    action) is always appended so other agents can see recent speech and movement.
+    Static pdesc/desc only ([?] rules). Observable actions (``passive_result``)
+    are ingested into memory modules, not repeated here.
     """
-    fragment = format_vision_desc(
+    return format_vision_desc(
         memory, other.id, other.passive_description, other.description
     )
-    if other.passive_result:
-        if fragment:
-            return f"{fragment} {other.passive_result}"
-        return other.passive_result
-    return fragment
 
 
 def build_passive_vision(agent: Agent, area: Area) -> str:
