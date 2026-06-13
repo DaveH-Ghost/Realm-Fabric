@@ -9,7 +9,11 @@
 <body>
   <header>
     <h1>realm-studio</h1>
-    <p class="subtitle">V0.3.1b — area grid</p>
+    <p class="subtitle">V0.3.1c — right-click to edit</p>
+    <label class="active-agent-label">
+      Active
+      <select id="active-agent-select" aria-label="Active agent"></select>
+    </label>
     <button type="button" id="refresh">Refresh</button>
     <span id="status" aria-live="polite"></span>
   </header>
@@ -26,6 +30,20 @@
       </details>
     </aside>
   </main>
-  <script src="/static/app.js"></script>
+
+  <div id="context-menu" class="context-menu hidden" role="menu"></div>
+
+  <div id="modal-backdrop" class="modal-backdrop hidden">
+    <div class="modal" role="dialog" aria-modal="true">
+      <h2 id="modal-title" class="modal-heading"></h2>
+      <form id="modal-form"></form>
+      <p id="modal-error" class="modal-error" aria-live="polite"></p>
+      <button type="button" id="modal-cancel" class="modal-cancel">Cancel</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden" role="status"></div>
+
+  <script type="module" src="/static/app.js"></script>
 </body>
 </html>

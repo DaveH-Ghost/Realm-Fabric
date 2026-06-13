@@ -1,11 +1,22 @@
 /**
- * realm-studio frontend — grid render from Session.snapshot() (V0.3.1b).
+ * realm-studio frontend — grid + context menus (V0.3.1b/c).
  */
+
+import { getState } from "./api.js";
+import {
+  bindActiveAgentSelect,
+  bindGridContextMenu,
+  initUi,
+  renderActiveAgentSelect,
+} from "./ui.js";
 
 const statusEl = document.getElementById("status");
 const gridEl = document.getElementById("grid");
 const snapshotEl = document.getElementById("snapshot");
 const sessionMetaEl = document.getElementById("session-meta");
+const activeAgentSelect = document.getElementById("active-agent-select");
+
+let lastSnapshot = null;
 
 function posKey(x, y) {
   return `${x},${y}`;
@@ -103,19 +114,17 @@ function escapeHtml(text) {
 }
 
 function renderState(data) {
+  lastSnapshot = data;
   renderGrid(data);
   renderSessionMeta(data);
+  renderActiveAgentSelect(activeAgentSelect, data);
   snapshotEl.textContent = JSON.stringify(data, null, 2);
 }
 
 async function fetchState() {
   statusEl.textContent = "Fetching…";
   try {
-    const res = await fetch("/api/state");
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
-    const data = await res.json();
+    const data = await getState();
     renderState(data);
     const active = data.agents.find((a) => a.id === data.active_agent_id);
     statusEl.textContent = `Turn ${data.session_turn} — ${active ? active.name : data.active_agent_id}`;
@@ -125,6 +134,13 @@ async function fetchState() {
     statusEl.textContent = "Error";
   }
 }
+
+initUi({
+  getSnapshotFn: () => lastSnapshot,
+  onStateChangedFn: fetchState,
+});
+bindGridContextMenu(gridEl);
+bindActiveAgentSelect(activeAgentSelect, fetchState);
 
 document.getElementById("refresh").addEventListener("click", fetchState);
 fetchState();

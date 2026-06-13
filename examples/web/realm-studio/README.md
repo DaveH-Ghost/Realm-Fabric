@@ -4,7 +4,7 @@ Example web app for [Realm-Fabric](https://github.com/) — wraps the engine `Se
 
 **Location:** `examples/web/realm-studio` in the Realm-Fabric repo.
 
-**Status:** **0.3.1b** — grid UI from snapshot; right-click editing in 0.3.1c.
+**Status:** **0.3.1c** — grid UI + right-click create/edit/delete and active-agent switch.
 
 ## Prerequisites
 
@@ -39,14 +39,26 @@ Alternative:
 uv run uvicorn backend.app:app --host 127.0.0.1 --port 8765 --reload
 ```
 
-## API (0.3.1a)
+## UI (0.3.1b–c)
+
+- **Grid** — agents (green) and objects (purple) at snapshot positions; active agent marked with ★
+- **Right-click** empty tile → create object or agent; right-click chip → edit, delete, or **Play as** (agents)
+- **Stacked tiles** — manage menu lists entities on the cell
+- **Toolbar** — active-agent dropdown (same as Play as; no turn consumed)
+- **Refresh** — manual re-fetch; successful edits auto-refresh
+
+**Note:** `realm-studio` and the terminal `realm` CLI use separate in-memory sessions — CLI edits do not appear in the browser.
+
+## API
 
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/health` | `{ "ok": true }` |
-| `GET` | `/api/state` | Engine `Session.snapshot()` — grid, agents, objects, passive vision |
+| `GET` | `/api/state` | Engine `Session.snapshot()` |
+| `POST` | `/api/command` | `{ "line": "create-object ..." }` → `run_command` |
+| `POST` | `/api/active-agent` | `{ "name_or_id": "Explorer" }` → `set_active_agent` |
 
-LLM turns and area-edit commands arrive in **0.3.1c** / **0.3.1d**.
+LLM turns arrive in **0.3.1d** (`POST /api/turn`).
 
 ## Tests
 
@@ -58,7 +70,7 @@ Uses FastAPI `TestClient` — no API key or running server required.
 
 ## Environment
 
-**0.3.1a** does not call the LLM. For future slices, copy `.env` with `OPENROUTER_API_KEY` to the repo root or this folder as documented in 0.3.1d.
+**0.3.1c** does not call the LLM. For **0.3.1d**, copy `.env` with `OPENROUTER_API_KEY` to the repo root or this folder.
 
 ## Dev: test stacked objects (temporary)
 
@@ -69,4 +81,4 @@ $env:REALM_STUDIO_DEV_STACK = "1"
 uv run realm-studio
 ```
 
-Unset the variable (or omit it) for the normal demo room. Removed when the UI can create objects (**0.3.1c**).
+Unset the variable (or omit it) for the normal demo room.

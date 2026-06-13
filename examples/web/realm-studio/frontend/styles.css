@@ -195,3 +195,143 @@ button:hover {
   max-height: 40vh;
   color: #a8a8b8;
 }
+
+.active-agent-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #9a9aa8;
+}
+
+.active-agent-label select {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #2a2a32;
+  color: inherit;
+  max-width: 14rem;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 11rem;
+  padding: 0.25rem 0;
+  background: #2a2a34;
+  border: 1px solid #484858;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+.context-menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.context-menu-item:hover {
+  background: #3a3a48;
+}
+
+.context-menu-sep {
+  height: 1px;
+  margin: 0.25rem 0;
+  background: #484858;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 1rem;
+}
+
+.modal {
+  width: min(100%, 26rem);
+  padding: 1rem 1.25rem;
+  background: #222228;
+  border: 1px solid #484858;
+  border-radius: 8px;
+}
+
+.modal-heading {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.65rem;
+  font-size: 0.85rem;
+}
+
+.modal-field span {
+  color: #b8b8c8;
+}
+
+.modal-field input,
+.modal-field textarea {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #1a1a1e;
+  color: inherit;
+  font: inherit;
+}
+
+.modal-field textarea {
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.modal-error {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: #e87878;
+  min-height: 1.2em;
+}
+
+.modal-cancel {
+  margin-top: 0.5rem;
+}
+
+.toast {
+  position: fixed;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  z-index: 1200;
+  max-width: min(24rem, calc(100vw - 2rem));
+  padding: 0.65rem 1rem;
+  background: #2d4a3e;
+  border: 1px solid #3d6a54;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.toast.toast-error {
+  background: #4a2d2d;
+  border-color: #6a3d3d;
+}

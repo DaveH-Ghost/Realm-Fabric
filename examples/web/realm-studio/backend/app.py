@@ -1,5 +1,5 @@
 """
-realm-studio FastAPI application (V0.3.1a).
+realm-studio FastAPI application (V0.3.1a+).
 
 Exposes engine state via ``Session.snapshot()`` for the web frontend.
 """
@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from backend.schemas import ActiveAgentRequest, CommandRequest
 from backend.session_store import get_session_store
 
 _FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
@@ -46,6 +47,18 @@ def create_app() -> FastAPI:
     def get_state() -> dict:
         """JSON snapshot of the live session (grid, agents, objects, passive vision)."""
         return get_session_store().session.snapshot()
+
+    @app.post("/api/command")
+    def post_command(body: CommandRequest) -> dict[str, object]:
+        """Run a stepper-style command (create/edit/delete, listings)."""
+        result = get_session_store().session.run_command(body.line)
+        return {"ok": result.ok, "message": result.message}
+
+    @app.post("/api/active-agent")
+    def post_active_agent(body: ActiveAgentRequest) -> dict[str, object]:
+        """Change the active agent without consuming a turn."""
+        result = get_session_store().session.set_active_agent(body.name_or_id)
+        return {"ok": result.ok, "message": result.message}
 
     @app.get("/")
     def index() -> FileResponse:
