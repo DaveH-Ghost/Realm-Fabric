@@ -64,6 +64,16 @@ button:hover {
   cursor: wait;
 }
 
+.emit-event-btn {
+  border-color: #6a5a8a;
+  background: #3a3548;
+  color: #e0d8f8;
+}
+
+.emit-event-btn:hover:not(:disabled) {
+  background: #4a4558;
+}
+
 #status {
   font-size: 0.85rem;
   color: #7ec87e;
@@ -264,6 +274,36 @@ button:hover {
 
 .turn-log-steps li {
   margin-bottom: 0.15rem;
+}
+
+.recent-events {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.recent-event-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.45rem 0.5rem;
+  background: #1a1a20;
+  border: 1px solid #333;
+  border-radius: 5px;
+  font-size: 0.78rem;
+}
+
+.recent-event-turn {
+  color: #9a9aa8;
+  font-size: 0.72rem;
+}
+
+.recent-event-text {
+  color: #e8e8ec;
+  line-height: 1.4;
 }
 
 .session-meta {

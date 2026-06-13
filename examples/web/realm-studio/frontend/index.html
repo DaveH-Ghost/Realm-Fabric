@@ -9,11 +9,12 @@
 <body>
   <header>
     <h1>realm-studio</h1>
-    <p class="subtitle">V0.3.1 — realm-studio</p>
+    <p class="subtitle">V0.3.2b — emit area events</p>
     <label class="active-agent-label">
       Active
       <select id="active-agent-select" aria-label="Active agent"></select>
     </label>
+    <button type="button" id="emit-event" class="emit-event-btn">Emit event…</button>
     <button type="button" id="run-turn" class="run-turn-btn">Run turn ▶</button>
     <button type="button" id="refresh">Refresh</button>
     <span id="status" aria-live="polite"></span>
@@ -30,6 +31,12 @@
         <h2>Passive vision</h2>
         <p id="passive-vision-empty" class="panel-empty">No vision text for the active agent.</p>
         <pre id="passive-vision" class="panel-text hidden"></pre>
+      </section>
+
+      <section class="sidebar-section" aria-label="Recent area events">
+        <h2>Recent events</h2>
+        <p id="recent-events-empty" class="panel-empty">No GM events yet — use Emit event…</p>
+        <ol id="recent-events" class="recent-events"></ol>
       </section>
 
       <section class="sidebar-section" aria-label="Turn log">

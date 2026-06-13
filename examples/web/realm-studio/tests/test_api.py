@@ -1,4 +1,4 @@
-"""realm-studio API tests (V0.3.1)."""
+"""realm-studio API tests (V0.3.1–0.3.2b)."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -45,6 +45,40 @@ def test_state_returns_snapshot_shape(client):
     object_ids = {o["id"] for o in data["objects"]}
     assert "obj_ball_01" in object_ids
     assert "obj_sign_01" in object_ids
+    assert data["recent_events"] == []
+
+
+def test_post_event_success(client):
+    response = client.post(
+        "/api/event",
+        json={"text": "Thunder rumbles overhead."},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert "Thunder" in data["message"]
+    assert data["snapshot"]["recent_events"] == [
+        {"session_turn": 0, "text": "Thunder rumbles overhead."}
+    ]
+    assert data["snapshot"]["session_turn"] == 0
+    assert "Thunder rumbles overhead." not in data["snapshot"]["passive_vision"]
+
+
+def test_post_event_empty_rejected(client):
+    response = client.post("/api/event", json={"text": ""})
+    assert response.status_code == 422
+
+
+def test_post_event_whitespace_fails(client):
+    response = client.post("/api/event", json={"text": "   "})
+    assert response.status_code == 200
+    assert response.json()["ok"] is False
+
+
+def test_post_event_via_state(client):
+    client.post("/api/event", json={"text": "A door slams."})
+    state = client.get("/api/state").json()
+    assert state["recent_events"][-1]["text"] == "A door slams."
 
 
 def test_index_page(client):
@@ -55,8 +89,8 @@ def test_index_page(client):
     assert 'id="context-menu"' in response.text
     assert 'id="active-agent-select"' in response.text
     assert 'id="run-turn"' in response.text
-    assert 'id="passive-vision"' in response.text
-    assert 'id="turn-log"' in response.text
+    assert 'id="emit-event"' in response.text
+    assert 'id="recent-events"' in response.text
 
 
 def _fake_compound_response(_prompt):

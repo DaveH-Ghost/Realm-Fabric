@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from backend.schemas import ActiveAgentRequest, CommandRequest, TurnRequest
+from backend.schemas import ActiveAgentRequest, CommandRequest, EventRequest, TurnRequest
 from backend.session_store import get_session_store
 from backend.turn_runner import run_llm_turn
 
@@ -24,7 +24,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="realm-studio",
         description="Example web UI for Realm-Fabric",
-        version="0.3.1",
+        version="0.3.2",
     )
 
     app.add_middleware(
@@ -83,6 +83,16 @@ def create_app() -> FastAPI:
             "length": len(prompt),
             "include_examples": session.include_examples,
         }
+
+    @app.post("/api/event")
+    def post_event(body: EventRequest) -> dict[str, object]:
+        """Broadcast a room-wide GM/narrator event (no turn consumed)."""
+        session = get_session_store().session
+        result = session.emit_area_event(body.text)
+        payload: dict[str, object] = {"ok": result.ok, "message": result.message}
+        if result.ok:
+            payload["snapshot"] = session.snapshot()
+        return payload
 
     @app.get("/")
     def index() -> FileResponse:

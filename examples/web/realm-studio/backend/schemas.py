@@ -14,3 +14,7 @@ class ActiveAgentRequest(BaseModel):
 class TurnRequest(BaseModel):
     agent_id: str | None = None
     include_examples: bool | None = None
+
+
+class EventRequest(BaseModel):
+    text: str = Field(min_length=1)

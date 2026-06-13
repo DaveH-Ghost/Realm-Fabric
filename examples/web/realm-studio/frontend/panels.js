@@ -1,5 +1,5 @@
 /**
- * Sidebar panels: passive vision, turn log, debug prompt (V0.3.1e).
+ * Sidebar panels: passive vision, turn log, recent events (V0.3.1e–0.3.2b).
  */
 
 const MAX_LOG_ENTRIES = 50;
@@ -18,6 +18,29 @@ export function renderPassiveVision(snapshot, visionEl, emptyEl) {
   visionEl.textContent = text;
   visionEl.classList.remove("hidden");
   emptyEl.classList.add("hidden");
+}
+
+export function renderRecentEvents(snapshot, listEl, emptyEl) {
+  const events = snapshot?.recent_events;
+  listEl.innerHTML = "";
+  if (!Array.isArray(events) || events.length === 0) {
+    emptyEl.classList.remove("hidden");
+    return;
+  }
+  emptyEl.classList.add("hidden");
+  for (const event of [...events].reverse()) {
+    const item = document.createElement("li");
+    item.className = "recent-event-entry";
+    const turn = document.createElement("span");
+    turn.className = "recent-event-turn";
+    turn.textContent = `Turn ${event.session_turn}`;
+    const text = document.createElement("span");
+    text.className = "recent-event-text";
+    text.textContent = event.text;
+    item.appendChild(turn);
+    item.appendChild(text);
+    listEl.appendChild(item);
+  }
 }
 
 export function appendTurnLogEntry({ sessionTurn, agentName, message, steps }) {

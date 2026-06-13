@@ -4,7 +4,7 @@ Example web app for [Realm-Fabric](https://github.com/) — wraps the engine `Se
 
 **Location:** `examples/web/realm-studio` in the Realm-Fabric repo.
 
-**Status:** **V0.3.1** complete — grid UI, right-click editing, LLM turns, passive vision, and turn log. Monorepo tag: **`v0.3.1`** (example milestone; engine stays `0.3.0`).
+**Status:** **V0.3.2b** in progress — adds **Emit event…** (GM area events) on top of V0.3.1.
 
 ## Quick start
 
@@ -15,7 +15,7 @@ copy ..\..\..\.env.example .env   # set OPENROUTER_API_KEY for Run turn
 uv run realm-studio
 ```
 
-Open [http://127.0.0.1:8765](http://127.0.0.1:8765) (opens automatically). Right-click the grid to edit; use **Run turn ▶** for the active agent.
+Open [http://127.0.0.1:8765](http://127.0.0.1:8765) (opens automatically). Right-click the grid to edit; **Emit event…** for GM narration; **Run turn ▶** for the active agent.
 
 ## Prerequisites
 
@@ -47,8 +47,8 @@ uv run uvicorn backend.app:app --host 127.0.0.1 --port 8765 --reload
 - **Grid** — agents (green) and objects (purple); active agent marked with ★
 - **Right-click** — create/edit/delete on tiles and entity chips; **Play as** for agents
 - **Stacked tiles** — manage menu when multiple entities share a cell
-- **Toolbar** — active-agent dropdown; **Run turn ▶**
-- **Sidebar** — session meta, passive vision, turn log, debug prompt viewer
+- **Toolbar** — active-agent dropdown; **Emit event…**; **Run turn ▶**
+- **Sidebar** — session meta, passive vision, recent GM events, turn log
 - **Refresh** — manual re-fetch; edits and turns auto-refresh
 
 **Note:** `realm-studio` and the terminal `realm` CLI use **separate in-memory sessions** — CLI edits do not appear in the browser.
@@ -62,9 +62,10 @@ uv run uvicorn backend.app:app --host 127.0.0.1 --port 8765 --reload
 | `POST` | `/api/command` | `{ "line": "create-object ..." }` → `run_command` |
 | `POST` | `/api/active-agent` | `{ "name_or_id": "Explorer" }` → `set_active_agent` |
 | `POST` | `/api/turn` | LLM compound turn (optional `agent_id`, `include_examples`) |
+| `POST` | `/api/event` | `{ "text": "..." }` → `emit_area_event` (no turn consumed) |
 | `GET` | `/api/prompt` | Build compound prompt (debug) |
 
-See [v0.3.1-changelog.md](../../../docs/v0.3.1-changelog.md) for full HTTP contract.
+See [v0.3.2-changelog.md](../../../docs/v0.3.2-changelog.md) for V0.3.2 slices.
 
 ## Tests
 
@@ -72,7 +73,7 @@ See [v0.3.1-changelog.md](../../../docs/v0.3.1-changelog.md) for full HTTP contr
 uv run pytest
 ```
 
-13 smoke/integration tests via FastAPI `TestClient` (mocked LLM — no API key or running server).
+16 smoke/integration tests via FastAPI `TestClient` (mocked LLM — no API key or running server).
 
 From repo root, engine tests remain separate:
 

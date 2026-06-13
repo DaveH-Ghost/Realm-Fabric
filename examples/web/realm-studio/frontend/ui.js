@@ -9,6 +9,7 @@ import {
   buildEditObject,
   postActiveAgent,
   postCommand,
+  postEvent,
 } from "./api.js";
 
 let menuEl;
@@ -230,7 +231,7 @@ function closeModal() {
   modalError.textContent = "";
 }
 
-function openModal(title, fields, onSubmit) {
+function openModal(title, fields, onSubmit, { submitLabel = "Save" } = {}) {
   modalTitle.textContent = title;
   modalForm.innerHTML = "";
   modalError.textContent = "";
@@ -266,7 +267,7 @@ function openModal(title, fields, onSubmit) {
   actions.className = "modal-actions";
   const submit = document.createElement("button");
   submit.type = "submit";
-  submit.textContent = "Save";
+  submit.textContent = submitLabel;
   actions.appendChild(submit);
   modalForm.appendChild(actions);
 
@@ -418,6 +419,33 @@ function openEditAgentModal(entity) {
     showToast(result.message, false);
     await onStateChanged();
   });
+}
+
+export function bindEmitEventButton(buttonEl) {
+  buttonEl.addEventListener("click", () => openEmitEventModal());
+}
+
+function openEmitEventModal() {
+  openModal(
+    "Emit area event",
+    [
+      {
+        name: "text",
+        label: "Event text (all agents will remember this)",
+        value: "Thunder rumbles overhead.",
+        type: "textarea",
+        rows: 3,
+        required: true,
+      },
+    ],
+    async (data) => {
+      const result = await postEvent(data.text);
+      if (!result.ok) throw new Error(result.message);
+      showToast(result.message, false);
+      await onStateChanged(result.snapshot);
+    },
+    { submitLabel: "Emit" },
+  );
 }
 
 export function bindActiveAgentSelect(selectEl, onChange) {

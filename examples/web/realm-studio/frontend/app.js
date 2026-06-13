@@ -1,5 +1,5 @@
 /**
- * realm-studio frontend — grid, edit menus, LLM turn, sidebar panels (V0.3.1b–e).
+ * realm-studio frontend — grid, edit menus, LLM turn, sidebar (V0.3.1b–0.3.2b).
  */
 
 import { getPrompt, getState, postTurn } from "./api.js";
@@ -8,11 +8,13 @@ import {
   bindPromptDebug,
   renderLastPrompt,
   renderPassiveVision,
+  renderRecentEvents,
   renderTurnLog,
   setLastPrompt,
 } from "./panels.js";
 import {
   bindActiveAgentSelect,
+  bindEmitEventButton,
   bindGridContextMenu,
   initUi,
   renderActiveAgentSelect,
@@ -25,6 +27,8 @@ const snapshotEl = document.getElementById("snapshot");
 const sessionMetaEl = document.getElementById("session-meta");
 const passiveVisionEl = document.getElementById("passive-vision");
 const passiveVisionEmptyEl = document.getElementById("passive-vision-empty");
+const recentEventsEl = document.getElementById("recent-events");
+const recentEventsEmptyEl = document.getElementById("recent-events-empty");
 const turnLogEl = document.getElementById("turn-log");
 const turnLogEmptyEl = document.getElementById("turn-log-empty");
 const lastPromptEl = document.getElementById("last-prompt");
@@ -32,6 +36,7 @@ const lastPromptEmptyEl = document.getElementById("last-prompt-empty");
 const promptDebugEl = document.getElementById("prompt-debug");
 const activeAgentSelect = document.getElementById("active-agent-select");
 const runTurnBtn = document.getElementById("run-turn");
+const emitEventBtn = document.getElementById("emit-event");
 
 let lastSnapshot = null;
 let turnInFlight = false;
@@ -133,6 +138,7 @@ function escapeHtml(text) {
 
 function renderSidebarPanels(data) {
   renderPassiveVision(data, passiveVisionEl, passiveVisionEmptyEl);
+  renderRecentEvents(data, recentEventsEl, recentEventsEmptyEl);
 }
 
 function renderState(data) {
@@ -211,12 +217,22 @@ async function runTurn() {
   }
 }
 
+async function refreshAfterMutation(snapshot) {
+  if (snapshot) {
+    renderState(snapshot);
+    updateStatusLine(snapshot);
+    return;
+  }
+  await fetchState();
+}
+
 initUi({
   getSnapshotFn: () => lastSnapshot,
-  onStateChangedFn: fetchState,
+  onStateChangedFn: refreshAfterMutation,
 });
 bindGridContextMenu(gridEl);
-bindActiveAgentSelect(activeAgentSelect, fetchState);
+bindActiveAgentSelect(activeAgentSelect, refreshAfterMutation);
+bindEmitEventButton(emitEventBtn);
 bindPromptDebug(promptDebugEl, lastPromptEl, lastPromptEmptyEl, () => getPrompt());
 
 document.getElementById("refresh").addEventListener("click", fetchState);
