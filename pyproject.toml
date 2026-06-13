@@ -1,7 +1,7 @@
 [project]
 name = "realm-fabric"
-version = "0.2.5"
-description = "Grid-based agent simulation framework for reliable structured LLM output (V0.2 — compound turns, coordinate move, object interact)"
+version = "0.3.0"
+description = "Grid-based LLM agent simulation engine — Session API, GameProfile prompts, compound turns, pluggable memory"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -29,7 +29,10 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src"]
+packages = ["src", "realm_fabric"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"profiles" = "profiles"
 
 [tool.uv]
 package = true

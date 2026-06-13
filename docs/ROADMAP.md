@@ -174,15 +174,15 @@ V0.2 compound turns and object interact should log in a shape that V0.2.5 can in
 
 See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e).
 
-### V0.3.0 — Engine — ⬜ In progress
+### V0.3.0 — Engine — ✅ Implemented (`0.3.0` in pyproject; tag **`v0.3.0`** pending)
 
-- `**Session`** — single entry point for turns, area-edit commands, active agent, prompts (holds one `**Area**` today)
-- **JSON snapshot** — web-ready area state (agents, objects, grid; derived passive vision for active agent)
-- `**GameProfile`** — prompt templates + default area factory (SillyTavern-style customization without forking sim code); `**AgentCompoundTurn` only** — swappable schemas deferred to **V0.4**
-- **CLI refactor** — `ManualStepper` delegates to `Session` (reference client) — ✅ **0.3.0d**
-- **Public package API** — importable engine for downstream projects
-- `**Area`** — configurable `GridBounds` + `area_description` (`create_area`, `create_initial_area`)
-- **Tests** — `tests/test_session.py`, `tests/test_area_config.py`; same pytest suite, no separate “web test” harness
+- **`Session`** — single entry point for turns, area-edit commands, active agent, prompts (one **`Area`** per session)
+- **JSON snapshot** — web-ready area state
+- **`GameProfile`** — prompt templates + default area factory; swappable schemas → **V0.4**
+- **CLI refactor** — `ManualStepper` delegates to `Session`
+- **`realm_fabric` package** — public imports for downstream projects
+- **`Area`** — configurable `GridBounds` + `area_description`
+- **Tests** — session, snapshot, profile, packaging, CLI parity (274 tests)
 
 ### V0.3.1 — Example web project — ⬜ Planned (separate tag)
 

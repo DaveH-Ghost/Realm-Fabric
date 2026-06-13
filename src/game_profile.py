@@ -20,7 +20,6 @@ from src.llm.schemas import AgentCompoundTurn
 from src.prompt_template import PromptTemplate
 
 _PROFILES_ROOT = Path(__file__).resolve().parent.parent / "profiles"
-_DEFAULT_COMPOUND_DIR = _PROFILES_ROOT / "default_compound"
 
 _SCHEMA_REGISTRY: dict[str, Type[AgentCompoundTurn]] = {
     "AgentCompoundTurn": AgentCompoundTurn,
@@ -100,9 +99,42 @@ def _load_profile_dir(
 
 def default_compound_profile() -> GameProfile:
     """Reference profile — same compound prompt behavior as pre-0.3.0c."""
+    return load_profile("default_compound")
+
+
+_BUILTIN_PROFILE_IDS = frozenset({"default_compound"})
+
+
+def load_profile(name_or_path: str | Path) -> GameProfile:
+    """
+    Load a ``GameProfile`` by built-in id or directory path.
+
+    Built-in ids resolve under ``profiles/`` at the project/package root.
+    Directory paths must contain ``template.txt`` (and optional ``few_shots.txt``).
+    """
+    if isinstance(name_or_path, Path):
+        directory = name_or_path
+        profile_id = directory.name
+    else:
+        raw = name_or_path.strip()
+        path_candidate = Path(raw)
+        if path_candidate.is_dir():
+            directory = path_candidate.resolve()
+            profile_id = directory.name
+        elif raw in _BUILTIN_PROFILE_IDS or (_PROFILES_ROOT / raw).is_dir():
+            profile_id = raw
+            directory = (_PROFILES_ROOT / profile_id).resolve()
+        else:
+            raise ValueError(f"Unknown profile: {name_or_path!r}")
+
+    if not (directory / "template.txt").is_file():
+        raise ValueError(
+            f"Profile directory {directory} is missing template.txt"
+        )
+
     return _load_profile_dir(
-        "default_compound",
-        _DEFAULT_COMPOUND_DIR,
+        profile_id,
+        directory,
         schema_id="AgentCompoundTurn",
         create_area=create_initial_area,
     )

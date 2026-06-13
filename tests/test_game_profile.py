@@ -1,7 +1,7 @@
 """GameProfile and prompt templates (V0.3.0c)."""
 
 from src.area import create_initial_area
-from src.game_profile import GameProfile, default_compound_profile
+from src.game_profile import GameProfile, default_compound_profile, load_profile
 from src.llm.prompt import build_compound_prompt
 from src.llm.prompt_context import build_prompt_context
 from src.llm.schemas import AgentCompoundTurn
@@ -86,6 +86,23 @@ def test_custom_minimal_template_injects_context():
     assert "You are at (1, 1)" in prompt
     assert "move_target" in prompt
     assert "---" in prompt
+
+
+def test_load_profile_by_path():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    profile_dir = root / "profiles" / "default_compound"
+    profile = load_profile(profile_dir)
+    assert profile.profile_id == "default_compound"
+    assert profile.template.text.strip().startswith("{{character}}")
+
+
+def test_load_profile_unknown_raises():
+    import pytest
+
+    with pytest.raises(ValueError, match="Unknown profile"):
+        load_profile("not_a_real_profile_xyz")
 
 
 def test_prompt_template_rules_alias():

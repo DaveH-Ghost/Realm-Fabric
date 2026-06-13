@@ -2,18 +2,40 @@
 
 A grid-based agent simulation framework designed around structured output and narrative roleplay.
 
-**Current Status:** **V0.2.5** release-ready (`0.2.5` in `pyproject.toml`; tag **`v0.2.5`** pending) — single compound LLM call, pluggable memory modules (`recent_turns`, `salient_turns`, `rolling_summary`), Passive Vision–first prompt. Builds on **V0.2** (`v0.2.0`): coordinate move, compound turns, declarative object interact, and effect registry; and **V0.1** (`v0.1.0`): multi-agent passive vision, world editing, `passive_result`, agent `pdesc`/`desc`/`personality`.
+**Current Status:** **V0.3.0** engine (`0.3.0` in `pyproject.toml`; tag **`v0.3.0`** pending) — `Session` API, JSON snapshots, `GameProfile` prompt templates, CLI on Session, public `realm_fabric` package. Builds on **V0.2.5** (`v0.2.5`): compound LLM turns, pluggable memory, Passive Vision–first prompt.
 
 **Documentation:**
 
-- [V0.2 implementation checklist](docs/v0.2-implementation-readiness-checklist.md) — **authoritative V0.2 spec** (implemented; as-shipped reference)
-- [V0.1 implementation checklist](docs/v0.1-implementation-readiness-checklist.md) — design reference for shipped V0.1 behavior (partially superseded by V0.2)
-- [Roadmap](docs/ROADMAP.md) — version plans (V0.1 ✅, V0.2 ✅, V0.2.5 ✅, V0.3.0 engine planned)
-- [V0.2.5 changelog](docs/v0.2.5-changelog.md) — memory / prompt slices (0.2.5a–g) + release checklist
-- [V0.3.0 changelog](docs/v0.3.0-changelog.md) — engine refactor slices (0.3.0a–e); web example in 0.3.1
+- [V0.3.0 changelog](docs/v0.3.0-changelog.md) — engine refactor (0.3.0a–e); web example in **0.3.1**
+- [Roadmap](docs/ROADMAP.md) — version plans (V0.3.0 ✅ engine; V0.3.1 web example planned)
+- [V0.2.5 changelog](docs/v0.2.5-changelog.md) — memory / prompt slices (0.2.5a–g)
 - [Long-term goals](LONG_TERM_GOALS.md) — aspirational features
 - [V0 implementation checklist](docs/v0-implementation-readiness-checklist.md) — V0 historical design reference
-- [Schema design references](docs/schemas/) — `AgentTurn` (pre-V0.2); **`AgentNavigationTurn` / `AgentActionTurn`** (V0.2 — implemented in `src/llm/schemas.py`)
+- [Schema design references](docs/schemas/) — `AgentTurn` (pre-V0.2); compound turn schema in `src/llm/schemas.py`
+
+## Engine vs apps
+
+**Realm-Fabric is the engine** — grid sim, perception, compound turns, memory modules, and a stable library API. **Apps and games build on top** with their own prompts, UI, and scenarios.
+
+| Layer | What it is |
+|-------|------------|
+| **`realm_fabric` package** | Public API: `Session`, `GameProfile`, `load_profile`, `PromptContext`, `AgentCompoundTurn`, snapshots |
+| **`realm` CLI** | Reference client (`ManualStepper`) for manual testing — not required for library use |
+| **Your app (0.3.1+)** | e.g. a web UI (`realm-studio`) that wraps `Session` over HTTP; custom `GameProfile` templates |
+
+Quick start for a downstream project:
+
+```python
+from realm_fabric import Session, load_profile, AgentCompoundTurn
+
+session = Session.from_profile(load_profile("default_compound"))
+prompt = session.build_prompt()
+# ... call your LLM, then:
+result = session.run_compound_turn(AgentCompoundTurn(...))
+state = session.snapshot()
+```
+
+**V0.3.1** will ship an example web project on this API. See [ROADMAP](docs/ROADMAP.md).
 
 ## Running / Testing (without LLM)
 
@@ -260,7 +282,7 @@ That's the whole magic.
 
 ## Running tests
 
-Tests use [pytest](https://docs.pytest.org/) and run **without** an API key or network access (**269 tests**). They cover V0.1 perception/editing/multi-agent behavior plus V0.2 coordinate move, compound turns, object interact, memory modules, and rolling summary; V0.3 Session API, Area model, snapshots, and GameProfile templates.
+Tests use [pytest](https://docs.pytest.org/) and run **without** an API key or network access (**274 tests**). They cover V0.1 perception/editing/multi-agent behavior plus V0.2 coordinate move, compound turns, object interact, memory modules, and rolling summary; V0.3 Session API, Area model, snapshots, and GameProfile templates.
 
 ### Run all tests
 
@@ -293,7 +315,7 @@ uv run pytest -x
 | File | Focus |
 |------|--------|
 | `tests/test_schema.py` | `AgentCompoundTurn` Pydantic validation |
-| `tests/test_packaging.py` | `pyproject.toml` version format, `realm` console script |
+| `tests/test_packaging.py` | `pyproject.toml` version, `realm_fabric` public imports, wheel layout |
 | `tests/test_stepper.py` | ManualStepper intro, help, state, compound turn logging |
 | `tests/test_llm_client.py` | LLM parse errors (`ERR:INVALID_JSON`, etc.) |
 | `tests/test_coordinate_move.py` | Coordinate move parser, bounds, schema |
