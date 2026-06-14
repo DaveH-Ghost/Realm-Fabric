@@ -1,33 +1,40 @@
-"""Area snapshot / JSON serialization (V0.3.0b)."""
+"""Area snapshot / JSON serialization (V0.3.0b, V0.4.0c1 multi-area)."""
 
 import json
 
 from src.llm.schemas import AgentCompoundTurn
 from src.session import Session
-from src.snapshot import build_area_snapshot, serialize_agent
+from src.snapshot import DEFAULT_AREA_ID, build_area_snapshot, build_session_snapshot, serialize_agent
+
+
+def _room(snap: dict) -> dict:
+    return snap["areas"][DEFAULT_AREA_ID]
 
 
 def test_snapshot_default_shape():
     session = Session.from_default()
     snap = session.snapshot()
 
-    assert snap["grid"] == {"min_x": 0, "max_x": 4, "min_y": 0, "max_y": 4}
-    assert "hardwood floor" in snap["area_description"].lower()
+    room = _room(snap)
+    assert room["grid"] == {"min_x": 0, "max_x": 4, "min_y": 0, "max_y": 4}
+    assert "hardwood floor" in room["area_description"].lower()
     assert snap["session_turn"] == 0
     assert snap["active_agent_id"] == "agent_01"
+    assert snap["active_area_id"] == DEFAULT_AREA_ID
     assert len(snap["agents"]) == 1
-    assert len(snap["objects"]) == 2
-    assert snap["recent_events"] == []
+    assert len(room["objects"]) == 2
+    assert room["recent_events"] == []
 
     explorer = snap["agents"][0]
     assert explorer["id"] == "agent_01"
     assert explorer["name"] == "Explorer"
+    assert explorer["area_id"] == DEFAULT_AREA_ID
     assert explorer["position"] == [1, 1]
     assert explorer["memory_module"] == "recent_turns"
     assert explorer["appearance"] == "tokens/explorer.svg"
     assert explorer["move_speed"] is None
 
-    ball = next(o for o in snap["objects"] if o["id"] == "obj_ball_01")
+    ball = next(o for o in room["objects"] if o["id"] == "obj_ball_01")
     assert ball["position"] == [2, 2]
     assert ball["appearance"] == "tokens/ball.svg"
     assert "kick" in ball["actions"]
@@ -56,7 +63,7 @@ def test_snapshot_include_private_adds_personality():
 
 def test_snapshot_include_private_adds_object_descriptions():
     session = Session.from_default()
-    objects = session.snapshot(include_private=True)["objects"]
+    objects = _room(session.snapshot(include_private=True))["objects"]
     ball = next(o for o in objects if o["id"] == "obj_ball_01")
     sign = next(o for o in objects if o["id"] == "obj_sign_01")
     assert "passive_description" in ball
@@ -103,7 +110,7 @@ def test_snapshot_after_create_object():
         'result "You ate it." passive "{actor} ate it."'
     )
     snap = session.snapshot()
-    names = {o["name"] for o in snap["objects"]}
+    names = {o["name"] for o in _room(snap)["objects"]}
     assert "Cookie" in names
 
 
@@ -131,6 +138,13 @@ def test_build_area_snapshot_standalone():
     assert snap["agents"][0]["id"] == "agent_01"
 
 
+def test_build_session_snapshot_from_session():
+    session = Session.from_default()
+    snap = build_session_snapshot(session)
+    assert snap["active_area_id"] == DEFAULT_AREA_ID
+    assert DEFAULT_AREA_ID in snap["areas"]
+
+
 def test_snapshot_appearance_round_trip():
     session = Session.from_default()
     session.run_command('edit-agent agent_01 appearance "tokens/explorer.png"')
@@ -140,7 +154,7 @@ def test_snapshot_appearance_round_trip():
     snap = session.snapshot()
     explorer = snap["agents"][0]
     assert explorer["appearance"] == "tokens/explorer.png"
-    crate = next(o for o in snap["objects"] if o["name"] == "Crate")
+    crate = next(o for o in _room(snap)["objects"] if o["name"] == "Crate")
     assert crate["appearance"] == "tokens/crate.png"
 
 
@@ -157,3 +171,10 @@ def test_serialize_agent_public_fields():
         "appearance",
         "move_speed",
     }
+
+
+def test_serialize_agent_includes_area_id_when_set():
+    session = Session.from_default()
+    agent = session.get_active_agent()
+    data = serialize_agent(agent, area_id=DEFAULT_AREA_ID)
+    assert data["area_id"] == DEFAULT_AREA_ID

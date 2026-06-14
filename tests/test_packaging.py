@@ -45,6 +45,8 @@ def test_realm_fabric_public_imports():
     assert rf.load_profile is not None
     assert rf.default_compound_profile is not None
     assert rf.build_area_snapshot is not None
+    assert rf.build_session_snapshot is not None
+    assert rf.DEFAULT_AREA_ID == "room"
     assert "Session" in rf.__all__
     assert "load_profile" in rf.__all__
 

@@ -6,6 +6,8 @@ V0.3.0a — runtime session API for Realm-Fabric.
 ``Session`` owns ``Area`` state, the active agent, and orchestrates compound
 turns and stepper-style edit commands. Intended as the single entry point for
 CLI, web backends, and other clients.
+
+V0.4.0c1 — multi-area sessions: ``areas``, ``agent_area``, ``active_area_id``.
 """
 
 from __future__ import annotations
@@ -31,6 +33,20 @@ from src.area_edit import (
     format_full_list,
     format_objects_list,
 )
+from src.session_area_edit import (
+    create_area_from_args,
+    delete_area_by_id,
+    edit_area_from_args,
+)
+from src.snapshot import DEFAULT_AREA_ID
+
+__all__ = [
+    "CommandResult",
+    "DEFAULT_AREA_ID",
+    "Session",
+    "SessionResult",
+    "TurnResult",
+]
 
 
 @dataclass(frozen=True)
@@ -68,26 +84,60 @@ class Session:
 
     def __init__(
         self,
-        area: Area,
+        area: Area | None = None,
         *,
+        areas: dict[str, Area] | None = None,
+        active_area_id: str | None = None,
+        agent_area: dict[str, str] | None = None,
         profile: GameProfile | None = None,
         active_agent_id: Optional[str] = None,
         include_examples: bool = False,
     ) -> None:
         self.profile = profile or default_compound_profile()
-        self.area = area
         self.include_examples = include_examples
         self.session_turn = 0
         self._agents_by_name: dict[str, Agent] = {}
+
+        if areas is not None:
+            if not areas:
+                raise ValueError("areas must not be empty")
+            self.areas = dict(areas)
+        elif area is not None:
+            resolved_area_id = active_area_id or DEFAULT_AREA_ID
+            self.areas = {resolved_area_id: area}
+        else:
+            raise ValueError("Session requires area or areas")
+
+        if active_area_id is None:
+            self.active_area_id = next(iter(self.areas))
+        else:
+            if active_area_id not in self.areas:
+                raise ValueError(f"Unknown active_area_id: {active_area_id!r}")
+            self.active_area_id = active_area_id
+
+        if agent_area is None:
+            self.agent_area: dict[str, str] = {}
+            for area_id, area_obj in self.areas.items():
+                for agent in area_obj.agents:
+                    self.agent_area[agent.id] = area_id
+        else:
+            self.agent_area = dict(agent_area)
+
         self._rebuild_agent_name_index()
         if active_agent_id is None:
-            if not area.agents:
-                raise ValueError("Area has no agents")
-            active_agent_id = area.agents[0].id
+            first_area = next(iter(self.areas.values()))
+            if not first_area.agents:
+                raise ValueError("Session has no agents")
+            active_agent_id = first_area.agents[0].id
         agent = self.get_agent(active_agent_id)
         if agent is None:
             raise ValueError(f"Unknown active_agent_id: {active_agent_id!r}")
         self.active_agent_id = agent.id
+
+    @property
+    def area(self) -> Area:
+        """Active area (GM edit / emit scope). Backward compat with V0.3."""
+        return self.areas[self.active_area_id]
 
     @classmethod
     def from_default(
@@ -119,8 +169,15 @@ class Session:
         )
 
     # ------------------------------------------------------------------
-    # Agent resolution
+    # Area / agent resolution
     # ------------------------------------------------------------------
+
+    def get_area_for_agent(self, agent: Agent) -> Area:
+        """Return the area where ``agent`` currently lives."""
+        area_id = self.agent_area.get(agent.id)
+        if area_id is None:
+            raise RuntimeError(f"Agent {agent.id!r} has no area mapping")
+        return self.areas[area_id]
 
     def get_active_agent(self) -> Agent:
         agent = self.get_agent(self.active_agent_id)
@@ -134,7 +191,11 @@ class Session:
         if not key:
             return None
         if key.startswith("agent_"):
-            return self.area.get_agent_by_id(key)
+            for area in self.areas.values():
+                agent = area.get_agent_by_id(key)
+                if agent is not None:
+                    return agent
+            return None
         name_key = key.lower()
         agent = self._agents_by_name.get(name_key)
         if agent is not None:
@@ -151,14 +212,75 @@ class Session:
                 message=f"Agent {name_or_id!r} not found.",
             )
         self.active_agent_id = agent.id
+        area_id = self.agent_area.get(agent.id, "?")
         return SessionResult(
             ok=True,
-            message=f"Active agent: {agent.name} ({agent.id}) at {agent.position}",
+            message=(
+                f"Active agent: {agent.name} ({agent.id}) at {agent.position} "
+                f"[{area_id}]"
+            ),
+        )
+
+    def set_active_area(self, area_id: str) -> SessionResult:
+        """Change GM edit / emit scope without consuming a turn."""
+        cleaned = area_id.strip()
+        if cleaned not in self.areas:
+            return SessionResult(
+                ok=False,
+                message=f"Unknown area {area_id!r}. Known: {', '.join(sorted(self.areas))}.",
+            )
+        self.active_area_id = cleaned
+        return SessionResult(ok=True, message=f"Active area: {cleaned}")
+
+    def transfer_agent(
+        self,
+        agent_id: str,
+        dest_area_id: str,
+        position: tuple[int, int],
+    ) -> SessionResult:
+        """
+        Move an agent to another area at ``position`` (internal API for effects).
+
+        Removes the agent from its current area, validates destination bounds,
+        and updates ``agent_area``.
+        """
+        source_area_id = self.agent_area.get(agent_id)
+        if source_area_id is None:
+            return SessionResult(ok=False, message=f"Agent {agent_id!r} not found.")
+        if dest_area_id not in self.areas:
+            return SessionResult(
+                ok=False,
+                message=f"Unknown destination area {dest_area_id!r}.",
+            )
+        dest_area = self.areas[dest_area_id]
+        if not dest_area.is_valid_position(position):
+            return SessionResult(
+                ok=False,
+                message=f"Position {position} is outside {dest_area_id} bounds.",
+            )
+
+        source_area = self.areas[source_area_id]
+        agent = source_area.get_agent_by_id(agent_id)
+        if agent is None:
+            return SessionResult(ok=False, message=f"Agent {agent_id!r} not found.")
+
+        if not source_area.remove_agent(agent_id):
+            return SessionResult(ok=False, message=f"Agent {agent_id!r} not found.")
+
+        agent.position = position
+        dest_area.add_agent(agent)
+        self.agent_area[agent_id] = dest_area_id
+        return SessionResult(
+            ok=True,
+            message=(
+                f"Transferred {agent.name} ({agent_id}) "
+                f"from {source_area_id} to {dest_area_id} at {position}."
+            ),
         )
 
     def emit_area_event(self, text: str) -> SessionResult:
         """
-        Broadcast a room-wide narrator/GM event to all agents.
+        Broadcast a room-wide narrator/GM event to all agents in the active area.
 
         Does not consume a turn or increment ``session_turn``.
         """
@@ -166,14 +288,15 @@ class Session:
         if not cleaned:
             return SessionResult(ok=False, message="Event text cannot be empty.")
 
-        record = self.area.append_area_event(
+        area = self.area
+        record = area.append_area_event(
             session_turn=self.session_turn,
             text=cleaned,
         )
         from src.observations import broadcast_area_event
 
         broadcast_area_event(
-            self.area,
+            area,
             session_turn=record.session_turn,
             text=record.text,
         )
@@ -186,7 +309,8 @@ class Session:
     def build_prompt(self, name_or_id: Optional[str] = None) -> str:
         """Build the compound-turn LLM prompt for an agent (default: active)."""
         agent = self._resolve_agent_or_active(name_or_id)
-        ctx = build_prompt_context(agent, self.area)
+        area = self.get_area_for_agent(agent)
+        ctx = build_prompt_context(agent, area)
         return self.profile.build_prompt(
             ctx,
             include_examples=self.include_examples,
@@ -199,18 +323,16 @@ class Session:
         include_passive_vision: bool = True,
     ) -> dict:
         """
-        JSON-friendly view of the session's area for web clients.
+        JSON-friendly view of the session for web clients.
 
         Omits ``personality`` and other LLM-only agent fields unless
         ``include_private`` is true. Includes ``passive_vision`` for the
         active agent by default.
         """
-        from src.snapshot import build_area_snapshot
+        from src.snapshot import build_session_snapshot
 
-        return build_area_snapshot(
-            self.area,
-            active_agent_id=self.active_agent_id,
-            session_turn=self.session_turn,
+        return build_session_snapshot(
+            self,
             include_private=include_private,
             include_passive_vision=include_passive_vision,
         )
@@ -222,8 +344,12 @@ class Session:
         from src.memory_modules.salient_turns import SalientTurnsModule
 
         agent = self._resolve_agent_or_active(name_or_id)
+        area = self.get_area_for_agent(agent)
+        area_id = self.agent_area.get(agent.id, "?")
         lines = [
             f"Session turns (log label): {self.session_turn}",
+            f"Active area (edit scope): {self.active_area_id}",
+            f"Agent area: {area_id}",
             f"Active agent: {agent.name} ({agent.id}) at {agent.position}",
             format_memory_module_label(agent.memory.module),
         ]
@@ -264,7 +390,7 @@ class Session:
                 lines.append(f"  - {step.kind}{target}{content}: {step.result}")
             lines.append(f"Composite result: {last.result}")
         lines.append(f"passive_result: {agent.passive_result or '(none)'}")
-        objs = [(o.name, o.id, o.position) for o in self.area.get_objects()]
+        objs = [(o.name, o.id, o.position) for o in area.get_objects()]
         lines.append(f"Objects: {objs}")
         return "\n".join(lines)
 
@@ -290,6 +416,7 @@ class Session:
         """
         agent = self._resolve_agent_or_active(agent_id)
         self.active_agent_id = agent.id
+        area = self.get_area_for_agent(agent)
 
         gate = self._gate_agent_turn(agent)
         if not gate.ok:
@@ -299,7 +426,7 @@ class Session:
         pending_session = self.session_turn + 1
         record = run_compound_turn(
             agent,
-            self.area,
+            area,
             turn,
             turn_number,
             session_turn=pending_session,
@@ -347,6 +474,11 @@ class Session:
             "effects": self._cmd_effects,
             "memory_modules": self._cmd_memory_modules,
             "emit_event": self._cmd_emit_event,
+            "active_area": self._cmd_active_area,
+            "areas": self._cmd_areas,
+            "create_area": self._cmd_create_area,
+            "edit_area": self._cmd_edit_area,
+            "delete_area": self._cmd_delete_area,
         }
 
         handler = handlers.get(cmd)
@@ -362,12 +494,18 @@ class Session:
     # ------------------------------------------------------------------
 
     def _rebuild_agent_name_index(self) -> None:
-        self._agents_by_name = {a.name.lower(): a for a in self.area.agents}
+        self._agents_by_name = {}
+        for area in self.areas.values():
+            for agent in area.agents:
+                self._agents_by_name[agent.name.lower()] = agent
 
-    def _register_agent(self, agent: Agent) -> None:
+    def _register_agent(self, agent: Agent, area_id: str | None = None) -> None:
+        resolved = area_id or self.active_area_id
+        self.agent_area[agent.id] = resolved
         self._agents_by_name[agent.name.lower()] = agent
 
     def _unregister_agent(self, agent: Agent) -> None:
+        self.agent_area.pop(agent.id, None)
         self._agents_by_name.pop(agent.name.lower(), None)
 
     def _rename_agent_in_index(self, old_name_lower: str, agent: Agent) -> None:
@@ -394,6 +532,12 @@ class Session:
                 message=f"Cannot run turn for {agent.name}: {exc}",
             )
         return SessionResult(ok=True, message="")
+
+    def _first_agent_in_area(self, area_id: str) -> Agent | None:
+        area = self.areas.get(area_id)
+        if area is None or not area.agents:
+            return None
+        return area.agents[0]
 
     # ------------------------------------------------------------------
     # Internal — command handlers
@@ -433,7 +577,18 @@ class Session:
         if result.ok and result.deleted_agent is not None:
             self._unregister_agent(result.deleted_agent)
             if self.active_agent_id == result.deleted_agent.id:
-                self.active_agent_id = self.area.agents[0].id
+                fallback = self._first_agent_in_area(self.active_area_id)
+                if fallback is None:
+                    for area_id in self.areas:
+                        fallback = self._first_agent_in_area(area_id)
+                        if fallback is not None:
+                            break
+                if fallback is None:
+                    return CommandResult(
+                        ok=False,
+                        message=f"{message}\nNo agents remain in the session.",
+                    )
+                self.active_agent_id = fallback.id
                 active = self.get_active_agent()
                 message = (
                     f"{message}\n"
@@ -476,4 +631,37 @@ class Session:
                 message='Usage: emit-event "Event description."',
             )
         result = self.emit_area_event(text)
+        return CommandResult(ok=result.ok, message=result.message)
+
+    def _cmd_active_area(self, arg: str) -> CommandResult:
+        area_id = arg.strip()
+        if not area_id:
+            return CommandResult(
+                ok=False,
+                message=f"Usage: active-area <area_id>  (known: {', '.join(sorted(self.areas))})",
+            )
+        result = self.set_active_area(area_id)
+        return CommandResult(ok=result.ok, message=result.message)
+
+    def _cmd_areas(self, _arg: str) -> CommandResult:
+        lines = ["Areas:"]
+        for area_id in sorted(self.areas):
+            marker = " *" if area_id == self.active_area_id else ""
+            agent_count = len(self.areas[area_id].agents)
+            obj_count = len(self.areas[area_id].get_objects())
+            lines.append(
+                f"  {area_id}{marker} — {agent_count} agent(s), {obj_count} object(s)"
+            )
+        return CommandResult(ok=True, message="\n".join(lines))
+
+    def _cmd_create_area(self, arg: str) -> CommandResult:
+        result = create_area_from_args(self, arg)
+        return CommandResult(ok=result.ok, message=result.message)
+
+    def _cmd_edit_area(self, arg: str) -> CommandResult:
+        result = edit_area_from_args(self, arg)
+        return CommandResult(ok=result.ok, message=result.message)
+
+    def _cmd_delete_area(self, arg: str) -> CommandResult:
+        result = delete_area_by_id(self, arg.strip())
         return CommandResult(ok=result.ok, message=result.message)

@@ -9,6 +9,8 @@ from typing import Any
 from realm_fabric import Session
 from src.memory import TurnRecord
 
+from backend.snapshot_compat import normalize_state_snapshot
+
 
 def _serialize_steps(record: TurnRecord) -> list[dict[str, Any]]:
     return [
@@ -64,7 +66,9 @@ def run_llm_turn(
         return {
             "ok": True,
             "message": result.message,
-            "snapshot": session.snapshot(include_private=True),
+            "snapshot": normalize_state_snapshot(
+                session.snapshot(include_private=True)
+            ),
             "steps": _serialize_steps(result.record),
             "prompt": prompt,
         }

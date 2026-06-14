@@ -7,6 +7,7 @@ from __future__ import annotations
 import os
 
 from realm_fabric import Session, load_profile
+from src.area import Area
 
 _store: SessionStore | None = None
 
@@ -33,12 +34,21 @@ def _maybe_dev_stack_seed(session: Session) -> None:
         )
 
 
+def _seed_studio_hall(session: Session) -> None:
+    """Second empty area so the area dropdown is exercisable (V0.4.0c2)."""
+    if "hall" not in session.areas:
+        session.areas["hall"] = Area(
+            area_description="A narrow stone hall with worn flagstones.",
+        )
+
+
 class SessionStore:
     """Owns one engine ``Session`` for the lifetime of the server process."""
 
     def __init__(self) -> None:
         profile = load_profile("default_compound")
         self._session = Session.from_profile(profile)
+        _seed_studio_hall(self._session)
         _maybe_dev_stack_seed(self._session)
 
     @property

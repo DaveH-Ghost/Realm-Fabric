@@ -156,7 +156,8 @@ class ManualStepper(cmd.Cmd):
 
     def do_vision(self, arg):
         """Show current passive vision."""
-        print(build_passive_vision(self.agent, self.area))
+        area = self.session.get_area_for_agent(self.agent)
+        print(build_passive_vision(self.agent, area))
 
     def do_prompt(self, arg):
         """Show the compound turn prompt for the active agent."""
@@ -184,8 +185,54 @@ class ManualStepper(cmd.Cmd):
         self._print_command("memory-modules")
 
     def do_agents(self, arg):
-        """List all agents in the area. Does not consume a turn."""
+        """List all agents in the active area. Does not consume a turn."""
         self._print_command("agents")
+
+    def do_areas(self, arg):
+        """List all areas in the session ( * marks active edit scope)."""
+        self._print_command("areas")
+
+    def do_active_area(self, arg):
+        """
+        Change the active area (GM edit / emit scope) without a turn.
+
+        Usage:
+            active-area room
+            active-area hall
+        """
+        area_id = arg.strip()
+        if not area_id:
+            print("Usage: active-area <area_id>  (see 'areas')")
+            return
+        self._print_command(f"active-area {area_id}")
+
+    def do_create_area(self, arg):
+        """
+        Add a new empty area to the session.
+
+        Usage:
+            create-area id attic desc "A dusty attic." width 6 height 6
+        """
+        self._print_command(f"create-area {arg}")
+
+    def do_edit_area(self, arg):
+        """
+        Edit an area's description and/or grid bounds.
+
+        Usage:
+            edit-area hall desc "A longer hall."
+            edit-area attic width 8 height 8
+        """
+        self._print_command(f"edit-area {arg}")
+
+    def do_delete_area(self, arg):
+        """
+        Delete an empty area (no agents or objects).
+
+        Usage:
+            delete-area attic
+        """
+        self._print_command(f"delete-area {arg}")
 
     def do_list(self, arg):
         """List all agents and objects. Does not consume a turn."""
@@ -279,7 +326,7 @@ class ManualStepper(cmd.Cmd):
             move_target=arg.strip(),
             turn_action="none",
         )
-        for step in execute_nav_phase(self.agent, self.area, nav):
+        for step in execute_nav_phase(self.agent, self.session.get_area_for_agent(self.agent), nav):
             print(step.result)
 
     def do_step_action(self, arg):
@@ -296,7 +343,7 @@ class ManualStepper(cmd.Cmd):
         except Exception as e:
             print(f"Invalid step-action: {e}")
             return
-        for step in execute_action_phase(self.agent, self.area, parsed.turn):
+        for step in execute_action_phase(self.agent, self.session.get_area_for_agent(self.agent), parsed.turn):
             print(step.result)
 
     def _run_manual_compound(self, turn: AgentCompoundTurn) -> None:

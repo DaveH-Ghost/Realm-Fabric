@@ -18,7 +18,7 @@ from src.llm.schemas import AgentCompoundTurn
 from src.object import Object
 from src.session import CommandResult, Session, SessionResult, TurnResult
 from src.simulation import run_compound_turn
-from src.snapshot import build_area_snapshot
+from src.snapshot import DEFAULT_AREA_ID, build_area_snapshot, build_session_snapshot
 
 __all__ = [
     "__version__",
@@ -34,6 +34,8 @@ __all__ = [
     "SessionResult",
     "TurnResult",
     "build_area_snapshot",
+    "build_session_snapshot",
+    "DEFAULT_AREA_ID",
     "build_prompt_context",
     "create_area",
     "create_initial_area",

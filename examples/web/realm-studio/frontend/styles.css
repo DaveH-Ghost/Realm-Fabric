@@ -389,6 +389,24 @@ button:hover {
   line-height: 1.4;
 }
 
+.agents-elsewhere {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+}
+
+.agents-elsewhere-area {
+  color: #9a9aa8;
+}
+
+.grid-empty {
+  min-height: 4rem;
+}
+
 .session-meta {
   margin: 0 0 1rem;
   padding-bottom: 0.75rem;
@@ -431,6 +449,15 @@ button:hover {
   color: #9a9aa8;
 }
 
+.active-area-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #9a9aa8;
+}
+
+.active-area-label select,
 .active-agent-label select {
   padding: 0.3rem 0.5rem;
   border: 1px solid #444;
@@ -438,6 +465,21 @@ button:hover {
   background: #2a2a32;
   color: inherit;
   max-width: 14rem;
+}
+
+.area-manage-btn {
+  padding: 0.3rem 0.55rem;
+  font-size: 0.82rem;
+  border: 1px solid #444;
+  border-radius: 4px;
+  background: #2a2a32;
+  color: #c8c8d0;
+  cursor: pointer;
+}
+
+.area-manage-btn:hover {
+  background: #35353f;
+  border-color: #666;
 }
 
 .hidden {

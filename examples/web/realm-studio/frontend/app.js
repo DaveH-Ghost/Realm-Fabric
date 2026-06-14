@@ -1,5 +1,5 @@
 /**
- * realm-studio frontend — grid, edit menus, LLM turn, sidebar (V0.3.1b–0.3.2d).
+ * realm-studio frontend — grid, edit menus, LLM turn, sidebar (V0.3.1b–0.4.0c2).
  */
 
 import { hasAppearance, resolveAppearanceUrl } from "./appearance.js";
@@ -8,18 +8,23 @@ import { initGridViewport, maybeCenterGrid } from "./gridViewport.js";
 import {
   appendTurnLogEntry,
   bindPromptDebug,
+  renderAgentsElsewhere,
   renderLastPrompt,
   renderPassiveVision,
   renderRecentEvents,
   renderTurnLog,
   setLastPrompt,
 } from "./panels.js";
+import { activeAreaView, asArray, normalizeSnapshot } from "./snapshot.js";
 import {
   bindActiveAgentSelect,
+  bindActiveAreaSelect,
+  bindAreaManageButtons,
   bindEmitEventButton,
   bindGridContextMenu,
   initUi,
   renderActiveAgentSelect,
+  renderActiveAreaSelect,
   showToast,
 } from "./ui.js";
 
@@ -31,6 +36,8 @@ const snapshotEl = document.getElementById("snapshot");
 const sessionMetaEl = document.getElementById("session-meta");
 const passiveVisionEl = document.getElementById("passive-vision");
 const passiveVisionEmptyEl = document.getElementById("passive-vision-empty");
+const agentsElsewhereEl = document.getElementById("agents-elsewhere");
+const agentsElsewhereEmptyEl = document.getElementById("agents-elsewhere-empty");
 const recentEventsEl = document.getElementById("recent-events");
 const recentEventsEmptyEl = document.getElementById("recent-events-empty");
 const turnLogEl = document.getElementById("turn-log");
@@ -38,6 +45,10 @@ const turnLogEmptyEl = document.getElementById("turn-log-empty");
 const lastPromptEl = document.getElementById("last-prompt");
 const lastPromptEmptyEl = document.getElementById("last-prompt-empty");
 const promptDebugEl = document.getElementById("prompt-debug");
+const activeAreaSelect = document.getElementById("active-area-select");
+const createAreaBtn = document.getElementById("create-area");
+const editAreaBtn = document.getElementById("edit-area");
+const deleteAreaBtn = document.getElementById("delete-area");
 const activeAgentSelect = document.getElementById("active-agent-select");
 const runTurnBtn = document.getElementById("run-turn");
 const emitEventBtn = document.getElementById("emit-event");
@@ -58,10 +69,10 @@ function indexEntities(agents, objects) {
     }
     byPos.get(key)[kind].push(entity);
   };
-  for (const agent of agents) {
+  for (const agent of asArray(agents)) {
     add(agent.position[0], agent.position[1], "agents", agent);
   }
-  for (const object of objects) {
+  for (const object of asArray(objects)) {
     add(object.position[0], object.position[1], "objects", object);
   }
   return byPos;
@@ -119,8 +130,15 @@ function createEntityMarker(entity, kind, isActive) {
 }
 
 function renderGrid(data) {
-  const { grid, agents, objects, active_agent_id } = data;
-  const byPos = indexEntities(agents, objects);
+  const view = activeAreaView(data);
+  const { grid, active_agent_id } = view;
+  if (!grid) {
+    gridEl.innerHTML = "";
+    gridEl.classList.add("grid-empty");
+    return;
+  }
+  gridEl.classList.remove("grid-empty");
+  const byPos = indexEntities(view.agents, view.objects);
 
   const width = grid.max_x - grid.min_x + 1;
   const height = grid.max_y - grid.min_y + 1;
@@ -145,10 +163,10 @@ function renderGrid(data) {
       stack.className = "tile-stack";
 
       const at = byPos.get(posKey(x, y)) || { agents: [], objects: [] };
-      for (const agent of at.agents) {
+      for (const agent of asArray(at.agents)) {
         stack.appendChild(createEntityMarker(agent, "agent", agent.id === active_agent_id));
       }
-      for (const object of at.objects) {
+      for (const object of asArray(at.objects)) {
         stack.appendChild(createEntityMarker(object, "object", false));
       }
 
@@ -161,14 +179,22 @@ function renderGrid(data) {
 }
 
 function renderSessionMeta(data) {
-  const active = data.agents.find((a) => a.id === data.active_agent_id);
-  const activeLabel = active ? `${active.name} (${active.id})` : data.active_agent_id;
+  const snap = normalizeSnapshot(data);
+  const view = activeAreaView(snap);
+  const agents = asArray(view.agents);
+  const objects = asArray(view.objects);
+  const allAgents = asArray(snap.agents);
+  const active = allAgents.find((a) => a.id === snap.active_agent_id);
+  const activeLabel = active ? `${active.name} (${active.id})` : snap.active_agent_id;
+  const areaDesc = snap.areas?.[snap.active_area_id]?.area_description ?? "";
 
   sessionMetaEl.innerHTML = `
-    <dt>Session turn</dt><dd>${data.session_turn}</dd>
-    <dt>Active agent</dt><dd>${escapeHtml(activeLabel)}</dd>
-    <dt>Agents</dt><dd>${data.agents.length}</dd>
-    <dt>Objects</dt><dd>${data.objects.length}</dd>
+    <dt>Session turn</dt><dd>${snap.session_turn ?? "?"}</dd>
+    <dt>Active area</dt><dd>${escapeHtml(snap.active_area_id ?? "—")}</dd>
+    <dt>Area description</dt><dd>${escapeHtml(areaDesc)}</dd>
+    <dt>Active agent</dt><dd>${escapeHtml(activeLabel ?? "—")}</dd>
+    <dt>Agents (this area)</dt><dd>${agents.length}</dd>
+    <dt>Objects (this area)</dt><dd>${objects.length}</dd>
   `;
 }
 
@@ -180,16 +206,18 @@ function escapeHtml(text) {
 
 function renderSidebarPanels(data) {
   renderPassiveVision(data, passiveVisionEl, passiveVisionEmptyEl);
-  renderRecentEvents(data, recentEventsEl, recentEventsEmptyEl);
+  renderAgentsElsewhere(data, agentsElsewhereEl, agentsElsewhereEmptyEl);
+  renderRecentEvents(activeAreaView(data), recentEventsEl, recentEventsEmptyEl);
 }
 
 function renderState(data) {
-  lastSnapshot = data;
-  renderGrid(data);
-  renderSessionMeta(data);
-  renderSidebarPanels(data);
-  renderActiveAgentSelect(activeAgentSelect, data);
-  snapshotEl.textContent = JSON.stringify(data, null, 2);
+  lastSnapshot = normalizeSnapshot(data);
+  renderGrid(lastSnapshot);
+  renderSessionMeta(lastSnapshot);
+  renderSidebarPanels(lastSnapshot);
+  if (activeAreaSelect) renderActiveAreaSelect(activeAreaSelect, lastSnapshot);
+  if (activeAgentSelect) renderActiveAgentSelect(activeAgentSelect, lastSnapshot);
+  snapshotEl.textContent = JSON.stringify(lastSnapshot, null, 2);
 }
 
 async function fetchState() {
@@ -197,24 +225,29 @@ async function fetchState() {
   try {
     const data = await getState();
     renderState(data);
-    updateStatusLine(data);
+    updateStatusLine(lastSnapshot);
   } catch (err) {
     gridEl.innerHTML = "";
-    snapshotEl.textContent = String(err);
-    statusEl.textContent = "Error";
+    gridEl.classList.add("grid-empty");
+    snapshotEl.textContent = String(err.message || err);
+    statusEl.textContent = `Error — ${err.message || err}`;
+    showToast(String(err.message || err), true);
   }
 }
 
 function updateStatusLine(data) {
-  const active = data.agents.find((a) => a.id === data.active_agent_id);
-  statusEl.textContent = `Turn ${data.session_turn} — ${active ? active.name : data.active_agent_id}`;
+  const snap = normalizeSnapshot(data);
+  const active = asArray(snap.agents).find((a) => a.id === snap.active_agent_id);
+  const area = snap.active_area_id ?? "area";
+  const agentName = active ? active.name : snap.active_agent_id ?? "—";
+  statusEl.textContent = `Turn ${snap.session_turn ?? "?"} — ${area} — ${agentName}`;
 }
 
 function recordTurnResult(result) {
-  const snap = result.snapshot || lastSnapshot;
-  const active = snap?.agents?.find((a) => a.id === snap.active_agent_id);
+  const snap = normalizeSnapshot(result.snapshot || lastSnapshot);
+  const active = asArray(snap.agents).find((a) => a.id === snap.active_agent_id);
   appendTurnLogEntry({
-    sessionTurn: snap?.session_turn ?? "?",
+    sessionTurn: snap.session_turn ?? "?",
     agentName: active?.name ?? "Agent",
     message: result.message,
     steps: result.steps,
@@ -262,19 +295,25 @@ async function runTurn() {
 async function refreshAfterMutation(snapshot) {
   if (snapshot) {
     renderState(snapshot);
-    updateStatusLine(snapshot);
+    updateStatusLine(lastSnapshot);
     return;
   }
   await fetchState();
 }
 
 initUi({
-  getSnapshotFn: () => lastSnapshot,
+  getSnapshotFn: () => activeAreaView(lastSnapshot),
   onStateChangedFn: refreshAfterMutation,
 });
 initGridViewport(gridViewportEl, gridWorldEl);
 bindGridContextMenu(gridEl);
-bindActiveAgentSelect(activeAgentSelect, refreshAfterMutation);
+if (activeAreaSelect) bindActiveAreaSelect(activeAreaSelect, refreshAfterMutation);
+if (activeAgentSelect) bindActiveAgentSelect(activeAgentSelect, refreshAfterMutation);
+bindAreaManageButtons({
+  createBtn: createAreaBtn,
+  editBtn: editAreaBtn,
+  deleteBtn: deleteAreaBtn,
+});
 bindEmitEventButton(emitEventBtn);
 bindPromptDebug(promptDebugEl, lastPromptEl, lastPromptEmptyEl, () => getPrompt());
 

@@ -16,6 +16,8 @@ from src.area import Area
 from src.object import Object
 from src.perception import build_passive_vision
 
+DEFAULT_AREA_ID = "room"
+
 
 def _position_list(position: tuple[int, int]) -> list[int]:
     x, y = position
@@ -37,7 +39,12 @@ def serialize_object(obj: Object, *, include_private: bool = False) -> dict[str,
     return data
 
 
-def serialize_agent(agent: Agent, *, include_private: bool = False) -> dict[str, Any]:
+def serialize_agent(
+    agent: Agent,
+    *,
+    area_id: str | None = None,
+    include_private: bool = False,
+) -> dict[str, Any]:
     """Public agent fields for clients."""
     data: dict[str, Any] = {
         "id": agent.id,
@@ -48,11 +55,81 @@ def serialize_agent(agent: Agent, *, include_private: bool = False) -> dict[str,
         "appearance": agent.appearance,
         "move_speed": agent.move_speed,
     }
+    if area_id is not None:
+        data["area_id"] = area_id
     if include_private:
         data["personality"] = agent.personality
         data["passive_description"] = agent.passive_description
         data["description"] = agent.description
     return data
+
+
+def serialize_area_block(
+    area: Area,
+    *,
+    include_private: bool = False,
+) -> dict[str, Any]:
+    """Per-area grid, description, objects, and events (no agents)."""
+    return {
+        "grid": {
+            "min_x": area.min_x,
+            "max_x": area.max_x,
+            "min_y": area.min_y,
+            "max_y": area.max_y,
+        },
+        "area_description": area.area_description,
+        "objects": [
+            serialize_object(o, include_private=include_private) for o in area.get_objects()
+        ],
+        "recent_events": [
+            {"session_turn": event.session_turn, "text": event.text}
+            for event in area.recent_events
+        ],
+    }
+
+
+def build_session_snapshot(
+    session: object,
+    *,
+    include_private: bool = False,
+    include_passive_vision: bool = True,
+) -> dict[str, Any]:
+    """
+    Build a JSON-friendly snapshot of a multi-area ``Session``.
+
+    Agents are listed once at the top level with ``area_id``; each area block
+    holds grid, description, objects, and recent events only.
+    """
+    from src.session import Session
+
+    if not isinstance(session, Session):
+        raise TypeError(f"Expected Session, got {type(session)!r}")
+
+    snap: dict[str, Any] = {
+        "session_turn": session.session_turn,
+        "active_agent_id": session.active_agent_id,
+        "active_area_id": session.active_area_id,
+        "areas": {
+            area_id: serialize_area_block(area, include_private=include_private)
+            for area_id, area in session.areas.items()
+        },
+        "agents": [
+            serialize_agent(
+                agent,
+                area_id=session.agent_area.get(agent.id),
+                include_private=include_private,
+            )
+            for area in session.areas.values()
+            for agent in area.agents
+        ],
+    }
+
+    if include_passive_vision and session.active_agent_id:
+        agent = session.get_active_agent()
+        area = session.get_area_for_agent(agent)
+        snap["passive_vision"] = build_passive_vision(agent, area)
+
+    return snap
 
 
 def build_area_snapshot(

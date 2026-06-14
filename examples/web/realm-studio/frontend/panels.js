@@ -1,5 +1,5 @@
 /**
- * Sidebar panels: passive vision, turn log, recent events (V0.3.1e–0.3.2b).
+ * Sidebar panels: passive vision, turn log, recent events (V0.3.1e–0.4.0c2).
  */
 
 const MAX_LOG_ENTRIES = 50;
@@ -18,6 +18,33 @@ export function renderPassiveVision(snapshot, visionEl, emptyEl) {
   visionEl.textContent = text;
   visionEl.classList.remove("hidden");
   emptyEl.classList.add("hidden");
+}
+
+export function renderAgentsElsewhere(snapshot, listEl, emptyEl) {
+  const activeAreaId = snapshot?.active_area_id;
+  const agents = Array.isArray(snapshot?.agents) ? snapshot.agents : [];
+  const elsewhere = agents.filter((a) => a.area_id && a.area_id !== activeAreaId);
+
+  listEl.innerHTML = "";
+  if (elsewhere.length === 0) {
+    listEl.classList.add("hidden");
+    emptyEl.classList.remove("hidden");
+    return;
+  }
+  listEl.classList.remove("hidden");
+  emptyEl.classList.add("hidden");
+
+  for (const agent of elsewhere) {
+    const item = document.createElement("li");
+    const name = document.createElement("span");
+    name.textContent = agent.name;
+    const area = document.createElement("span");
+    area.className = "agents-elsewhere-area";
+    area.textContent = ` — ${agent.area_id}`;
+    item.appendChild(name);
+    item.appendChild(area);
+    listEl.appendChild(item);
+  }
 }
 
 export function renderRecentEvents(snapshot, listEl, emptyEl) {

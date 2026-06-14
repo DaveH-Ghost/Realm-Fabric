@@ -4,6 +4,7 @@ from src.area import create_initial_area
 from src.area_event import DEFAULT_MAX_RECENT_AREA_EVENTS
 from src.perception import build_passive_vision
 from src.session import Session
+from src.snapshot import DEFAULT_AREA_ID
 
 
 def test_emit_area_event_not_in_passive_vision():
@@ -49,7 +50,7 @@ def test_emit_area_event_via_run_command():
     assert "Wind howls" in result.message
 
     snap = session.snapshot()
-    assert snap["recent_events"] == [
+    assert snap["areas"][DEFAULT_AREA_ID]["recent_events"] == [
         {"session_turn": 0, "text": "Wind howls through the room."}
     ]
 
@@ -79,7 +80,7 @@ def test_snapshot_includes_recent_events():
     session.emit_area_event("A door slams shut.")
 
     snap = session.snapshot()
-    assert snap["recent_events"] == [
+    assert snap["areas"][DEFAULT_AREA_ID]["recent_events"] == [
         {"session_turn": 0, "text": "A door slams shut."}
     ]
 

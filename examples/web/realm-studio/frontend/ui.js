@@ -8,9 +8,14 @@ import {
   buildEditAgent,
   buildEditObject,
   postActiveAgent,
+  postActiveArea,
   postCommand,
+  postCreateArea,
+  postDeleteArea,
+  postEditArea,
   postEvent,
 } from "./api.js";
+import { activeAreaView, asArray, normalizeSnapshot } from "./snapshot.js";
 
 let menuEl;
 let modalBackdrop;
@@ -77,21 +82,21 @@ export function bindGridContextMenu(gridEl) {
 }
 
 function entitiesAt(x, y) {
-  const snap = getSnapshot();
-  if (!snap) return { agents: [], objects: [] };
-  const agents = snap.agents.filter(
+  const snap = activeAreaView(getSnapshot());
+  if (!snap?.grid) return { agents: [], objects: [] };
+  const agents = asArray(snap.agents).filter(
     (a) => a.position[0] === x && a.position[1] === y,
   );
-  const objects = snap.objects.filter(
+  const objects = asArray(snap.objects).filter(
     (o) => o.position[0] === x && o.position[1] === y,
   );
   return { agents, objects };
 }
 
 function findEntity(kind, id) {
-  const snap = getSnapshot();
+  const snap = activeAreaView(getSnapshot());
   if (!snap) return null;
-  const list = kind === "agent" ? snap.agents : snap.objects;
+  const list = kind === "agent" ? asArray(snap.agents) : asArray(snap.objects);
   return list.find((e) => e.id === id) || null;
 }
 
@@ -149,13 +154,13 @@ function showManageTileMenu(x, y, tileX, tileY, at) {
     },
     { separator: true },
   ];
-  for (const agent of at.agents) {
+  for (const agent of asArray(at.agents)) {
     items.push({
       label: `Agent: ${agent.name}`,
       action: () => showEntityMenu(x, y, "agent", agent.id),
     });
   }
-  for (const object of at.objects) {
+  for (const object of asArray(at.objects)) {
     items.push({
       label: `Object: ${object.name}`,
       action: () => showEntityMenu(x, y, "object", object.id),
@@ -198,7 +203,7 @@ async function runCommand(line) {
     return result;
   }
   showToast(result.message, false);
-  await onStateChanged();
+  await onStateChanged(result.snapshot);
   return result;
 }
 
@@ -531,19 +536,165 @@ export function bindActiveAgentSelect(selectEl, onChange) {
   });
 }
 
-export function renderActiveAgentSelect(selectEl, snapshot) {
+export function bindActiveAreaSelect(selectEl, onChange) {
+  if (!selectEl) return;
+  selectEl.addEventListener("change", async () => {
+    const value = selectEl.value;
+    if (!value) return;
+    try {
+      const result = await postActiveArea(value);
+      if (!result.ok) {
+        showToast(result.message, true);
+        return;
+      }
+      showToast(result.message, false);
+      await onChange(result.snapshot);
+    } catch (err) {
+      showToast(String(err.message || err), true);
+    }
+  });
+}
+
+export function renderActiveAreaSelect(selectEl, snapshot) {
+  if (!selectEl || !snapshot) return;
+  const normalized = normalizeSnapshot(snapshot);
+  const areaIds = normalized?.areas ? Object.keys(normalized.areas).sort() : [];
   const current = selectEl.value;
   selectEl.innerHTML = "";
-  for (const agent of snapshot.agents) {
+  for (const areaId of areaIds) {
     const opt = document.createElement("option");
-    opt.value = agent.id;
-    opt.textContent = `${agent.name} (${agent.id})`;
-    if (agent.id === snapshot.active_agent_id) opt.selected = true;
+    opt.value = areaId;
+    opt.textContent = areaId;
+    if (areaId === normalized.active_area_id) opt.selected = true;
     selectEl.appendChild(opt);
   }
   if (current && [...selectEl.options].some((o) => o.value === current)) {
     selectEl.value = current;
   }
+}
+
+export function renderActiveAgentSelect(selectEl, snapshot) {
+  if (!selectEl || !snapshot) return;
+  const snap = normalizeSnapshot(snapshot);
+  const agents = asArray(snap.agents);
+  const current = selectEl.value;
+  selectEl.innerHTML = "";
+  for (const agent of agents) {
+    const opt = document.createElement("option");
+    opt.value = agent.id;
+    const areaTag = agent.area_id ? ` [${agent.area_id}]` : "";
+    opt.textContent = `${agent.name} (${agent.id})${areaTag}`;
+    if (agent.id === snap.active_agent_id) opt.selected = true;
+    selectEl.appendChild(opt);
+  }
+  if (current && [...selectEl.options].some((o) => o.value === current)) {
+    selectEl.value = current;
+  }
+}
+
+export function openCreateAreaModal() {
+  openModal(
+    "Create area",
+    [
+      {
+        name: "id",
+        label: "Area id (lowercase, e.g. attic)",
+        value: "attic",
+        required: true,
+      },
+      {
+        name: "desc",
+        label: "Area description",
+        value: "A new area.",
+        type: "textarea",
+      },
+      { name: "width", label: "Grid width", value: "5", type: "number", required: true },
+      { name: "height", label: "Grid height", value: "5", type: "number", required: true },
+    ],
+    async (data) => {
+      const result = await postCreateArea({
+        areaId: data.id.trim().toLowerCase(),
+        description: data.desc,
+        width: data.width,
+        height: data.height,
+      });
+      if (!result.ok) throw new Error(result.message);
+      showToast(result.message, false);
+      await onStateChanged(result.snapshot);
+    },
+    { submitLabel: "Create" },
+  );
+}
+
+export function openEditAreaModal() {
+  const snap = normalizeSnapshot(getSnapshot());
+  const areaId = snap?.active_area_id;
+  if (!areaId || !snap?.areas?.[areaId]) {
+    showToast("No active area to edit.", true);
+    return;
+  }
+  const block = snap.areas[areaId];
+  const grid = block.grid || {};
+  const width = grid.max_x != null && grid.min_x != null
+    ? grid.max_x - grid.min_x + 1
+    : 5;
+  const height = grid.max_y != null && grid.min_y != null
+    ? grid.max_y - grid.min_y + 1
+    : 5;
+
+  openModal(
+    `Edit area — ${areaId}`,
+    [
+      {
+        name: "desc",
+        label: "Area description",
+        value: block.area_description ?? "",
+        type: "textarea",
+      },
+      { name: "width", label: "Grid width", value: String(width), type: "number", required: true },
+      { name: "height", label: "Grid height", value: String(height), type: "number", required: true },
+    ],
+    async (data) => {
+      const result = await postEditArea({
+        areaId,
+        description: data.desc,
+        width: data.width,
+        height: data.height,
+      });
+      if (!result.ok) throw new Error(result.message);
+      showToast(result.message, false);
+      await onStateChanged(result.snapshot);
+    },
+  );
+}
+
+export async function openDeleteAreaModal() {
+  const snap = normalizeSnapshot(getSnapshot());
+  const areaId = snap?.active_area_id;
+  if (!areaId) {
+    showToast("No active area selected.", true);
+    return;
+  }
+  if (!window.confirm(`Delete area "${areaId}"? It must be empty (no agents or objects).`)) {
+    return;
+  }
+  try {
+    const result = await postDeleteArea(areaId);
+    if (!result.ok) {
+      showToast(result.message, true);
+      return;
+    }
+    showToast(result.message, false);
+    await onStateChanged(result.snapshot);
+  } catch (err) {
+    showToast(String(err.message || err), true);
+  }
+}
+
+export function bindAreaManageButtons({ createBtn, editBtn, deleteBtn }) {
+  if (createBtn) createBtn.addEventListener("click", () => openCreateAreaModal());
+  if (editBtn) editBtn.addEventListener("click", () => openEditAreaModal());
+  if (deleteBtn) deleteBtn.addEventListener("click", () => openDeleteAreaModal());
 }
 
 export { showToast };

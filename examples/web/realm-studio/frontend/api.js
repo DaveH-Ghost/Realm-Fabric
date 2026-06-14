@@ -1,4 +1,4 @@
-/** HTTP helpers for realm-studio API (V0.3.1c–0.3.2d). */
+/** HTTP helpers for realm-studio API. */
 
 export async function getState() {
   const res = await fetch("/api/state");
@@ -26,6 +26,68 @@ export async function postActiveAgent(nameOrId) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name_or_id: nameOrId }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || `HTTP ${res.status}`);
+  }
+  return data;
+}
+
+export async function postActiveArea(areaId) {
+  const res = await fetch("/api/active-area", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ area_id: areaId }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || `HTTP ${res.status}`);
+  }
+  return data;
+}
+
+export async function postCreateArea({ areaId, description, width, height }) {
+  const res = await fetch("/api/create-area", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      area_id: areaId,
+      description: description ?? "",
+      width: Number(width),
+      height: Number(height),
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || `HTTP ${res.status}`);
+  }
+  return data;
+}
+
+export async function postEditArea({ areaId, description, width, height }) {
+  const res = await fetch("/api/edit-area", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      area_id: areaId,
+      description,
+      width: width !== "" && width !== undefined ? Number(width) : undefined,
+      height: height !== "" && height !== undefined ? Number(height) : undefined,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || `HTTP ${res.status}`);
+  }
+  return data;
+}
+
+export async function postDeleteArea(areaId) {
+  const res = await fetch("/api/delete-area", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ area_id: areaId }),
   });
   const data = await res.json();
   if (!res.ok) {
@@ -153,4 +215,23 @@ export function buildEditAgent({
   }
   parts.push(`pos ${x},${y}`);
   return parts.join(" ");
+}
+
+export function buildCreateArea({ id, desc, width, height }) {
+  let line = `create-area id ${id}`;
+  if (desc) line += ` desc ${cliQuote(desc)}`;
+  line += ` width ${width} height ${height}`;
+  return line;
+}
+
+export function buildEditArea({ id, desc, width, height }) {
+  const parts = [`edit-area ${id}`];
+  if (desc !== undefined && desc !== "") parts.push(`desc ${cliQuote(desc)}`);
+  if (width) parts.push(`width ${width}`);
+  if (height) parts.push(`height ${height}`);
+  return parts.join(" ");
+}
+
+export function buildDeleteArea(id) {
+  return `delete-area ${id}`;
 }

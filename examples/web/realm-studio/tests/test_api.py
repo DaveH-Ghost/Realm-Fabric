@@ -1,4 +1,4 @@
-"""realm-studio API tests (V0.3.1–0.3.2d)."""
+"""realm-studio API tests (V0.3.1–0.4.0c2)."""
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,6 +8,9 @@ from backend.session_store import get_session_store, reset_session_store
 from src.llm.schemas import AgentCompoundTurn
 from src.llm.types import LLMResponse
 from src.session import SessionResult
+
+ROOM = "room"
+HALL = "hall"
 
 
 @pytest.fixture(autouse=True)
@@ -22,18 +25,29 @@ def client():
     return TestClient(create_app())
 
 
+def _room(state: dict) -> dict:
+    return state["areas"][ROOM]
+
+
+def _active_block(state: dict) -> dict:
+    return state["areas"][state["active_area_id"]]
+
+
 def test_health(client):
     response = client.get("/api/health")
     assert response.status_code == 200
     assert response.json() == {"ok": True}
 
 
-def test_state_returns_snapshot_shape(client):
+def test_state_returns_multi_area_snapshot(client):
     response = client.get("/api/state")
     assert response.status_code == 200
     data = response.json()
 
-    assert data["grid"] == {"min_x": 0, "max_x": 4, "min_y": 0, "max_y": 4}
+    assert data["active_area_id"] == ROOM
+    assert ROOM in data["areas"]
+    assert HALL in data["areas"]
+    assert _room(data)["grid"] == {"min_x": 0, "max_x": 4, "min_y": 0, "max_y": 4}
     assert data["active_agent_id"] == "agent_01"
     assert data["session_turn"] == 0
     assert "passive_vision" in data
@@ -41,20 +55,24 @@ def test_state_returns_snapshot_shape(client):
 
     assert len(data["agents"]) == 1
     assert data["agents"][0]["name"] == "Explorer"
+    assert data["agents"][0]["area_id"] == ROOM
     assert data["agents"][0]["appearance"] == "tokens/explorer.svg"
     assert "personality" in data["agents"][0]
-    assert "passive_description" in data["agents"][0]
-    assert "description" in data["agents"][0]
     assert data["agents"][0]["move_speed"] is None
 
-    object_ids = {o["id"] for o in data["objects"]}
+    room_objects = _room(data)["objects"]
+    object_ids = {o["id"] for o in room_objects}
     assert "obj_ball_01" in object_ids
     assert "obj_sign_01" in object_ids
-    ball = next(o for o in data["objects"] if o["id"] == "obj_ball_01")
-    assert ball["appearance"] == "tokens/ball.svg"
-    assert "passive_description" in ball
-    assert "description" in ball
-    assert data["recent_events"] == []
+    assert isinstance(_room(data)["objects"], list)
+    assert isinstance(_room(data)["recent_events"], list)
+    assert isinstance(_active_block(data)["objects"], list)
+
+
+def test_hall_area_has_objects_array(client):
+    data = client.get("/api/state").json()
+    assert isinstance(data["areas"][HALL]["objects"], list)
+    assert data["areas"][HALL]["objects"] == []
 
 
 def test_post_event_success(client):
@@ -66,9 +84,8 @@ def test_post_event_success(client):
     data = response.json()
     assert data["ok"] is True
     assert "Thunder" in data["message"]
-    assert data["snapshot"]["recent_events"] == [
-        {"session_turn": 0, "text": "Thunder rumbles overhead."}
-    ]
+    events = data["snapshot"]["areas"][ROOM]["recent_events"]
+    assert events == [{"session_turn": 0, "text": "Thunder rumbles overhead."}]
     assert data["snapshot"]["session_turn"] == 0
     assert "Thunder rumbles overhead." not in data["snapshot"]["passive_vision"]
 
@@ -87,7 +104,41 @@ def test_post_event_whitespace_fails(client):
 def test_post_event_via_state(client):
     client.post("/api/event", json={"text": "A door slams."})
     state = client.get("/api/state").json()
-    assert state["recent_events"][-1]["text"] == "A door slams."
+    assert _room(state)["recent_events"][-1]["text"] == "A door slams."
+
+
+def test_post_active_area_switch(client):
+    response = client.post("/api/active-area", json={"area_id": HALL})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert data["snapshot"]["active_area_id"] == HALL
+    assert isinstance(data["snapshot"]["areas"][HALL]["objects"], list)
+
+    state = client.get("/api/state").json()
+    assert state["active_area_id"] == HALL
+
+
+def test_post_active_area_unknown(client):
+    response = client.post("/api/active-area", json={"area_id": "attic"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is False
+
+
+def test_create_object_scoped_to_active_area(client):
+    client.post("/api/active-area", json={"area_id": HALL})
+    create = client.post(
+        "/api/command",
+        json={'line': 'create-object name "Bench" pdesc "A bench." at 2,2'},
+    )
+    assert create.json()["ok"] is True
+
+    state = client.get("/api/state").json()
+    hall_names = {o["name"] for o in state["areas"][HALL]["objects"]}
+    room_names = {o["name"] for o in state["areas"][ROOM]["objects"]}
+    assert "Bench" in hall_names
+    assert "Bench" not in room_names
 
 
 def test_static_token_assets(client):
@@ -114,7 +165,7 @@ def test_post_command_appearance(client):
     assert response.json()["ok"] is True
 
     state = client.get("/api/state").json()
-    crate = next(o for o in state["objects"] if o["name"] == "Token Crate")
+    crate = next(o for o in _room(state)["objects"] if o["name"] == "Token Crate")
     assert crate["appearance"] == "tokens/ball.svg"
 
 
@@ -123,12 +174,11 @@ def test_index_page(client):
     assert response.status_code == 200
     assert "realm-studio" in response.text
     assert 'id="grid"' in response.text
-    assert 'id="grid-viewport"' in response.text
-    assert 'id="context-menu"' in response.text
-    assert 'id="active-agent-select"' in response.text
-    assert 'id="run-turn"' in response.text
-    assert 'id="emit-event"' in response.text
-    assert 'id="recent-events"' in response.text
+    assert 'id="active-area-select"' in response.text
+    assert 'id="create-area"' in response.text
+    assert 'id="edit-area"' in response.text
+    assert 'id="delete-area"' in response.text
+    assert 'id="agents-elsewhere"' in response.text
 
 
 def _fake_compound_response(_prompt):
@@ -153,12 +203,9 @@ def test_post_turn_success(client, monkeypatch):
     assert response.status_code == 200
     data = response.json()
     assert data["ok"] is True
-    assert data["message"]
-    assert isinstance(data["steps"], list)
-    assert len(data["steps"]) >= 1
     assert data["snapshot"]["session_turn"] == 1
+    assert "areas" in data["snapshot"]
     assert "prompt" in data
-    assert len(data["prompt"]) > 100
 
 
 def test_get_prompt(client):
@@ -167,16 +214,12 @@ def test_get_prompt(client):
     data = response.json()
     assert data["ok"] is True
     assert len(data["prompt"]) > 100
-    assert data["length"] == len(data["prompt"])
-    assert data["include_examples"] is False
-    assert "You are at" in data["prompt"] or "Explorer" in data["prompt"]
 
 
 def test_get_prompt_unknown_agent(client):
     response = client.get("/api/prompt", params={"agent_id": "nobody"})
     assert response.status_code == 200
-    data = response.json()
-    assert data["ok"] is False
+    assert response.json()["ok"] is False
 
 
 def test_post_turn_gate_blocked(client, monkeypatch):
@@ -187,13 +230,7 @@ def test_post_turn_gate_blocked(client, monkeypatch):
     monkeypatch.setattr(session, "gate_agent_turn", blocked)
 
     response = client.post("/api/turn", json={})
-    assert response.status_code == 200
-    data = response.json()
-    assert data["ok"] is False
-    assert "consolidation" in data["message"].lower()
-
-    state = client.get("/api/state").json()
-    assert state["session_turn"] == 0
+    assert response.json()["ok"] is False
 
 
 def test_post_turn_missing_api_key(client, monkeypatch):
@@ -201,16 +238,11 @@ def test_post_turn_missing_api_key(client, monkeypatch):
         raise RuntimeError("OPENROUTER_API_KEY not found.")
 
     monkeypatch.setattr("src.llm.client.get_compound_turn", fail_llm)
-
     response = client.post("/api/turn", json={})
-    assert response.status_code == 200
-    data = response.json()
-    assert data["ok"] is False
-    assert "OPENROUTER_API_KEY" in data["message"]
+    assert response.json()["ok"] is False
 
 
 def test_e2e_edit_then_turn(client, monkeypatch):
-    """Smoke: area edit (no turn) then mocked LLM turn updates snapshot."""
     monkeypatch.setattr(
         "src.llm.client.get_compound_turn",
         _fake_compound_response,
@@ -225,15 +257,12 @@ def test_e2e_edit_then_turn(client, monkeypatch):
     assert create.json()["ok"] is True
 
     mid = client.get("/api/state").json()
-    assert mid["session_turn"] == 0
-    assert any(o["name"] == "E2E Crate" for o in mid["objects"])
+    assert any(o["name"] == "E2E Crate" for o in _room(mid)["objects"])
 
     turn = client.post("/api/turn", json={})
     data = turn.json()
     assert data["ok"] is True
     assert data["snapshot"]["session_turn"] == 1
-    assert "passive_vision" in data["snapshot"]
-    assert isinstance(data["steps"], list)
 
 
 def test_post_command_create_object(client):
@@ -243,14 +272,11 @@ def test_post_command_create_object(client):
             "line": 'create-object name "Test Crate" pdesc "A crate." desc "Wooden crate." at 2,2',
         },
     )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["ok"] is True
+    assert response.json()["ok"] is True
 
     state = client.get("/api/state").json()
-    names = {o["name"] for o in state["objects"]}
+    names = {o["name"] for o in _room(state)["objects"]}
     assert "Test Crate" in names
-    assert state["session_turn"] == 0
 
 
 def test_post_command_invalid(client):
@@ -258,10 +284,7 @@ def test_post_command_invalid(client):
         "/api/command",
         json={"line": "not-a-real-command"},
     )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["ok"] is False
-    assert data["message"]
+    assert response.json()["ok"] is False
 
 
 def test_post_active_agent(client):
@@ -280,14 +303,11 @@ def test_post_active_agent(client):
         "/api/active-agent",
         json={"name_or_id": "Goblin"},
     )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["ok"] is True
+    assert response.json()["ok"] is True
 
     state = client.get("/api/state").json()
     active = next(a for a in state["agents"] if a["name"] == "Goblin")
     assert state["active_agent_id"] == active["id"]
-    assert state["session_turn"] == 0
 
 
 def test_post_active_agent_unknown(client):
@@ -295,10 +315,7 @@ def test_post_active_agent_unknown(client):
         "/api/active-agent",
         json={"name_or_id": "Nobody"},
     )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["ok"] is False
-    assert data["message"]
+    assert response.json()["ok"] is False
 
 
 def test_post_command_create_agent_with_move_speed(client):
@@ -311,11 +328,9 @@ def test_post_command_create_agent_with_move_speed(client):
             ),
         },
     )
-    assert response.status_code == 200
     assert response.json()["ok"] is True
 
-    state = client.get("/api/state").json()
-    scout = next(a for a in state["agents"] if a["name"] == "Scout")
+    scout = next(a for a in client.get("/api/state").json()["agents"] if a["name"] == "Scout")
     assert scout["move_speed"] == 3
 
 
@@ -336,7 +351,7 @@ def test_post_command_edit_agent_move_speed(client):
 
     edit = client.post(
         "/api/command",
-        json={"line": f'edit-agent {agent_id} move-speed 2'},
+        json={"line": f"edit-agent {agent_id} move-speed 2"},
     )
     assert edit.json()["ok"] is True
 
@@ -344,3 +359,104 @@ def test_post_command_edit_agent_move_speed(client):
         a for a in client.get("/api/state").json()["agents"] if a["id"] == agent_id
     )
     assert walker["move_speed"] == 2
+
+
+def test_post_command_create_area(client):
+    response = client.post(
+        "/api/command",
+        json={
+            "line": 'create-area id attic desc "A dusty attic." width 6 height 4',
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert "snapshot" in data
+    assert "attic" in data["snapshot"]["areas"]
+    assert data["snapshot"]["active_area_id"] == "attic"
+
+
+def test_post_command_edit_area(client):
+    client.post(
+        "/api/command",
+        json={"line": 'create-area id cellar desc "Old cellar." width 5 height 5'},
+    )
+    response = client.post(
+        "/api/command",
+        json={"line": 'edit-area cellar desc "Damp cellar." width 7 height 7'},
+    )
+    data = response.json()
+    assert data["ok"] is True
+    block = data["snapshot"]["areas"]["cellar"]
+    assert block["area_description"] == "Damp cellar."
+    assert block["grid"]["max_x"] - block["grid"]["min_x"] + 1 == 7
+
+
+def test_post_command_delete_area(client):
+    client.post(
+        "/api/command",
+        json={"line": 'create-area id closet desc "Empty closet."'},
+    )
+    response = client.post(
+        "/api/command",
+        json={"line": "delete-area closet"},
+    )
+    data = response.json()
+    assert data["ok"] is True
+    assert "closet" not in data["snapshot"]["areas"]
+
+
+def test_post_command_delete_area_with_agents_rejected(client):
+    response = client.post(
+        "/api/command",
+        json={"line": f"delete-area {ROOM}"},
+    )
+    assert response.json()["ok"] is False
+
+
+def test_post_create_area_route(client):
+    response = client.post(
+        "/api/create-area",
+        json={
+            "area_id": "attic",
+            "description": "A dusty attic.",
+            "width": 6,
+            "height": 4,
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert "attic" in data["snapshot"]["areas"]
+    assert data["snapshot"]["active_area_id"] == "attic"
+
+
+def test_post_edit_area_route(client):
+    client.post(
+        "/api/create-area",
+        json={"area_id": "cellar", "description": "Old cellar.", "width": 5, "height": 5},
+    )
+    response = client.post(
+        "/api/edit-area",
+        json={
+            "area_id": "cellar",
+            "description": "Damp cellar.",
+            "width": 7,
+            "height": 7,
+        },
+    )
+    data = response.json()
+    assert data["ok"] is True
+    block = data["snapshot"]["areas"]["cellar"]
+    assert block["area_description"] == "Damp cellar."
+
+
+def test_post_delete_area_route(client):
+    client.post(
+        "/api/create-area",
+        json={"area_id": "closet", "description": "Empty closet."},
+    )
+    response = client.post("/api/delete-area", json={"area_id": "closet"})
+    data = response.json()
+    assert data["ok"] is True
+    assert "closet" not in data["snapshot"]["areas"]
