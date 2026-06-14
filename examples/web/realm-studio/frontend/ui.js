@@ -340,6 +340,13 @@ function openCreateAgentModal(x, y) {
       value: "",
       placeholder: "tokens/my-agent.svg",
     },
+    {
+      name: "moveSpeed",
+      label: "Move speed (steps per turn)",
+      value: "",
+      type: "number",
+      placeholder: "blank = unlimited (teleport)",
+    },
     { name: "x", label: "X", value: String(x), type: "number", required: true },
     { name: "y", label: "Y", value: String(y), type: "number", required: true },
   ], async (data) => {
@@ -349,6 +356,7 @@ function openCreateAgentModal(x, y) {
       desc: data.desc,
       personality: data.personality,
       appearance: data.appearance,
+      moveSpeed: data.moveSpeed,
       x: data.x,
       y: data.y,
     });
@@ -362,8 +370,18 @@ function openCreateAgentModal(x, y) {
 function openEditObjectModal(entity) {
   openModal(`Edit object — ${entity.name}`, [
     { name: "name", label: "Name", value: entity.name, required: true },
-    { name: "pdesc", label: "Passive description", value: "", type: "textarea" },
-    { name: "desc", label: "Detailed description", value: "", type: "textarea" },
+    {
+      name: "pdesc",
+      label: "Passive description",
+      value: entity.passive_description ?? "",
+      type: "textarea",
+    },
+    {
+      name: "desc",
+      label: "Detailed description",
+      value: entity.description ?? "",
+      type: "textarea",
+    },
     {
       name: "appearance",
       label: "Token image path",
@@ -404,12 +422,22 @@ function openEditObjectModal(entity) {
 function openEditAgentModal(entity) {
   openModal(`Edit agent — ${entity.name}`, [
     { name: "name", label: "Name", value: entity.name, required: true },
-    { name: "pdesc", label: "Passive description", value: "", type: "textarea" },
-    { name: "desc", label: "Detailed description", value: "", type: "textarea" },
+    {
+      name: "pdesc",
+      label: "Passive description",
+      value: entity.passive_description ?? "",
+      type: "textarea",
+    },
+    {
+      name: "desc",
+      label: "Detailed description",
+      value: entity.description ?? "",
+      type: "textarea",
+    },
     {
       name: "personality",
       label: "Personality (LLM)",
-      value: "",
+      value: entity.personality ?? "",
       type: "textarea",
     },
     {
@@ -417,6 +445,13 @@ function openEditAgentModal(entity) {
       label: "Token image path",
       value: entity.appearance ?? "",
       placeholder: "tokens/my-agent.svg",
+    },
+    {
+      name: "moveSpeed",
+      label: "Move speed (steps per turn)",
+      value: entity.move_speed != null ? String(entity.move_speed) : "",
+      type: "number",
+      placeholder: "blank = unlimited (teleport)",
     },
     {
       name: "x",
@@ -440,6 +475,7 @@ function openEditAgentModal(entity) {
       desc: data.desc || undefined,
       personality: data.personality || undefined,
       appearance: data.appearance,
+      moveSpeed: data.moveSpeed,
       x: data.x,
       y: data.y,
     });

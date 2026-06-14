@@ -25,6 +25,7 @@ def test_snapshot_default_shape():
     assert explorer["position"] == [1, 1]
     assert explorer["memory_module"] == "recent_turns"
     assert explorer["appearance"] == "tokens/explorer.svg"
+    assert explorer["move_speed"] is None
 
     ball = next(o for o in snap["objects"] if o["id"] == "obj_ball_01")
     assert ball["position"] == [2, 2]
@@ -49,6 +50,20 @@ def test_snapshot_include_private_adds_personality():
     agent_data = session.snapshot(include_private=True)["agents"][0]
     assert "personality" in agent_data
     assert "curious explorer" in agent_data["personality"].lower()
+    assert "passive_description" in agent_data
+    assert "description" in agent_data
+
+
+def test_snapshot_include_private_adds_object_descriptions():
+    session = Session.from_default()
+    objects = session.snapshot(include_private=True)["objects"]
+    ball = next(o for o in objects if o["id"] == "obj_ball_01")
+    sign = next(o for o in objects if o["id"] == "obj_sign_01")
+    assert "passive_description" in ball
+    assert "description" in ball
+    assert "ceramic ball" in ball["description"].lower()
+    assert sign["passive_description"]
+    assert sign["description"]
 
 
 def test_snapshot_passive_vision_for_active_agent():
@@ -140,4 +155,5 @@ def test_serialize_agent_public_fields():
         "passive_result",
         "memory_module",
         "appearance",
+        "move_speed",
     }

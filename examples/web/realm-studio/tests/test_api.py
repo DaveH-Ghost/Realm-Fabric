@@ -42,12 +42,18 @@ def test_state_returns_snapshot_shape(client):
     assert len(data["agents"]) == 1
     assert data["agents"][0]["name"] == "Explorer"
     assert data["agents"][0]["appearance"] == "tokens/explorer.svg"
+    assert "personality" in data["agents"][0]
+    assert "passive_description" in data["agents"][0]
+    assert "description" in data["agents"][0]
+    assert data["agents"][0]["move_speed"] is None
 
     object_ids = {o["id"] for o in data["objects"]}
     assert "obj_ball_01" in object_ids
     assert "obj_sign_01" in object_ids
     ball = next(o for o in data["objects"] if o["id"] == "obj_ball_01")
     assert ball["appearance"] == "tokens/ball.svg"
+    assert "passive_description" in ball
+    assert "description" in ball
     assert data["recent_events"] == []
 
 
@@ -293,3 +299,48 @@ def test_post_active_agent_unknown(client):
     data = response.json()
     assert data["ok"] is False
     assert data["message"]
+
+
+def test_post_command_create_agent_with_move_speed(client):
+    response = client.post(
+        "/api/command",
+        json={
+            "line": (
+                'create-agent name "Scout" pdesc "A scout." desc "Fast scout." '
+                'personality "You are a scout." move-speed 3 at 0,0'
+            ),
+        },
+    )
+    assert response.status_code == 200
+    assert response.json()["ok"] is True
+
+    state = client.get("/api/state").json()
+    scout = next(a for a in state["agents"] if a["name"] == "Scout")
+    assert scout["move_speed"] == 3
+
+
+def test_post_command_edit_agent_move_speed(client):
+    create = client.post(
+        "/api/command",
+        json={
+            "line": (
+                'create-agent name "Walker" pdesc "A walker." desc "Slow walker." '
+                'personality "You walk." at 0,0'
+            ),
+        },
+    )
+    assert create.json()["ok"] is True
+    agent_id = next(
+        a["id"] for a in client.get("/api/state").json()["agents"] if a["name"] == "Walker"
+    )
+
+    edit = client.post(
+        "/api/command",
+        json={"line": f'edit-agent {agent_id} move-speed 2'},
+    )
+    assert edit.json()["ok"] is True
+
+    walker = next(
+        a for a in client.get("/api/state").json()["agents"] if a["id"] == agent_id
+    )
+    assert walker["move_speed"] == 2

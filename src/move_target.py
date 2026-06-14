@@ -84,6 +84,29 @@ def format_move_arrival_message(resolved: ResolvedMoveTarget) -> str:
     return f"You moved to {label}."
 
 
+def format_move_target_label(resolved: ResolvedMoveTarget) -> str:
+    """Human label for the move goal (entity name or coordinate)."""
+    if resolved.entity_name:
+        return resolved.entity_name
+    return format_coordinate(*resolved.position)
+
+
+def format_move_towards_message(resolved: ResolvedMoveTarget) -> str:
+    return f"You moved towards {format_move_target_label(resolved)}."
+
+
+def format_move_towards_passive(
+    agent_name: str,
+    resolved: ResolvedMoveTarget,
+    stop_position: tuple[int, int],
+) -> str:
+    stop = format_coordinate(*stop_position)
+    return (
+        f"{agent_name} moves towards {format_move_target_label(resolved)}, "
+        f"stopping at {stop}."
+    )
+
+
 def format_move_entity_targets(agent: Agent, area: Area) -> str:
     """List in-area entity ids the agent may use as move targets."""
     lines: list[str] = []
@@ -104,9 +127,16 @@ def format_move_instructions(agent: Agent, area: Area) -> str:
     """Coordinate bounds plus entity id list for the compound prompt."""
     coord_rule = area.format_move_coordinate_rule()
     entity_block = format_move_entity_targets(agent, area)
+    speed_line = ""
+    if agent.move_speed is not None:
+        speed_line = (
+            f"Your move speed this turn is {agent.move_speed} step(s) "
+            "(diagonal and straight each cost 1); you may stop short of the target.\n"
+        )
     return (
         f"{coord_rule}\n"
         "You may also set move_target to an entity id (obj_* or agent_*) to move "
         "to that entity's current tile.\n"
+        f"{speed_line}"
         f"{entity_block}"
     )

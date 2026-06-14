@@ -108,6 +108,20 @@ def parse_position(value: str) -> tuple[Optional[tuple[int, int]], Optional[str]
     return (x, y), None
 
 
+def parse_move_speed(value: str) -> tuple[Optional[int], Optional[str]]:
+    """Parse move-speed field. Empty string clears to unlimited (None)."""
+    text = value.strip()
+    if not text:
+        return None, None
+    try:
+        speed = int(text)
+    except ValueError:
+        return None, f"move-speed must be an integer (got {value!r})."
+    if speed < 1:
+        return None, "move-speed must be at least 1 (omit or clear for unlimited)."
+    return speed, None
+
+
 def parse_field_tokens(
     tokens: list[str], allowed: set[str]
 ) -> tuple[dict[str, str], Optional[str]]:
@@ -502,7 +516,7 @@ def create_agent_from_args(area: Area, arg: str) -> tuple[Optional[Agent], str]:
     if not tokens:
         return None, (
             'Usage: create-agent name "..." [pdesc "..."] [desc "..."] [appearance "..."] '
-            '[personality "..."] [memory MODULE_ID] [memory-budget N] '
+            '[personality "..."] [move-speed N] [memory MODULE_ID] [memory-budget N] '
             '[memory-summary-interval N] [memory-summary-max N] [memory-summary-tail N] at x,y'
         )
 
@@ -514,6 +528,7 @@ def create_agent_from_args(area: Area, arg: str) -> tuple[Optional[Agent], str]:
             "desc",
             "appearance",
             "personality",
+            "move-speed",
             "memory",
             "memory-budget",
             "memory-summary-interval",
@@ -547,6 +562,11 @@ def create_agent_from_args(area: Area, arg: str) -> tuple[Optional[Agent], str]:
     desc = fields.get("desc", "")
     appearance = fields.get("appearance", "")
     personality = fields.get("personality", "")
+    move_speed: Optional[int] = None
+    if "move-speed" in fields:
+        move_speed, speed_err = parse_move_speed(fields["move-speed"])
+        if speed_err:
+            return None, speed_err
     memory, mem_err = _build_agent_memory(fields)
     if mem_err:
         return None, mem_err
@@ -561,6 +581,7 @@ def create_agent_from_args(area: Area, arg: str) -> tuple[Optional[Agent], str]:
         passive_description=pdesc,
         description=desc,
         appearance=appearance,
+        move_speed=move_speed,
         memory=memory,
         last_action=None,
     )
@@ -576,7 +597,7 @@ def edit_agent_from_args(area: Area, arg: str) -> EditAgentResult:
     """
     Parse and edit an agent.
 
-    Usage: <agent_id> [pdesc "..."] [desc "..."] [appearance "..."] [personality "..."] [name "..."] [pos x,y] ...
+    Usage: <agent_id> [pdesc "..."] [desc "..."] [appearance "..."] [personality "..."] [move-speed N] [name "..."] [pos x,y] ...
 
     Memory module is set only at create-agent; edit-agent cannot change it.
     """
@@ -588,7 +609,7 @@ def edit_agent_from_args(area: Area, arg: str) -> EditAgentResult:
             ok=False,
             message=(
                 'Usage: edit-agent <id> [pdesc "..."] [desc "..."] [appearance "..."] [personality "..."] '
-                '[name "..."] [pos x,y] ...'
+                '[move-speed N] [name "..."] [pos x,y] ...'
             ),
         )
 
@@ -610,7 +631,7 @@ def edit_agent_from_args(area: Area, arg: str) -> EditAgentResult:
         )
 
     fields, err = parse_field_tokens(
-        tokens[1:], {"name", "pdesc", "desc", "appearance", "personality", "pos"}
+        tokens[1:], {"name", "pdesc", "desc", "appearance", "personality", "move-speed", "pos"}
     )
     if err:
         return EditAgentResult(ok=False, message=err)
@@ -619,7 +640,7 @@ def edit_agent_from_args(area: Area, arg: str) -> EditAgentResult:
             ok=False,
             message=(
                 "At least one field to change is required "
-                "(name, pdesc, desc, appearance, personality, or pos)."
+                "(name, pdesc, desc, appearance, personality, move-speed, or pos)."
             ),
         )
 
@@ -659,6 +680,14 @@ def edit_agent_from_args(area: Area, arg: str) -> EditAgentResult:
     if "personality" in fields and fields["personality"] != agent.personality:
         agent.personality = fields["personality"]
         changes.append("personality")
+
+    if "move-speed" in fields:
+        move_speed, speed_err = parse_move_speed(fields["move-speed"])
+        if speed_err:
+            return EditAgentResult(ok=False, message=speed_err)
+        if move_speed != agent.move_speed:
+            agent.move_speed = move_speed
+            changes.append("move-speed")
 
     if "pos" in fields:
         position, err = parse_position(fields["pos"])

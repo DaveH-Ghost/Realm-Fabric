@@ -65,3 +65,11 @@ class Agent:
     Ignored by the simulation, passive vision, and LLM prompts. Empty means
     no custom token image.
     """
+
+    move_speed: Optional[int] = None
+    """
+    Max grid steps per move toward a target (5e: diagonal and orthogonal each cost 1).
+
+    ``None`` = unlimited (teleport to target tile). Positive int = path at most that
+    many steps; may stop short with a "towards" result.
+    """

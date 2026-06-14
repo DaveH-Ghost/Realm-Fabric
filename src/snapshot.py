@@ -22,15 +22,19 @@ def _position_list(position: tuple[int, int]) -> list[int]:
     return [x, y]
 
 
-def serialize_object(obj: Object) -> dict[str, Any]:
+def serialize_object(obj: Object, *, include_private: bool = False) -> dict[str, Any]:
     """Public object fields for clients."""
-    return {
+    data: dict[str, Any] = {
         "id": obj.id,
         "name": obj.name,
         "position": _position_list(obj.position),
         "actions": sorted(obj.actions.keys()),
         "appearance": obj.appearance,
     }
+    if include_private:
+        data["passive_description"] = obj.passive_description
+        data["description"] = obj.description
+    return data
 
 
 def serialize_agent(agent: Agent, *, include_private: bool = False) -> dict[str, Any]:
@@ -42,6 +46,7 @@ def serialize_agent(agent: Agent, *, include_private: bool = False) -> dict[str,
         "passive_result": agent.passive_result,
         "memory_module": agent.memory.module_id,
         "appearance": agent.appearance,
+        "move_speed": agent.move_speed,
     }
     if include_private:
         data["personality"] = agent.personality
@@ -76,7 +81,9 @@ def build_area_snapshot(
         "session_turn": session_turn,
         "active_agent_id": active_agent_id,
         "agents": [serialize_agent(a, include_private=include_private) for a in area.agents],
-        "objects": [serialize_object(o) for o in area.get_objects()],
+        "objects": [
+            serialize_object(o, include_private=include_private) for o in area.get_objects()
+        ],
         "recent_events": [
             {"session_turn": event.session_turn, "text": event.text}
             for event in area.recent_events

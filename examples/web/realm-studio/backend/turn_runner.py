@@ -64,7 +64,7 @@ def run_llm_turn(
         return {
             "ok": True,
             "message": result.message,
-            "snapshot": session.snapshot(),
+            "snapshot": session.snapshot(include_private=True),
             "steps": _serialize_steps(result.record),
             "prompt": prompt,
         }

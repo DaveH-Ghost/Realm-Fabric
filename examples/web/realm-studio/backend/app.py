@@ -47,7 +47,7 @@ def create_app() -> FastAPI:
     @app.get("/api/state")
     def get_state() -> dict:
         """JSON snapshot of the live session (grid, agents, objects, passive vision)."""
-        return get_session_store().session.snapshot()
+        return get_session_store().session.snapshot(include_private=True)
 
     @app.post("/api/command")
     def post_command(body: CommandRequest) -> dict[str, object]:
@@ -91,7 +91,7 @@ def create_app() -> FastAPI:
         result = session.emit_area_event(body.text)
         payload: dict[str, object] = {"ok": result.ok, "message": result.message}
         if result.ok:
-            payload["snapshot"] = session.snapshot()
+            payload["snapshot"] = session.snapshot(include_private=True)
         return payload
 
     @app.get("/")

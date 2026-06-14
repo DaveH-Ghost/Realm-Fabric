@@ -95,12 +95,24 @@ export function buildCreateObject({ name, pdesc, desc, appearance, x, y, withEat
   return line;
 }
 
-export function buildCreateAgent({ name, pdesc, desc, personality, appearance, x, y }) {
+export function buildCreateAgent({
+  name,
+  pdesc,
+  desc,
+  personality,
+  appearance,
+  moveSpeed,
+  x,
+  y,
+}) {
   let line =
     `create-agent name ${cliQuote(name)} pdesc ${cliQuote(pdesc)} ` +
     `desc ${cliQuote(desc)} personality ${cliQuote(personality)} at ${x},${y}`;
   if (appearance) {
     line += ` appearance ${cliQuote(appearance)}`;
+  }
+  if (moveSpeed) {
+    line += ` move-speed ${moveSpeed}`;
   }
   return line;
 }
@@ -115,13 +127,30 @@ export function buildEditObject({ id, name, pdesc, desc, appearance, x, y }) {
   return parts.join(" ");
 }
 
-export function buildEditAgent({ id, name, pdesc, desc, personality, appearance, x, y }) {
+export function buildEditAgent({
+  id,
+  name,
+  pdesc,
+  desc,
+  personality,
+  appearance,
+  moveSpeed,
+  x,
+  y,
+}) {
   const parts = [`edit-agent ${id}`];
   if (name) parts.push(`name ${cliQuote(name)}`);
   if (pdesc) parts.push(`pdesc ${cliQuote(pdesc)}`);
   if (desc) parts.push(`desc ${cliQuote(desc)}`);
   if (personality) parts.push(`personality ${cliQuote(personality)}`);
   if (appearance !== undefined) parts.push(`appearance ${cliQuote(appearance)}`);
+  if (moveSpeed !== undefined) {
+    if (moveSpeed === "") {
+      parts.push('move-speed ""');
+    } else {
+      parts.push(`move-speed ${moveSpeed}`);
+    }
+  }
   parts.push(`pos ${x},${y}`);
   return parts.join(" ");
 }
