@@ -172,7 +172,7 @@ V0.2 compound turns and object interact should log in a shape that V0.2.5 can in
 
 **Focus:** **V0.3.0** — engine refactor (Session API, snapshots, GameProfile, CLI on Session). **V0.3.1** — example web project built on the engine. **V0.3.2** — realm-studio polish (GM events, appearance). **Depends on V0.2.5** (`v0.2.5`).
 
-See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e). See [v0.3.1-changelog.md](v0.3.1-changelog.md) for realm-studio (0.3.1a–f). See [v0.3.2-changelog.md](v0.3.2-changelog.md) for 0.3.2 slices.
+See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e). See [v0.3.1-changelog.md](v0.3.1-changelog.md) for realm-studio (0.3.1a–f). See [v0.3.2-changelog.md](v0.3.2-changelog.md) for 0.3.2 slices. See [v0.4.0-changelog.md](v0.4.0-changelog.md) for 0.4.0 slices.
 
 ### V0.3.0 — Engine — ✅ Implemented (`0.3.0` in pyproject; tag **`v0.3.0`** pending)
 
@@ -206,32 +206,42 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 
 ## V0.4
 
-**Focus:** **Multi-area sessions** — one `Session` can own multiple `**Area`** instances; agents can move between areas. Builds on V0.3 engine + web example.
+**Focus:** **Tactical movement** + **multi-area sessions** + **area-transfer object effects**. Builds on V0.3.2 engine + realm-studio.
 
-**Status:** ⬜ **Planned**
+**Status:** ⬜ **Planned** — see [v0.4.0-changelog.md](v0.4.0-changelog.md) for slices **0.4.0a–e**.
+
+### V0.4.0 — movement, multi-area, portals — ⬜ Planned
+
+| Slice | Theme |
+|-------|--------|
+| **0.4.0a** | `move_target` accepts entity id |
+| **0.4.0b** | `move_speed` + D&D 5e pathing (diagonal = 1 step) |
+| **0.4.0c1** | Multi-area `Session` + snapshot |
+| **0.4.0c2** | realm-studio area dropdown |
+| **0.4.0d** | `move_area` effect + action params |
+| **0.4.0e** | Release polish, tag **`v0.4.0`** |
+
+- **Movement** — id or coordinate targets; `move_speed=None` preserves teleport parity
+- **Multi-area** — `Session.areas`, agent `area_id`, full snapshot v1; GM **active area** in realm-studio
+- **Connectors** — `move_area` on object actions (doors, ladders) via parameterized effects
+- **Deferred:** swappable turn schemas → **V0.5+**; multiplayer → [LONG_TERM_GOALS.md](../LONG_TERM_GOALS.md)
+
+<details>
+<summary>Original ROADMAP draft (multi-area + swappable schemas)</summary>
 
 ### Multi-area session
 
-- `**Session`** holds a map of areas (e.g. by `area_id`) plus each agent’s **current area**
+- **`Session`** holds a map of areas (e.g. by `area_id`) plus each agent’s **current area**
 - **Area transfer API** — move an agent from one area to another (and optionally to a coordinate in the destination area)
 - **Prompt / perception** scoped to the agent’s **current area** only (passive vision, interact list, bounds)
-- **Cross-area** — no shared passive vision by default; portals/exits modeled as objects or explicit transfer commands (TBD in design)
-- **Snapshot** includes all areas + agent locations for save/load and multiplayer (extends **0.3.0b**)
+- **Cross-area** — no shared passive vision by default; portals/exits modeled as objects or explicit transfer commands
+- **Snapshot** includes all areas + agent locations for save/load
 
 ### Swappable turn schemas (`GameProfile`)
 
-- `**GameProfile.schema_id`** becomes functional — profile selects **Pydantic model + turn executor**, not just prompt prose
-- Default profile keeps `**AgentCompoundTurn`** and today’s move → look → turn-action pipeline (parity unchanged)
-- Apps register or ship profiles with alternate schemas (e.g. strategy-game phases, simplified single-action turns)
-- LLM client validates against the profile’s schema class; `**output_format**` template stays in sync with that schema
-- `Session.run_compound_turn()` (or profile-scoped equivalent) dispatches to the profile’s executor instead of hardcoding `simulation.py` + `AgentCompoundTurn`
+- Profile selects **Pydantic model + turn executor**, not just prompt prose — deferred to **V0.5+**
 
-**Explicitly out of initial V0.4 slice:** multiple schemas in one turn, hot-reload of schema classes in production, GUI schema editor.
-
-### Explicitly out of V0.4 (initial slice)
-
-- Automatic pathfinding across areas
-- Persistent world database (still **0.2.5+** / store themes unless pulled forward)
+</details>
 
 ---
 
