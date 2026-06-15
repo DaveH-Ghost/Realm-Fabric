@@ -174,7 +174,7 @@ V0.2 compound turns and object interact should log in a shape that V0.2.5 can in
 
 See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e). See [v0.3.1-changelog.md](v0.3.1-changelog.md) for realm-studio (0.3.1a–f). See [v0.3.2-changelog.md](v0.3.2-changelog.md) for 0.3.2 slices. See [v0.4.0-changelog.md](v0.4.0-changelog.md) for 0.4.0 slices.
 
-### V0.3.0 — Engine — ✅ Implemented (`0.3.0` in pyproject; tag **`v0.3.0`** pending)
+### V0.3.0 — Engine — ✅ Implemented (`0.3.0`; superseded by **`0.4.0`**)
 
 - **`Session`** — single entry point for turns, area-edit commands, active agent, prompts (one **`Area`** per session)
 - **JSON snapshot** — web-ready area state
@@ -188,7 +188,7 @@ See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e). See 
 
 See [v0.3.1-changelog.md](v0.3.1-changelog.md). App path: **`examples/web/realm-studio`**.
 
-- FastAPI wraps `Session`; depends on `realm-fabric>=0.3.0`
+- FastAPI wraps `Session`; depends on `realm-fabric>=0.4.0` (path dep in dev)
 - Local web UI: **grid** with agents/objects; **right-click** create/edit/delete; passive vision + turn log; **Run turn**
 - **19** FastAPI `TestClient` smoke/integration tests (V0.3.2); engine coverage stays in root pytest
 
@@ -199,7 +199,7 @@ See [v0.3.2-changelog.md](v0.3.2-changelog.md).
 - **Area-wide GM events** — `Session.emit_area_event`; memory for all agents; realm-studio **Emit event…** + **Recent events** sidebar
 - **Pannable grid viewport** — white map on black canvas (0.3.2c1)
 - **`appearance`** — client-only image path on `Agent` / `Object`; token images on grid (0.3.2c2–d)
-- **Tests** — root **287** pytest; realm-studio **19** API tests
+- **Tests** — root **348** pytest; realm-studio **36** API tests
 - **Not in 0.3.2:** multiplayer (moved to [LONG_TERM_GOALS.md](../LONG_TERM_GOALS.md))
 
 Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) remain in [LONG_TERM_GOALS.md](../LONG_TERM_GOALS.md).
@@ -208,22 +208,24 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 
 **Focus:** **Tactical movement** + **multi-area sessions** + **area-transfer object effects**. Builds on V0.3.2 engine + realm-studio.
 
-**Status:** ⬜ **Planned** — see [v0.4.0-changelog.md](v0.4.0-changelog.md) for slices **0.4.0a–e**.
+**Status:** ✅ **Complete** — see [v0.4.0-changelog.md](v0.4.0-changelog.md) for slices **0.4.0a–e**. Tag **`v0.4.0`** when ready.
 
-### V0.4.0 — movement, multi-area, portals — ⬜ Planned
+### V0.4.0 — movement, multi-area, portals — ✅ Complete
 
-| Slice | Theme |
-|-------|--------|
-| **0.4.0a** | `move_target` accepts entity id |
-| **0.4.0b** | `move_speed` + D&D 5e pathing (diagonal = 1 step) |
-| **0.4.0c1** | Multi-area `Session` + snapshot |
-| **0.4.0c2** | realm-studio area dropdown |
-| **0.4.0d** | `move_area` effect + action params |
-| **0.4.0e** | Release polish, tag **`v0.4.0`** |
+| Slice | Theme | Status |
+|-------|--------|--------|
+| **0.4.0a** | `move_target` accepts entity id | ✅ |
+| **0.4.0b** | `move_speed` + Chebyshev pathing | ✅ |
+| **0.4.0c1** | Multi-area `Session` + snapshot | ✅ |
+| **0.4.0c2** | realm-studio area dropdown | ✅ |
+| **0.4.0d** | `move_area` effect + object actions UI + interact templates | ✅ |
+| **0.4.0e** | Release polish, tag **`v0.4.0`** | ✅ |
 
 - **Movement** — id or coordinate targets; `move_speed=None` preserves teleport parity
 - **Multi-area** — `Session.areas`, agent `area_id`, full snapshot v1; GM **active area** in realm-studio
-- **Connectors** — `move_area` on object actions (doors, ladders) via parameterized effects
+- **Connectors** — `move_area` on object actions (doors, ladders) via parameterized effects; **Manage actions…** in realm-studio
+- **Interact templates** — `{object_start}`, `{actor_end_area}`, etc.; **?** help in action editor
+- **Tests** — root **348** pytest; realm-studio **36** API tests
 - **Deferred:** swappable turn schemas → **V0.5+**; multiplayer → [LONG_TERM_GOALS.md](../LONG_TERM_GOALS.md)
 
 <details>

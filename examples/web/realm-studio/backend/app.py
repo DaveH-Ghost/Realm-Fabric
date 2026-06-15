@@ -35,7 +35,7 @@ _ENGINE_SRC = _REPO_ROOT / "src"
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="realm-studio", version="0.4.0c2")
+    app = FastAPI(title="realm-studio", version="0.4.0")
 
     app.add_middleware(
         CORSMiddleware,

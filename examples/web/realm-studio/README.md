@@ -4,7 +4,7 @@ Example web app for [Realm-Fabric](https://github.com/) — wraps the engine `Se
 
 **Location:** `examples/web/realm-studio` in the Realm-Fabric repo.
 
-**Status:** **V0.3.2** complete — tag **`v0.3.2`** on the example milestone. Pannable grid, GM **Emit event…**, token images from `appearance` paths.
+**Status:** **V0.4.0** — multi-area GM grid, object **Manage actions…** editor, Chebyshev pathing via agent `move_speed`. Tag **`v0.4.0`** when ready.
 
 ## Quick start
 
@@ -15,14 +15,14 @@ copy ..\..\..\.env.example .env   # set OPENROUTER_API_KEY for Run turn
 uv run realm-studio
 ```
 
-Open [http://127.0.0.1:8765](http://127.0.0.1:8765) (opens automatically). Right-click the grid to edit; **Emit event…** for GM narration; **Run turn ▶** for the active agent.
+Open [http://127.0.0.1:8765](http://127.0.0.1:8765) (opens automatically). Right-click the grid to edit; switch **Area** for multi-room sessions; **Emit event…** for GM narration; **Run turn ▶** for the active agent.
 
 ## Prerequisites
 
 - Python ≥3.11
 - [uv](https://docs.astral.sh/uv/)
 - Realm-Fabric engine at repo root (path dependency on `realm-fabric`)
-- **OpenRouter API key** for LLM turns (area edits work without it)
+- **OpenRouter API key** for LLM turns (area edits and object actions work without it)
 
 ## Run (dev server)
 
@@ -44,14 +44,19 @@ uv run uvicorn backend.app:app --host 127.0.0.1 --port 8765 --reload
 
 ## UI
 
-- **Grid** — white pannable map; entities show **token images** when `appearance` is set (else name chips); active agent ★
-- **Right-click** — create/edit/delete on tiles and tokens; **Play as** for agents
+- **Grid** — white pannable map scoped to the **active area**; token images from `appearance` (else name chips); active agent ★
+- **Area toolbar** — dropdown (room / hall / …); **+ Area**, **Edit area**, **Delete area**
+- **Agents elsewhere** — sidebar list when agents are in other areas
+- **Right-click** — create/edit/delete on tiles and tokens; **Play as** for agents; **Manage actions…** on objects
+- **Manage actions…** — add/edit/remove object actions; effect picker (`delete_self`, `random_move_self`, `move_area`); **?** on result/passive fields lists template variables
 - **Stacked tiles** — manage menu when multiple entities share a cell
 - **Toolbar** — active-agent dropdown; **Emit event…**; **Run turn ▶**
 - **Sidebar** — session meta, passive vision, recent GM events, turn log
 - **Refresh** — manual re-fetch; edits and turns auto-refresh
 
 **Note:** `realm-studio` and the terminal `realm` CLI use **separate in-memory sessions** — CLI edits do not appear in the browser.
+
+**Demo areas:** server seeds **room** (default profile) plus empty **hall**. Add a door object and a `move_area` action via **Manage actions…** or CLI to test cross-area travel.
 
 ## Token images
 
@@ -66,19 +71,28 @@ create-object name "Crate" appearance "tokens/ball.svg" at 3,3
 
 Empty path falls back to a name chip. Broken paths fall back at render time.
 
+## Agent move speed
+
+Set **Move speed (steps per turn)** in create/edit agent modals, or via CLI (`move-speed N`). Blank = unlimited (teleport). Limited speed uses Chebyshev pathing — agents may stop **towards** a target without reaching it in one turn.
+
 ## API
 
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/health` | Liveness |
-| `GET` | `/api/state` | `Session.snapshot()` |
+| `GET` | `/api/state` | Full session snapshot (all areas, `actions_detail` on objects) |
 | `POST` | `/api/command` | `{ "line": "create-object ..." }` → `run_command` |
 | `POST` | `/api/active-agent` | `{ "name_or_id": "Explorer" }` → `set_active_agent` |
+| `POST` | `/api/active-area` | `{ "area_id": "hall" }` → set GM active area |
+| `POST` | `/api/create-area` | Create empty area |
+| `POST` | `/api/edit-area` | Edit area description / grid size |
+| `POST` | `/api/delete-area` | Delete empty area |
 | `POST` | `/api/turn` | LLM compound turn (optional `agent_id`, `include_examples`) |
 | `POST` | `/api/event` | `{ "text": "..." }` → `emit_area_event` (no turn consumed) |
 | `GET` | `/api/prompt` | Build compound prompt (debug) |
+| `GET` | `/api/interact-template-vars` | Placeholders for object action result/passive text |
 
-See [v0.3.2-changelog.md](../../../docs/v0.3.2-changelog.md) for the full V0.3.2 release notes.
+See [v0.4.0-changelog.md](../../../docs/v0.4.0-changelog.md) for the full V0.4.0 release notes.
 
 ## Tests
 
@@ -86,7 +100,7 @@ See [v0.3.2-changelog.md](../../../docs/v0.3.2-changelog.md) for the full V0.3.2
 uv run pytest
 ```
 
-19 smoke/integration tests in `tests/test_api.py` via FastAPI `TestClient` (mocked LLM — no API key or running server).
+**36** smoke/integration tests (`test_api.py`, `test_snapshot_compat.py`) via FastAPI `TestClient` (mocked LLM — no API key or running server).
 
 From repo root, engine tests remain separate:
 
@@ -94,6 +108,8 @@ From repo root, engine tests remain separate:
 cd ..\..\..
 uv run pytest
 ```
+
+(348 engine tests as of 0.4.0e.)
 
 ## Environment
 
@@ -115,4 +131,4 @@ Adds 10 objects on tile **(3, 3)** to test scrollbars. Omit for the normal demo 
 
 ## What's next
 
-**V0.4** — multi-area sessions — see [ROADMAP.md](../../../docs/ROADMAP.md).
+**V0.5+** — swappable turn schemas, tile blockers, cross-area vision — see [ROADMAP.md](../../../docs/ROADMAP.md).

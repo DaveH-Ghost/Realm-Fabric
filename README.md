@@ -2,15 +2,15 @@
 
 A grid-based agent simulation framework designed around structured output and narrative roleplay.
 
-**Current Status:** **V0.3.0** engine (`0.3.0` in `pyproject.toml`) + **V0.3.2** example web app [**realm-studio**](examples/web/realm-studio) (tag **`v0.3.2`** on the example milestone). Engine: `Session` API, JSON snapshots, `GameProfile`, CLI on Session, GM area events, `appearance` token paths. Builds on **V0.2.5** (`v0.2.5`): compound LLM turns, pluggable memory, Passive Vision–first prompt.
+**Current Status:** **V0.4.0** (`0.4.0` in `pyproject.toml`) + [**realm-studio**](examples/web/realm-studio) example app. Tag **`v0.4.0`** when ready. Ships: entity-id move targets, **`move_speed`** + Chebyshev pathing, multi-area **`Session`**, **`move_area`** object effect, realm-studio area dropdown + **Manage actions…** UI.
 
 **Documentation:**
 
-- [V0.4.0 changelog](docs/v0.4.0-changelog.md) — movement, multi-area, `move_area` effect (planned)
+- [V0.4.0 changelog](docs/v0.4.0-changelog.md) — movement, multi-area, `move_area`, object actions (**0.4.0a–e**)
 - [V0.3.2 changelog](docs/v0.3.2-changelog.md) — **realm-studio** GM events, pannable grid, token images (0.3.2a–e) ✅
 - [V0.3.1 changelog](docs/v0.3.1-changelog.md) — **realm-studio** web app (0.3.1a–f) ✅
 - [V0.3.0 changelog](docs/v0.3.0-changelog.md) — engine refactor (0.3.0a–e)
-- [Roadmap](docs/ROADMAP.md) — version plans (V0.3.x ✅; **V0.4.0** planned)
+- [Roadmap](docs/ROADMAP.md) — version plans (**V0.4.0** ✅; V0.3.x ✅)
 - [V0.2.5 changelog](docs/v0.2.5-changelog.md) — memory / prompt slices (0.2.5a–g)
 - [Long-term goals](LONG_TERM_GOALS.md) — aspirational features
 - [V0 implementation checklist](docs/v0-implementation-readiness-checklist.md) — V0 historical design reference
@@ -24,7 +24,7 @@ A grid-based agent simulation framework designed around structured output and na
 |-------|------------|
 | **`realm_fabric` package** | Public API: `Session`, `GameProfile`, `load_profile`, `PromptContext`, `AgentCompoundTurn`, snapshots |
 | **`realm` CLI** | Reference client (`ManualStepper`) for manual testing — not required for library use |
-| **[realm-studio](examples/web/realm-studio)** | Example web UI (V0.3.2) — pannable grid, token images, GM **Emit event**, right-click edit, LLM **Run turn** over HTTP |
+| **[realm-studio](examples/web/realm-studio)** | Example web UI (V0.4.0) — multi-area grid, object action editor, GM **Emit event**, LLM **Run turn** over HTTP |
 
 Quick start for a downstream project:
 
@@ -38,7 +38,7 @@ result = session.run_compound_turn(AgentCompoundTurn(...))
 state = session.snapshot()
 ```
 
-**V0.3.2** ships [realm-studio](examples/web/realm-studio) on this API:
+**V0.4.0** ships [realm-studio](examples/web/realm-studio) on this API:
 
 ```powershell
 cd examples\web\realm-studio
@@ -46,7 +46,7 @@ uv sync
 uv run realm-studio
 ```
 
-Pannable grid with token images, right-click create/edit/delete, **Emit event…** (GM narration), and **Run turn** (needs `OPENROUTER_API_KEY`). See [realm-studio README](examples/web/realm-studio/README.md) and [v0.3.2-changelog](docs/v0.3.2-changelog.md).
+Multi-area pannable grid, token images, right-click create/edit/delete, **Manage actions…** on objects (effects including `move_area`), **Emit event…**, area dropdown (+ create/edit/delete area), and **Run turn** (needs `OPENROUTER_API_KEY`). See [realm-studio README](examples/web/realm-studio/README.md) and [v0.4.0-changelog](docs/v0.4.0-changelog.md).
 
 ## Running / Testing (without LLM)
 
@@ -70,7 +70,8 @@ Pannable grid with token images, right-click create/edit/delete, **Emit event…
   - `list` — overview of all agents and objects (no turn consumed)
   - `objects` — list all objects with ids and action names (for `edit-object` / `delete-object`)
   - `agents` — list all agents with ids and active marker
-  - `effects` — list registered object interaction effects (`delete_self`, `random_move_self`, …)
+  - `effects` — list registered object interaction effects (`delete_self`, `random_move_self`, `move_area`, …)
+  - `areas` — list areas in a multi-area session (* marks active edit scope)
   - `memory-modules` — list pluggable memory module ids (V0.2.5)
   - `state` — active agent context (memory module, turn count, compound step breakdown, few-shots)
   - `vision` — see what the active agent currently perceives
@@ -94,12 +95,13 @@ agents
 effects
 create-object name "Crate" pdesc "A crate." desc "A wooden crate." appearance "tokens/crate.svg" at 0,0
 create-object name "Cookie" pdesc "A cookie." desc "Tasty." at 2,2 action eat range 1 effect delete_self result "You ate the cookie." passive "{actor} ate the cookie."
+create-object name "Door" pdesc "A door." desc "To the hall." at 1,1 action enter range 0 effect move_area dest-area hall dest-at 0,0 result "You walk through." passive "{actor} walks through to {actor_end_area}."
 edit-object obj_sign_01 pdesc "A sign on the wall." desc "Updated sign text."
 edit-object obj_ball_01 appearance "tokens/ball.svg" pos 3,3
 edit-object obj_cookie_01 add-action smell range 1 result "Nice smell." passive "{actor} smells it."
 edit-object obj_cookie_01 remove-action smell
 delete-object obj_crate_01
-create-agent name "Goblin" pdesc "A short figure." desc "A grumpy goblin." personality "You are a grumpy goblin." appearance "tokens/goblin.svg" at 0,3
+create-agent name "Goblin" pdesc "A short figure." desc "A grumpy goblin." personality "You are a grumpy goblin." appearance "tokens/goblin.svg" move-speed 2 at 0,3
 create-agent name "Archivist" personality "You remember everything." memory rolling_summary memory-summary-interval 15 memory-summary-tail 3 at 1,1
 create-agent name "Scribe" personality "Quiet." memory salient_turns memory-budget 2500 at 2,2
 edit-agent agent_01 desc "Updated detailed description."
@@ -109,7 +111,7 @@ edit-agent agent_01 name "Scout"
 delete-agent agent_goblin_01
 ```
 
-The initial **ceramic ball** includes a built-in **`kick`** action (`range 1`, `random_move_self`). Example manual turn:
+The initial **ceramic ball** includes a built-in **`kick`** action (`range 1`, `random_move_self`). Result templates can use placeholders such as `{object}`, `{object_start}`, `{object_end}`, `{actor}`, `{actor_start_area}`, etc. (see `effects` / realm-studio **?** help). Example manual turn:
 
 ```
 step-compound 2,3 interact obj_ball_01 kick
@@ -132,6 +134,31 @@ emit-event "Thunder rumbles overhead."
 ```
 
 Events appear in agent **Memory:** on the next turn; realm-studio shows a **Recent events** sidebar and **Emit event…** button. Passive vision stays static (events are memory-only).
+
+### Multi-area sessions (V0.4.0)
+
+One session can hold multiple areas. Agents live in exactly one area; GM **active area** scopes create/edit/delete and **Emit event**. Compound turns (move, look, interact) use the agent's current area only.
+
+```
+areas
+active-area hall
+create-area id attic desc "A dusty attic." width 6 height 6
+edit-area hall desc "A longer hall." width 8 height 4
+delete-area attic
+```
+
+realm-studio: **Area** dropdown, **+ Area** / **Edit area** / **Delete area**; **Agents elsewhere** sidebar.
+
+### Movement (V0.4.0)
+
+- **`move_target`** — coordinate `"x,y"` **or** entity id (`obj_*`, `agent_*`) in the agent's current area
+- **`move_speed`** — on agent; `None` (default) = teleport; `N` = up to N Chebyshev steps toward target
+- CLI: `move-speed N` on `create-agent` / `edit-agent`; blank → unlimited
+
+```
+edit-agent agent_01 move-speed 2
+step-compound obj_ball_01
+```
 
 ### Multi-agent (V0.1 Section 3)
 
@@ -308,8 +335,8 @@ Tests use [pytest](https://docs.pytest.org/) and run **without** an API key or n
 
 | Suite | Where to run | Count | What it covers |
 |-------|----------------|-------|----------------|
-| **Engine** | Repo root (`uv run pytest`) | **287** | `tests/` — perception, editing, Session API, snapshots, area events, `appearance`, etc. |
-| **realm-studio** | `examples/web/realm-studio` (`uv run pytest`) | **19** | `tests/test_api.py` — FastAPI `TestClient` HTTP smoke (health, state, command, event, turn, static tokens) |
+| **Engine** | Repo root (`uv run pytest`) | **348** | `tests/` — perception, editing, Session API, multi-area, pathing, `move_area`, snapshots, etc. |
+| **realm-studio** | `examples/web/realm-studio` (`uv run pytest`) | **36** | HTTP smoke — health, multi-area state, areas CRUD, object actions, events, turn, template vars |
 
 Root `pyproject.toml` sets `testpaths = ["tests"]` only. The example app has its own `pyproject.toml` and does **not** get picked up when you run pytest from the repo root.
 
@@ -358,8 +385,14 @@ uv run pytest -x
 | `tests/test_stepper.py` | ManualStepper intro, help, state, compound turn logging |
 | `tests/test_llm_client.py` | LLM parse errors (`ERR:INVALID_JSON`, etc.) |
 | `tests/test_coordinate_move.py` | Coordinate move parser, bounds, schema |
+| `tests/test_move_target.py` | Entity id as move target (V0.4.0a) |
+| `tests/test_move_pathing.py` | `move_speed`, Chebyshev pathing, towards/reached wording (V0.4.0b) |
 | `tests/test_compound_turn.py` | Compound orchestration, `TurnRecord.steps`, step-compound parser |
 | `tests/test_object_actions.py` | Effect registry, interact range/vision, `delete_self`, ball `kick` |
+| `tests/test_move_area_effect.py` | `move_area` effect, cross-area transfer (V0.4.0d) |
+| `tests/test_interact_templates.py` | Result/passive template placeholders |
+| `tests/test_session_multi_area.py` | Multi-area `Session`, transfer, snapshot |
+| `tests/test_session_area_edit.py` | Area CRUD CLI |
 | `tests/test_area.py` | Initial demo area, grid rules, passive vision baseline |
 | `tests/test_area_config.py` | Configurable grid bounds and `area_description` |
 | `tests/test_session.py` | Session API — turns, commands, active agent, `build_prompt` |
