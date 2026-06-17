@@ -237,6 +237,58 @@ def test_get_prompt_unknown_agent(client):
     assert response.json()["ok"] is False
 
 
+def test_get_prompt_blocks_default(client):
+    response = client.get("/api/prompt-blocks")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert data["uses_default"] is True
+    assert len(data["blocks"]) > 5
+    assert data["blocks"][0]["type"] == "slot"
+
+
+def test_put_prompt_blocks_reorder(client):
+    base = client.get("/api/prompt-blocks").json()
+    blocks = list(base["blocks"])
+    blocks.insert(0, {"type": "text", "content": "API START\n"})
+    put = client.put("/api/prompt-blocks", json={"blocks": blocks})
+    assert put.status_code == 200
+    assert put.json()["ok"] is True
+    assert put.json()["uses_default"] is False
+
+    prompt = client.get("/api/prompt").json()["prompt"]
+    assert prompt.startswith("API START")
+
+
+def test_put_prompt_blocks_invalid(client):
+    response = client.put(
+        "/api/prompt-blocks",
+        json={"blocks": [{"type": "slot", "name": "bad_slot"}]},
+    )
+    assert response.status_code == 200
+    assert response.json()["ok"] is False
+
+
+def test_reset_prompt_blocks(client):
+    blocks = client.get("/api/prompt-blocks").json()["blocks"]
+    blocks[0] = {"type": "text", "content": "TEMP\n"}
+    client.put("/api/prompt-blocks", json={"blocks": blocks})
+    reset = client.post("/api/prompt-blocks/reset")
+    assert reset.status_code == 200
+    assert reset.json()["uses_default"] is True
+
+
+def test_get_prompt_slots(client):
+    response = client.get("/api/prompt-slots")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    names = {item["name"] for item in data["slots"]}
+    assert "passive_vision" in names
+    assert "memory" in names
+    assert "compound_rules" in data["editable_sections"]
+
+
 def test_post_turn_gate_blocked(client, monkeypatch):
     def blocked(_agent_id=None):
         return SessionResult(ok=False, message="Cannot run turn: consolidation pending.")

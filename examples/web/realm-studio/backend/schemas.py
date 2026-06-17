@@ -40,3 +40,13 @@ class EditAreaRequest(BaseModel):
 
 class DeleteAreaRequest(BaseModel):
     area_id: str = Field(min_length=1)
+
+
+class PromptBlockItem(BaseModel):
+    type: str = Field(min_length=1)
+    name: str | None = None
+    content: str | None = None
+
+
+class PromptBlocksRequest(BaseModel):
+    blocks: list[PromptBlockItem] = Field(min_length=1)

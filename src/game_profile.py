@@ -55,14 +55,21 @@ class GameProfile:
         ctx: PromptContext,
         *,
         include_examples: bool | None = None,
+        blocks: list | None = None,
     ) -> str:
         """Assemble the LLM prompt from engine-built context."""
+        from src.prompt_blocks import render_prompt_blocks
+
         show_examples = (
             self.include_examples_default
             if include_examples is None
             else include_examples
         )
-        prompt = self.template.render_context(ctx)
+        use_blocks = blocks
+        if use_blocks is None:
+            prompt = self.template.render_context(ctx)
+        else:
+            prompt = render_prompt_blocks(use_blocks, ctx)
         if show_examples and self.few_shot_examples.strip():
             prompt = (
                 f"{prompt}\n\n"

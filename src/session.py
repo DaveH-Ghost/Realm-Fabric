@@ -133,6 +133,7 @@ class Session:
         if agent is None:
             raise ValueError(f"Unknown active_agent_id: {active_agent_id!r}")
         self.active_agent_id = agent.id
+        self._prompt_blocks: list | None = None
 
     @property
     def area(self) -> Area:
@@ -314,7 +315,39 @@ class Session:
         return self.profile.build_prompt(
             ctx,
             include_examples=self.include_examples,
+            blocks=self.get_prompt_blocks(),
         )
+
+    def get_prompt_blocks(self) -> list:
+        """Return the session prompt layout (custom or profile default)."""
+        from src.prompt_blocks import PromptBlock, default_prompt_blocks
+
+        if self._prompt_blocks is not None:
+            return list(self._prompt_blocks)
+        return default_prompt_blocks()
+
+    def set_prompt_blocks(self, blocks: list) -> str | None:
+        """Replace the session prompt layout. Returns an error message or None."""
+        from src.prompt_blocks import validate_prompt_blocks
+
+        err = validate_prompt_blocks(blocks)
+        if err:
+            return err
+        self._prompt_blocks = list(blocks)
+        return None
+
+    def reset_prompt_blocks(self) -> None:
+        """Restore the profile default prompt layout."""
+        self._prompt_blocks = None
+
+    def prompt_blocks_use_default(self) -> bool:
+        return self._prompt_blocks is None
+
+    def build_prompt_context_for_agent(self, name_or_id: Optional[str] = None):
+        """Build ``PromptContext`` for an agent (default: active)."""
+        agent = self._resolve_agent_or_active(name_or_id)
+        area = self.get_area_for_agent(agent)
+        return build_prompt_context(agent, area)
 
     def snapshot(
         self,

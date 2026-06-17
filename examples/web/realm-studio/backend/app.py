@@ -21,11 +21,18 @@ from backend.schemas import (
     DeleteAreaRequest,
     EditAreaRequest,
     EventRequest,
+    PromptBlocksRequest,
     TurnRequest,
 )
 from backend.session_store import get_session_store
 from backend.snapshot_compat import normalize_state_snapshot
 from backend.turn_runner import run_llm_turn
+from backend.prompt_api import (
+    get_prompt_blocks as api_get_prompt_blocks,
+    get_prompt_slots as api_get_prompt_slots,
+    put_prompt_blocks as api_put_prompt_blocks,
+    reset_prompt_blocks as api_reset_prompt_blocks,
+)
 from src.interact_templates import interact_template_var_help
 
 _STUDIO_DIR = Path(__file__).resolve().parent.parent
@@ -144,6 +151,23 @@ def create_app() -> FastAPI:
             "length": len(prompt),
             "include_examples": session.include_examples,
         }
+
+    @app.get("/api/prompt-blocks")
+    def get_prompt_blocks_route() -> dict[str, object]:
+        return api_get_prompt_blocks(get_session_store().session)
+
+    @app.put("/api/prompt-blocks")
+    def put_prompt_blocks_route(body: PromptBlocksRequest) -> dict[str, object]:
+        items = [block.model_dump() for block in body.blocks]
+        return api_put_prompt_blocks(get_session_store().session, items)
+
+    @app.post("/api/prompt-blocks/reset")
+    def reset_prompt_blocks_route() -> dict[str, object]:
+        return api_reset_prompt_blocks(get_session_store().session)
+
+    @app.get("/api/prompt-slots")
+    def get_prompt_slots_route(agent_id: str | None = None) -> dict[str, object]:
+        return api_get_prompt_slots(get_session_store().session, agent_id)
 
     @app.post("/api/event")
     def post_event(body: EventRequest) -> dict[str, object]:
