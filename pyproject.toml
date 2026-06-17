@@ -1,6 +1,6 @@
 [project]
 name = "realm-fabric"
-version = "0.4.0"
+version = "0.4.1"
 description = "Grid-based LLM agent simulation engine — Session API, multi-area worlds, tactical movement, compound turns, pluggable memory"
 readme = "README.md"
 requires-python = ">=3.11"

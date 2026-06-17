@@ -2,16 +2,16 @@
 
 A grid-based agent simulation framework designed around structured output and narrative roleplay.
 
-**Current Status:** **V0.4.0** (`0.4.0` in `pyproject.toml`) + [**realm-studio**](examples/web/realm-studio) example app. Tag **`v0.4.0`** when ready. Ships: entity-id move targets, **`move_speed`** + Chebyshev pathing, multi-area **`Session`**, **`move_area`** object effect, realm-studio area dropdown + **Manage actions…** UI.
+**Current Status:** **V0.4.1** (`0.4.1` in `pyproject.toml`) + [**realm-studio**](examples/web/realm-studio) example app. Tag **`v0.4.1`** when ready. Ships: sentence-aware truncation, **prompt block layout** (reorder + static sections), slot ⚙ settings, session **vision units** / relative bearing, plus V0.4.0 movement and multi-area.
 
 **Documentation:**
 
-- [V0.4.1 changelog](docs/v0.4.1-changelog.md) — truncation, prompt block editor (**0.4.1a–d**, planned)
+- [V0.4.1 changelog](docs/v0.4.1-changelog.md) — truncation, prompt blocks, prompt editor, vision units (**0.4.1a–d**) ✅
 - [V0.4.0 changelog](docs/v0.4.0-changelog.md) — movement, multi-area, `move_area`, object actions (**0.4.0a–e**) ✅
 - [V0.3.2 changelog](docs/v0.3.2-changelog.md) — **realm-studio** GM events, pannable grid, token images (0.3.2a–e) ✅
 - [V0.3.1 changelog](docs/v0.3.1-changelog.md) — **realm-studio** web app (0.3.1a–f) ✅
 - [V0.3.0 changelog](docs/v0.3.0-changelog.md) — engine refactor (0.3.0a–e)
-- [Roadmap](docs/ROADMAP.md) — version plans (**V0.4.1** planned; **V0.4.0** ✅; V0.3.x ✅)
+- [Roadmap](docs/ROADMAP.md) — version plans (**V0.4.1** ✅; **V0.4.0** ✅; V0.3.x ✅)
 - [V0.2.5 changelog](docs/v0.2.5-changelog.md) — memory / prompt slices (0.2.5a–g)
 - [Long-term goals](LONG_TERM_GOALS.md) — aspirational features
 - [V0 implementation checklist](docs/v0-implementation-readiness-checklist.md) — V0 historical design reference
@@ -25,7 +25,7 @@ A grid-based agent simulation framework designed around structured output and na
 |-------|------------|
 | **`realm_fabric` package** | Public API: `Session`, `GameProfile`, `load_profile`, `PromptContext`, `AgentCompoundTurn`, snapshots |
 | **`realm` CLI** | Reference client (`ManualStepper`) for manual testing — not required for library use |
-| **[realm-studio](examples/web/realm-studio)** | Example web UI (V0.4.0) — multi-area grid, object action editor, GM **Emit event**, LLM **Run turn** over HTTP |
+| **[realm-studio](examples/web/realm-studio)** | Example web UI (V0.4.1) — prompt layout editor, vision units, multi-area grid, object actions, GM **Emit event**, LLM **Run turn** over HTTP |
 
 Quick start for a downstream project:
 
@@ -39,7 +39,7 @@ result = session.run_compound_turn(AgentCompoundTurn(...))
 state = session.snapshot()
 ```
 
-**V0.4.0** ships [realm-studio](examples/web/realm-studio) on this API:
+**V0.4.1** ships [realm-studio](examples/web/realm-studio) on this API:
 
 ```powershell
 cd examples\web\realm-studio
@@ -47,7 +47,7 @@ uv sync
 uv run realm-studio
 ```
 
-Multi-area pannable grid, token images, right-click create/edit/delete, **Manage actions…** on objects (effects including `move_area`), **Emit event…**, area dropdown (+ create/edit/delete area), and **Run turn** (needs `OPENROUTER_API_KEY`). See [realm-studio README](examples/web/realm-studio/README.md) and [v0.4.0-changelog](docs/v0.4.0-changelog.md).
+Multi-area pannable grid, token images (SVG/PNG), right-click create/edit/delete, **Manage actions…** on objects, **Prompt layout** (block reorder + section edit + slot ⚙), session **Units** for distance/move speed, **Emit event…**, area dropdown, and **Run turn** (needs `OPENROUTER_API_KEY`). See [realm-studio README](examples/web/realm-studio/README.md) and [v0.4.1-changelog](docs/v0.4.1-changelog.md).
 
 ## Running / Testing (without LLM)
 
@@ -160,6 +160,14 @@ realm-studio: **Area** dropdown, **+ Area** / **Edit area** / **Delete area**; *
 edit-agent agent_01 move-speed 2
 step-compound obj_ball_01
 ```
+
+### Prompt layout (V0.4.1)
+
+Sessions assemble compound prompts from an ordered **block list** (`slot`, `text`, `section`) instead of a fixed template file. realm-studio **Prompt layout** sidebar: reorder blocks, edit static rules / output format, add/remove blocks, ⚙ toggles on Character / Passive vision / Move instructions.
+
+Session **Units** + **Units per tile** (sidebar) feed relative bearing in passive vision and move-speed wording in move instructions.
+
+Engine API: `Session.get_prompt_blocks()`, `Session.set_prompt_blocks()`, `Session.build_prompt()` uses blocks when set. See [v0.4.1-changelog](docs/v0.4.1-changelog.md).
 
 ### Multi-agent (V0.1 Section 3)
 
@@ -336,8 +344,8 @@ Tests use [pytest](https://docs.pytest.org/) and run **without** an API key or n
 
 | Suite | Where to run | Count | What it covers |
 |-------|----------------|-------|----------------|
-| **Engine** | Repo root (`uv run pytest`) | **348** | `tests/` — perception, editing, Session API, multi-area, pathing, `move_area`, snapshots, etc. |
-| **realm-studio** | `examples/web/realm-studio` (`uv run pytest`) | **36** | HTTP smoke — health, multi-area state, areas CRUD, object actions, events, turn, template vars |
+| **Engine** | Repo root (`uv run pytest`) | **386** | `tests/` — perception, prompt blocks, truncation, editing, Session API, multi-area, pathing, snapshots, etc. |
+| **realm-studio** | `examples/web/realm-studio` (`uv run pytest`) | **49** | HTTP smoke — health, multi-area state, prompt blocks, vision units, areas CRUD, object actions, events, turn |
 
 Root `pyproject.toml` sets `testpaths = ["tests"]` only. The example app has its own `pyproject.toml` and does **not** get picked up when you run pytest from the repo root.
 
@@ -381,7 +389,10 @@ uv run pytest -x
 
 | File | Focus |
 |------|--------|
-| `tests/test_schema.py` | `AgentCompoundTurn` Pydantic validation |
+| `tests/test_schema.py` | `AgentCompoundTurn` Pydantic validation, sentence truncation |
+| `tests/test_text_truncation.py` | Sentence-boundary truncation helper (V0.4.1a) |
+| `tests/test_prompt_blocks.py` | Prompt block model, slot settings, render order (V0.4.1b–c+) |
+| `tests/test_vision_bearing.py` | Relative compass + distance phrases (V0.4.1c+) |
 | `tests/test_packaging.py` | `pyproject.toml` version, `realm_fabric` public imports, wheel layout |
 | `tests/test_stepper.py` | ManualStepper intro, help, state, compound turn logging |
 | `tests/test_llm_client.py` | LLM parse errors (`ERR:INVALID_JSON`, etc.) |

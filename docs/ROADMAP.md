@@ -188,7 +188,7 @@ See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e). See 
 
 See [v0.3.1-changelog.md](v0.3.1-changelog.md). App path: **`examples/web/realm-studio`**.
 
-- FastAPI wraps `Session`; depends on `realm-fabric>=0.4.0` (path dep in dev)
+- FastAPI wraps `Session`; depends on `realm-fabric>=0.4.1` (path dep in dev)
 - Local web UI: **grid** with agents/objects; **right-click** create/edit/delete; passive vision + turn log; **Run turn**
 - **19** FastAPI `TestClient` smoke/integration tests (V0.3.2); engine coverage stays in root pytest
 
@@ -251,19 +251,21 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 
 **Focus:** **LLM turn reliability** + **GM prompt layout** in realm-studio. Builds on V0.4.0.
 
-**Status:** ⬜ **Planned** — see [v0.4.1-changelog.md](v0.4.1-changelog.md) for slices **0.4.1a–d**.
+**Status:** ✅ **Complete** — see [v0.4.1-changelog.md](v0.4.1-changelog.md) for slices **0.4.1a–d** (+ **0.4.1c+**). Tag **`v0.4.1`** when ready.
 
-### V0.4.1 — truncation + prompt blocks — 🔄 In progress (0.4.1d remaining)
+### V0.4.1 — truncation + prompt blocks — ✅ Complete
 
-| Slice | Theme |
-|-------|--------|
-| **0.4.1a** | Sentence-aware truncation (`reasoning` 400, speak 500); drop 5-sentence cap |
-| **0.4.1b** | Prompt block model + session override + API |
-| **0.4.1c** | realm-studio block-list prompt editor |
-| **0.4.1d** | Release polish, tag **`v0.4.1`** |
+| Slice | Theme | Status |
+|-------|--------|--------|
+| **0.4.1a** | Sentence-aware truncation (`reasoning` 400, speak 500); drop 5-sentence cap | ✅ |
+| **0.4.1b** | Prompt block model + session override + API | ✅ |
+| **0.4.1c** | realm-studio block-list prompt editor | ✅ |
+| **0.4.1c+** | Slot ⚙ settings, vision units, bearing, move-instruction polish | ✅ |
+| **0.4.1d** | Release polish, tag **`v0.4.1`** | ✅ |
 
 - **Truncation** — trim at sentence boundaries on parse; no mid-sentence cuts; turns do not fail on length alone
 - **Prompt blocks** — reorder `slot` / `text` / `section` blocks; edit static rules and output format in-session
+- **Slot settings** — Character / passive vision / move-instructions ⚙ toggles; session **Units** for distance and move speed
 - **Deferred:** profile file export, per-agent prompts, swappable schemas → **V0.5+**
 
 ---

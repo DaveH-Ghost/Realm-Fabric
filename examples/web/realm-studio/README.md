@@ -4,7 +4,7 @@ Example web app for [Realm-Fabric](https://github.com/) — wraps the engine `Se
 
 **Location:** `examples/web/realm-studio` in the Realm-Fabric repo.
 
-**Status:** **V0.4.1** (in progress) — sentence-aware truncation, **Prompt layout** sidebar, prompt block API. Tag **`v0.4.1`** in 0.4.1d.
+**Status:** **V0.4.1** — sentence-aware truncation, **Prompt layout** sidebar (block reorder, section edit, slot ⚙), session **Units**, prompt block API. Tag **`v0.4.1`** when ready.
 
 ## Quick start
 
@@ -51,7 +51,7 @@ uv run uvicorn backend.app:app --host 127.0.0.1 --port 8765 --reload
 - **Manage actions…** — add/edit/remove object actions; effect picker (`delete_self`, `random_move_self`, `move_area`); **?** on result/passive fields lists template variables
 - **Stacked tiles** — manage menu when multiple entities share a cell
 - **Toolbar** — active-agent dropdown; **Emit event…**; **Run turn ▶**
-- **Sidebar** — session meta, passive vision, recent GM events, turn log, **Prompt layout** (block reorder + section edit), last prompt debug
+- **Sidebar** — session meta (**Units** / **Units per tile**), passive vision, recent GM events, turn log, **Prompt layout**, last prompt debug
 - **Refresh** — manual re-fetch; edits and turns auto-refresh
 
 **Note:** `realm-studio` and the terminal `realm` CLI use **separate in-memory sessions** — CLI edits do not appear in the browser.
@@ -70,6 +70,21 @@ create-object name "Crate" appearance "tokens/ball.svg" at 3,3
 ```
 
 Empty path falls back to a name chip. Broken paths fall back at render time.
+
+## Prompt layout (V0.4.1)
+
+Open **Prompt layout** in the sidebar to edit how the compound prompt is assembled:
+
+- **Reorder** — ↑↓ on `slot`, `text`, and `section` blocks
+- **Edit** — `text` glue and `section` bodies (`compound_rules`, `output_format`)
+- **Add / remove** — block catalog (`GET /api/prompt-block-catalog`)
+- **Slot ⚙** — Character (name / personality / description), Passive vision (you-are-at, coordinates, direction+distance), Move instructions (coordinate moves)
+- **Reset to default** — restore profile block list
+- **Preview** — full rendered prompt; syncs **Last prompt (debug)** when open
+
+**Units** and **Units per tile** under Session meta enable relative bearing (`South-East of you, 10 ft away`) and move-speed lines in session units. Direction and distance requires both fields.
+
+Changes are session-scoped (in-memory until server restart).
 
 ## Agent move speed
 
@@ -95,6 +110,7 @@ Set **Move speed (steps per turn)** in create/edit agent modals, or via CLI (`mo
 | `POST` | `/api/prompt-blocks/reset` | Restore profile default blocks |
 | `GET` | `/api/prompt-slots` | Slot names + preview snippets (optional `agent_id`) |
 | `GET` | `/api/prompt-block-catalog` | Addable block types, slot/section options, section defaults |
+| `PUT` | `/api/vision-units` | `{ "units": "ft", "units_per_tile": 5 }` — session distance labels |
 | `GET` | `/api/interact-template-vars` | Placeholders for object action result/passive text |
 
 See [v0.4.1-changelog.md](../../../docs/v0.4.1-changelog.md) for V0.4.1 release notes.
@@ -105,7 +121,7 @@ See [v0.4.1-changelog.md](../../../docs/v0.4.1-changelog.md) for V0.4.1 release 
 uv run pytest
 ```
 
-**36** smoke/integration tests (`test_api.py`, `test_snapshot_compat.py`) via FastAPI `TestClient` (mocked LLM — no API key or running server).
+**49** smoke/integration tests (`test_api.py`, `test_snapshot_compat.py`) via FastAPI `TestClient` (mocked LLM — no API key or running server).
 
 From repo root, engine tests remain separate:
 
@@ -114,7 +130,7 @@ cd ..\..\..
 uv run pytest
 ```
 
-(348 engine tests as of 0.4.0e.)
+(386 engine tests as of 0.4.1d.)
 
 ## Environment
 
