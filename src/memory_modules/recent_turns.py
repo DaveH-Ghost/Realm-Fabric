@@ -14,6 +14,15 @@ from src.memory_modules.formatting import format_stored_turns_block, join_lines
 from src.turn_record import TurnRecord
 
 DEFAULT_WINDOW = 10
+MIN_WINDOW = 1
+MAX_WINDOW = 100
+
+
+def validate_window(value: int) -> None:
+    if value < MIN_WINDOW or value > MAX_WINDOW:
+        raise ValueError(
+            f"memory-window must be between {MIN_WINDOW} and {MAX_WINDOW} (got {value})."
+        )
 
 
 @dataclass
@@ -30,6 +39,9 @@ class RecentTurnsModule:
     _witnessed_before: list[list[WitnessedEvent]] = field(default_factory=list, repr=False)
     _pending: list[WitnessedEvent] = field(default_factory=list, repr=False)
     _total_turns: int = field(default=0, repr=False)
+
+    def __post_init__(self) -> None:
+        validate_window(self.window)
 
     def record_turn(self, record: TurnRecord, ctx: MemoryRecordContext) -> None:
         del ctx  # reserved for future module config

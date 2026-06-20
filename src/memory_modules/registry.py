@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from src.memory_modules.base import MemoryModule
-from src.memory_modules.recent_turns import DEFAULT_WINDOW, RecentTurnsModule
+from src.memory_modules.recent_turns import DEFAULT_WINDOW, RecentTurnsModule, validate_window
 from src.memory_modules.rolling_summary import (
     DEFAULT_MAX_SUMMARY_CHARS,
     DEFAULT_SUMMARY_INTERVAL,
@@ -45,6 +45,14 @@ def default_module_id() -> str:
 
 
 def _validate_module_config(module_id: str, config: dict[str, Any]) -> None:
+    if module_id != "recent_turns" and "window" in config:
+        raise ValueError(
+            "memory-window is only valid with memory recent_turns "
+            f"(got memory {module_id!r})."
+        )
+    if module_id == "recent_turns" and "window" in config:
+        validate_window(int(config["window"]))
+
     if module_id != "salient_turns" and "char_budget" in config:
         raise ValueError(
             "memory-budget is only valid with memory salient_turns "
@@ -105,7 +113,7 @@ def format_memory_modules_list() -> str:
     for module_id in known_module_ids():
         if module_id == "recent_turns":
             desc = "Last N own turns plus witnessed other-agent actions (default)"
-            flags = "(none)"
+            flags = "memory-window N"
         elif module_id == "salient_turns":
             desc = (
                 f"Salience-weighted retention; render capped by memory-budget "

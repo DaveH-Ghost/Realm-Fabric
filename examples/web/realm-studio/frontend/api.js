@@ -236,6 +236,34 @@ export function buildCreateObject({ name, pdesc, desc, appearance, x, y, withEat
   return line;
 }
 
+export async function getMemoryModules() {
+  const res = await fetch("/api/memory-modules");
+  const data = await res.json();
+  if (!res.ok || !data.ok) {
+    throw new Error(data.message || `GET /api/memory-modules failed: HTTP ${res.status}`);
+  }
+  return data;
+}
+
+const MEMORY_OPTION_FLAGS = {
+  memoryWindow: "memory-window",
+  memoryBudget: "memory-budget",
+  memorySummaryInterval: "memory-summary-interval",
+  memorySummaryMax: "memory-summary-max",
+  memorySummaryTail: "memory-summary-tail",
+};
+
+function hasMemoryCliOptions(memoryOptions) {
+  return Object.values(memoryOptions).some(
+    (value) => value !== undefined && value !== null && String(value).trim() !== "",
+  );
+}
+
+export function memoryOptionFieldName(flag) {
+  const entry = Object.entries(MEMORY_OPTION_FLAGS).find(([, cliFlag]) => cliFlag === flag);
+  return entry ? entry[0] : flag.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+}
+
 export function buildCreateAgent({
   name,
   pdesc,
@@ -243,6 +271,8 @@ export function buildCreateAgent({
   personality,
   appearance,
   moveSpeed,
+  memoryModule,
+  memoryOptions = {},
   x,
   y,
 }) {
@@ -255,15 +285,42 @@ export function buildCreateAgent({
   if (moveSpeed) {
     line += ` move-speed ${moveSpeed}`;
   }
+  const moduleId = String(memoryModule ?? "").trim() || "recent_turns";
+  if (moduleId !== "recent_turns") {
+    line += ` memory ${moduleId}`;
+  } else if (hasMemoryCliOptions(memoryOptions)) {
+    line += " memory recent_turns";
+  }
+  for (const [field, flag] of Object.entries(MEMORY_OPTION_FLAGS)) {
+    const value = memoryOptions[field];
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      line += ` ${flag} ${String(value).trim()}`;
+    }
+  }
   return line;
 }
 
-export function buildEditObject({ id, name, pdesc, desc, appearance, x, y }) {
+export function buildEditObject({
+  id,
+  name,
+  pdesc,
+  desc,
+  appearance,
+  areaId,
+  sourceAreaId,
+  x,
+  y,
+}) {
   const parts = [`edit-object ${id}`];
   if (name) parts.push(`name ${cliQuote(name)}`);
   if (pdesc) parts.push(`pdesc ${cliQuote(pdesc)}`);
   if (desc) parts.push(`desc ${cliQuote(desc)}`);
   if (appearance !== undefined) parts.push(`appearance ${cliQuote(appearance)}`);
+  const targetArea = String(areaId ?? "").trim();
+  const originArea = String(sourceAreaId ?? "").trim();
+  if (targetArea && originArea && targetArea !== originArea) {
+    parts.push(`area ${targetArea}`);
+  }
   parts.push(`pos ${x},${y}`);
   return parts.join(" ");
 }
@@ -276,6 +333,8 @@ export function buildEditAgent({
   personality,
   appearance,
   moveSpeed,
+  areaId,
+  sourceAreaId,
   x,
   y,
 }) {
@@ -291,6 +350,11 @@ export function buildEditAgent({
     } else {
       parts.push(`move-speed ${moveSpeed}`);
     }
+  }
+  const targetArea = String(areaId ?? "").trim();
+  const originArea = String(sourceAreaId ?? "").trim();
+  if (targetArea && originArea && targetArea !== originArea) {
+    parts.push(`area ${targetArea}`);
   }
   parts.push(`pos ${x},${y}`);
   return parts.join(" ");

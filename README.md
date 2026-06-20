@@ -2,17 +2,18 @@
 
 A grid-based agent simulation framework designed around structured output and narrative roleplay.
 
-**Current Status:** **V0.4.2** (`0.4.2` in `pyproject.toml`) + [**realm-studio**](examples/web/realm-studio) example app. Tag **`v0.4.2`** when ready. Ships: **emote** turn action, speak as its own step, action ranges in session units, prompt token hint, **last prompt / last response** debug panels — plus V0.4.1 truncation, prompt blocks, vision units, and V0.4.0 movement / multi-area.
+**Current Status:** **V0.4.3** (`0.4.3` in `pyproject.toml`) + [**realm-studio**](examples/web/realm-studio) example app. Tag **`v0.4.3`** when ready. Ships: **create-agent memory module** + options, **edit location** panels (object/agent), **multi-step witness broadcast** (speak + emote) — plus V0.4.2 emote/speak/debug, V0.4.1 prompt layout, and V0.4.0 movement / multi-area.
 
 **Documentation:**
 
+- [V0.4.3 changelog](docs/v0.4.3-changelog.md) — memory module UI, edit location, witness broadcast (**0.4.3a–c**) ✅
 - [V0.4.2 changelog](docs/v0.4.2-changelog.md) — emote, speak step, action range units, debug panels (**0.4.2a–e**) ✅
 - [V0.4.1 changelog](docs/v0.4.1-changelog.md) — truncation, prompt blocks, prompt editor, vision units (**0.4.1a–d**) ✅
 - [V0.4.0 changelog](docs/v0.4.0-changelog.md) — movement, multi-area, `move_area`, object actions (**0.4.0a–e**) ✅
 - [V0.3.2 changelog](docs/v0.3.2-changelog.md) — **realm-studio** GM events, pannable grid, token images (0.3.2a–e) ✅
 - [V0.3.1 changelog](docs/v0.3.1-changelog.md) — **realm-studio** web app (0.3.1a–f) ✅
 - [V0.3.0 changelog](docs/v0.3.0-changelog.md) — engine refactor (0.3.0a–e)
-- [Roadmap](docs/ROADMAP.md) — version plans (**V0.4.2** ✅; **V0.4.1** ✅; **V0.4.0** ✅; V0.3.x ✅)
+- [Roadmap](docs/ROADMAP.md) — version plans (**V0.4.3** ✅; **V0.4.2** ✅; **V0.4.1** ✅; **V0.4.0** ✅; V0.3.x ✅)
 - [V0.2.5 changelog](docs/v0.2.5-changelog.md) — memory / prompt slices (0.2.5a–g)
 - [Long-term goals](LONG_TERM_GOALS.md) — aspirational features
 - [V0 implementation checklist](docs/v0-implementation-readiness-checklist.md) — V0 historical design reference
@@ -26,7 +27,7 @@ A grid-based agent simulation framework designed around structured output and na
 |-------|------------|
 | **`realm_fabric` package** | Public API: `Session`, `GameProfile`, `load_profile`, `PromptContext`, `AgentCompoundTurn`, snapshots |
 | **`realm` CLI** | Reference client (`ManualStepper`) for manual testing — not required for library use |
-| **[realm-studio](examples/web/realm-studio)** | Example web UI (V0.4.2) — emotes, speak step, prompt layout, vision units, last prompt/response debug, multi-area grid, GM **Emit event**, LLM **Run turn** over HTTP |
+| **[realm-studio](examples/web/realm-studio)** | Example web UI (V0.4.3) — create-agent memory module + options, edit location panels, emotes/speak step, prompt layout, vision units, last prompt/response debug, multi-area grid, GM **Emit event**, LLM **Run turn** over HTTP |
 
 Quick start for a downstream project:
 
@@ -411,7 +412,8 @@ uv run pytest -x
 | `tests/test_move_target.py` | Entity id as move target (V0.4.0a) |
 | `tests/test_move_pathing.py` | `move_speed`, Chebyshev pathing, towards/reached wording (V0.4.0b) |
 | `tests/test_compound_turn.py` | Compound orchestration, speak step, `TurnRecord.steps`, step-compound parser |
-| `tests/test_emote.py` | Emote turn action, witness phrasing, passive priority (V0.4.2) |
+| `tests/test_emote.py` | Emote turn action, witness phrasing (V0.4.2) |
+| `tests/test_observations.py` | Multi-step witness broadcast (V0.4.3) |
 | `tests/test_token_estimate.py` | Prompt token estimate helper (V0.4.2) |
 | `tests/test_object_actions.py` | Effect registry, interact range/vision, `delete_self`, ball `kick` |
 | `tests/test_move_area_effect.py` | `move_area` effect, cross-area transfer (V0.4.0d) |

@@ -21,13 +21,16 @@ from src.llm.prompt_context import build_prompt_context
 from src.llm.schemas import AgentCompoundTurn
 from src.memory import TurnRecord
 from src.simulation import next_turn_number_for_agent, run_compound_turn
+from src.object import Object
 from src.area import Area
 from src.area_edit import (
     create_agent_from_args,
     create_object_from_args,
     delete_agent_by_id,
     delete_object_by_id,
+    edit_agent_for_session,
     edit_agent_from_args,
+    edit_object_for_session,
     edit_object_from_args,
     format_agents_list,
     format_full_list,
@@ -278,6 +281,62 @@ class Session:
             message=(
                 f"Transferred {agent.name} ({agent_id}) "
                 f"from {source_area_id} to {dest_area_id} at {position}."
+            ),
+        )
+
+    def find_object(self, object_id: str) -> tuple[str, Object] | None:
+        """Return ``(area_id, object)`` for ``object_id`` anywhere in the session."""
+        cleaned = object_id.strip()
+        for area_id, area in self.areas.items():
+            obj = area.get_object_by_id(cleaned)
+            if obj is not None:
+                return area_id, obj
+        return None
+
+    def transfer_object(
+        self,
+        object_id: str,
+        dest_area_id: str,
+        position: tuple[int, int],
+    ) -> SessionResult:
+        """Move an object to another area at ``position`` (internal / edit-object API)."""
+        located = self.find_object(object_id)
+        if located is None:
+            return SessionResult(ok=False, message=f"Object {object_id!r} not found.")
+        source_area_id, obj = located
+        if dest_area_id not in self.areas:
+            return SessionResult(
+                ok=False,
+                message=f"Unknown destination area {dest_area_id!r}.",
+            )
+        dest_area = self.areas[dest_area_id]
+        if not dest_area.is_valid_position(position):
+            return SessionResult(
+                ok=False,
+                message=(
+                    f"Invalid position {position}. "
+                    f"{dest_area.format_grid_bounds_message()}"
+                ),
+            )
+
+        if source_area_id == dest_area_id and obj.position == position:
+            return SessionResult(
+                ok=True,
+                message=f"Object {object_id} already in {dest_area_id} at {position}.",
+            )
+
+        source_area = self.areas[source_area_id]
+        for index, candidate in enumerate(source_area.objects):
+            if candidate.id == object_id:
+                source_area.objects.pop(index)
+                break
+        obj.position = position
+        dest_area.add_object(obj)
+        return SessionResult(
+            ok=True,
+            message=(
+                f"Moved object {object_id} from {source_area_id} "
+                f"to {dest_area_id} at {position}."
             ),
         )
 
@@ -605,7 +664,7 @@ class Session:
         return CommandResult(ok=ok, message=message)
 
     def _cmd_edit_object(self, arg: str) -> CommandResult:
-        message = edit_object_from_args(self.area, arg)
+        message = edit_object_for_session(self, arg)
         ok = not message.startswith("Error") and not message.startswith("Unknown")
         return CommandResult(ok=ok, message=message)
 
@@ -622,7 +681,7 @@ class Session:
         return CommandResult(ok=ok, message=message)
 
     def _cmd_edit_agent(self, arg: str) -> CommandResult:
-        result = edit_agent_from_args(self.area, arg)
+        result = edit_agent_for_session(self, arg)
         if result.ok and result.agent is not None and result.old_name_lower:
             self._rename_agent_in_index(result.old_name_lower, result.agent)
         return CommandResult(ok=result.ok, message=result.message)

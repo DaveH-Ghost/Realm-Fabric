@@ -172,13 +172,6 @@ def _pick_passive_from_steps(steps: list[TurnStep]) -> str:
     )
 
 
-def _find_emote_step(steps: list[TurnStep]) -> TurnStep | None:
-    for step in reversed(steps):
-        if step.kind == "emote":
-            return step
-    return None
-
-
 def finalize_turn_record(
     turn: AgentCompoundTurn,
     nav_steps: list[TurnStep],
@@ -217,7 +210,7 @@ def commit_turn_record(
         area,
         agent,
         session_turn=witness_session,
-        emote_step=_find_emote_step(record.steps) if turn.turn_action == "emote" else None,
+        steps=record.steps,
     )
 
     agent.last_action = record.steps[-1].kind if record.steps else None

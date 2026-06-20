@@ -605,18 +605,69 @@ button:hover {
   font-size: 0.85rem;
 }
 
+.modal-field[hidden] {
+  display: none !important;
+}
+
+.modal-context {
+  margin: 0 0 0.65rem;
+  font-size: 0.85rem;
+  color: #9898a8;
+}
+
+.modal-advanced {
+  margin: 0.25rem 0 0.75rem;
+  font-size: 0.85rem;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem 0.5rem;
+}
+
+.modal-location {
+  margin: 0.25rem 0 0.75rem;
+  font-size: 0.85rem;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem 0.5rem;
+}
+
+.modal-location summary,
+.modal-advanced summary {
+  cursor: pointer;
+  color: #b8b8c8;
+  user-select: none;
+}
+
+.modal-location-body,
+.modal-advanced-body {
+  margin-top: 0.5rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid #333;
+}
+
+.modal-location-body .modal-field:last-child,
+.modal-advanced-body .modal-field:last-child {
+  margin-bottom: 0;
+}
+
 .modal-field span {
   color: #b8b8c8;
 }
 
 .modal-field input,
-.modal-field textarea {
+.modal-field textarea,
+.modal-field select {
   padding: 0.35rem 0.5rem;
   border: 1px solid #444;
   border-radius: 4px;
   background: #1a1a1e;
   color: inherit;
   font: inherit;
+}
+
+.modal-field input.modal-readonly {
+  opacity: 0.85;
+  cursor: default;
 }
 
 .modal-field textarea {

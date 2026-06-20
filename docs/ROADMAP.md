@@ -172,7 +172,7 @@ V0.2 compound turns and object interact should log in a shape that V0.2.5 can in
 
 **Focus:** **V0.3.0** — engine refactor (Session API, snapshots, GameProfile, CLI on Session). **V0.3.1** — example web project built on the engine. **V0.3.2** — realm-studio polish (GM events, appearance). **Depends on V0.2.5** (`v0.2.5`).
 
-See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e). See [v0.3.1-changelog.md](v0.3.1-changelog.md) for realm-studio (0.3.1a–f). See [v0.3.2-changelog.md](v0.3.2-changelog.md) for 0.3.2 slices. See [v0.4.0-changelog.md](v0.4.0-changelog.md) for 0.4.0 slices. See [v0.4.1-changelog.md](v0.4.1-changelog.md) for 0.4.1 slices. See [v0.4.2-changelog.md](v0.4.2-changelog.md) for 0.4.2 slices.
+See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e). See [v0.3.1-changelog.md](v0.3.1-changelog.md) for realm-studio (0.3.1a–f). See [v0.3.2-changelog.md](v0.3.2-changelog.md) for 0.3.2 slices. See [v0.4.0-changelog.md](v0.4.0-changelog.md) for 0.4.0 slices. See [v0.4.1-changelog.md](v0.4.1-changelog.md) for 0.4.1 slices. See [v0.4.2-changelog.md](v0.4.2-changelog.md) for 0.4.2 slices. See [v0.4.3-changelog.md](v0.4.3-changelog.md) for 0.4.3 slices.
 
 ### V0.3.0 — Engine — ✅ Implemented (`0.3.0`; superseded by **`0.4.0`**)
 
@@ -188,7 +188,7 @@ See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e). See 
 
 See [v0.3.1-changelog.md](v0.3.1-changelog.md). App path: **`examples/web/realm-studio`**.
 
-- FastAPI wraps `Session`; depends on `realm-fabric>=0.4.2` (path dep in dev)
+- FastAPI wraps `Session`; depends on `realm-fabric>=0.4.3` (path dep in dev)
 - Local web UI: **grid** with agents/objects; **right-click** create/edit/delete; passive vision + turn log; **Run turn**
 - **19** FastAPI `TestClient` smoke/integration tests (V0.3.2); engine coverage stays in root pytest
 
@@ -290,6 +290,25 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 - **Emote** — past-tense gestures at entities or free-text targets; per-observer witness phrasing
 - **realm-studio** — input-token hover hint; **Last prompt** + **Last response** debug panels
 - **Breaking:** `"turn_action": "speak"` and `confidence` / `emotion` fields removed from compound JSON
+
+---
+
+## V0.4.3
+
+**Focus:** **realm-studio create-agent** + edit location UX + witness broadcast fixes. Builds on V0.4.2.
+
+**Status:** ✅ **Complete** — see [v0.4.3-changelog.md](v0.4.3-changelog.md) for slices **0.4.3a–c**. Tag **`v0.4.3`** when ready.
+
+| Slice | Theme | Status |
+|-------|--------|--------|
+| **0.4.3a** | Memory module + options on create-agent in realm-studio | ✅ |
+| **0.4.3b** | Edit object/agent Location panel (area + position) | ✅ |
+| **0.4.3c** | Multi-step witness broadcast (speak + emote, etc.) | ✅ |
+
+- **`GET /api/memory-modules`** — catalog for UI; **`memory-window`** on `create-agent`
+- **Create agent** modal — module dropdown + conditional options; Advanced collapse
+- **Edit object/agent** — Location ▾ (area + X/Y); cross-area engine support
+- **Witness broadcast** — move/speak/emote/interact each recorded; look only when idle
 
 ---
 

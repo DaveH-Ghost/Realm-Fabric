@@ -10,6 +10,27 @@ from src.memory_modules.base import WitnessedEvent
 from src.perception import get_visible_look_target_ids
 from src.turn_record import TurnStep
 
+_PRIMARY_WITNESS_KINDS = frozenset({"move", "speak", "emote", "interact"})
+
+
+def observable_witness_steps(steps: list[TurnStep]) -> list[TurnStep]:
+    """
+    Return turn steps that should be broadcast to observing agents.
+
+    move, speak, emote, and interact are always included when they have
+    ``passive_result``. look is included only when no primary action ran —
+    so witnesses still see that the actor did something rather than nothing.
+    """
+    has_primary = any(step.kind in _PRIMARY_WITNESS_KINDS for step in steps)
+    witness_steps: list[TurnStep] = []
+    for step in steps:
+        if step.kind in _PRIMARY_WITNESS_KINDS:
+            if step.passive_result:
+                witness_steps.append(step)
+        elif step.kind == "look" and not has_primary and step.passive_result:
+            witness_steps.append(step)
+    return witness_steps
+
 
 def can_observe_agent(observer: Agent, actor: Agent, area: Area) -> bool:
     """Return True if the actor appears in the observer's passive vision."""
@@ -30,39 +51,49 @@ def _witness_text_for_emote(
     return format_emote_line(actor.name, action_name, phrase)
 
 
+def _witness_text_for_step(
+    actor: Agent,
+    area: Area,
+    step: TurnStep,
+    observer: Agent,
+) -> str:
+    if step.kind == "emote":
+        return _witness_text_for_emote(actor, area, step, observer)
+    return step.passive_result or ""
+
+
 def broadcast_actor_turn(
     area: Area,
     actor: Agent,
     *,
     session_turn: int,
-    emote_step: TurnStep | None = None,
+    steps: list[TurnStep],
 ) -> None:
     """
-    Record the actor's observable action in each observing agent's memory module.
+    Record the actor's observable actions in each observing agent's memory module.
 
-    Call after the actor's passive_result is set for the turn.
+    Emits one witnessed event per observable step (see ``observable_witness_steps``).
     Emote steps use per-observer target phrasing (``you`` for the emote target).
     """
-    if not actor.passive_result and emote_step is None:
+    witness_steps = observable_witness_steps(steps)
+    if not witness_steps:
         return
 
     for observer in area.agents:
         if not can_observe_agent(observer, actor, area):
             continue
-        if emote_step is not None:
-            text = _witness_text_for_emote(actor, area, emote_step, observer)
-        else:
-            text = actor.passive_result
-        if not text:
-            continue
-        event = WitnessedEvent(
-            session_turn=session_turn,
-            actor_id=actor.id,
-            actor_name=actor.name,
-            text=text,
-            actor_position=actor.position,
-        )
-        observer.memory.record_observation(event, observer_id=observer.id)
+        for step in witness_steps:
+            text = _witness_text_for_step(actor, area, step, observer)
+            if not text:
+                continue
+            event = WitnessedEvent(
+                session_turn=session_turn,
+                actor_id=actor.id,
+                actor_name=actor.name,
+                text=text,
+                actor_position=actor.position,
+            )
+            observer.memory.record_observation(event, observer_id=observer.id)
 
 
 def broadcast_area_event(

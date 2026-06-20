@@ -208,6 +208,35 @@ def test_create_agent_with_explicit_memory_module():
     assert "memory=recent_turns" in msg
 
 
+def test_create_agent_recent_turns_with_memory_window():
+    area = create_initial_area()
+    agent, msg = create_agent_from_args(
+        area,
+        'name "Short" personality "Quiet." memory recent_turns memory-window 5 at 2,2',
+    )
+    assert agent is not None
+    assert agent.memory.module_id == "recent_turns"
+    assert agent.memory.module.window == 5
+    assert "memory=recent_turns" in msg
+
+    agent2, _ = create_agent_from_args(
+        area,
+        'name "DefaultWin" personality "Quiet." memory-window 15 at 3,3',
+    )
+    assert agent2 is not None
+    assert agent2.memory.module.window == 15
+
+
+def test_create_agent_memory_window_rejected_for_salient():
+    area = create_initial_area()
+    agent, msg = create_agent_from_args(
+        area,
+        'name "Bad" personality "Quiet." memory salient_turns memory-window 5 at 2,2',
+    )
+    assert agent is None
+    assert "memory-window is only valid with memory recent_turns" in msg
+
+
 def test_create_agent_unknown_memory_module_rejected():
     area = create_initial_area()
     agent, msg = create_agent_from_args(
@@ -235,8 +264,7 @@ def test_format_memory_modules_list():
     assert "recent_turns" in text
     assert "salient_turns" in text
     assert "rolling_summary" in text
-    assert "create-agent flags: (none)" in text
-    assert "create-agent flags: memory-budget N" in text
+    assert "create-agent flags: memory-window N" in text
     assert "memory-summary-interval N" in text
 
 

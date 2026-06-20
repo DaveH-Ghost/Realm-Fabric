@@ -331,6 +331,56 @@ def test_get_prompt_block_catalog(client):
     assert "character" in data["slot_settings"]
 
 
+def test_get_memory_modules(client):
+    response = client.get("/api/memory-modules")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert data["default_id"] == "recent_turns"
+    ids = {mod["id"] for mod in data["modules"]}
+    assert ids == {"recent_turns", "salient_turns", "rolling_summary"}
+    salient = next(m for m in data["modules"] if m["id"] == "salient_turns")
+    assert salient["options"][0]["flag"] == "memory-budget"
+    recent = next(m for m in data["modules"] if m["id"] == "recent_turns")
+    assert recent["options"][0]["flag"] == "memory-window"
+    rolling = next(m for m in data["modules"] if m["id"] == "rolling_summary")
+    assert len(rolling["options"]) == 3
+
+
+def test_post_command_create_agent_with_recent_turns_memory_window(client):
+    response = client.post(
+        "/api/command",
+        json={
+            "line": (
+                'create-agent name "Watcher" pdesc "A watcher." desc "Alert watcher." '
+                'personality "You watch." memory recent_turns memory-window 5 at 2,2'
+            ),
+        },
+    )
+    assert response.json()["ok"] is True
+    agent = next(
+        a for a in client.get("/api/state").json()["agents"] if a["name"] == "Watcher"
+    )
+    assert agent["memory_module"] == "recent_turns"
+
+
+def test_post_command_create_agent_with_salient_memory(client):
+    response = client.post(
+        "/api/command",
+        json={
+            "line": (
+                'create-agent name "Scribe" pdesc "A scribe." desc "Quiet scribe." '
+                'personality "You are a scribe." memory salient_turns memory-budget 1200 at 1,1'
+            ),
+        },
+    )
+    assert response.json()["ok"] is True
+    agent = next(
+        a for a in client.get("/api/state").json()["agents"] if a["name"] == "Scribe"
+    )
+    assert agent["memory_module"] == "salient_turns"
+
+
 def test_preview_prompt_blocks_character_options(client):
     base = client.get("/api/prompt-blocks").json()["blocks"]
     blocks = list(base)

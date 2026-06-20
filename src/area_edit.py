@@ -10,7 +10,10 @@ from __future__ import annotations
 import re
 import shlex
 from dataclasses import dataclass
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from src.session import Session
 
 from src.agent import Agent
 from src.memory import Memory
@@ -365,6 +368,154 @@ def _edit_object_remove_action(obj: Object, tokens: list[str]) -> str:
     return f"Removed action '{action_name}' from {obj.id}."
 
 
+def _apply_object_content_fields(
+    area: Area,
+    obj: Object,
+    object_id: str,
+    fields: dict[str, str],
+    changes: list[str],
+) -> None:
+    if "name" in fields and fields["name"] != obj.name:
+        obj.name = fields["name"]
+        changes.append("name")
+
+    if "pdesc" in fields and fields["pdesc"] != obj.passive_description:
+        obj.passive_description = fields["pdesc"]
+        changes.append("pdesc")
+
+    if "appearance" in fields and fields["appearance"] != obj.appearance:
+        obj.appearance = fields["appearance"]
+        changes.append("appearance")
+
+    if "desc" in fields and fields["desc"] != obj.description:
+        obj.description = fields["desc"]
+        if fields["desc"]:
+            area.invalidate_object_knowledge(object_id)
+        else:
+            area.clear_object_examination_history(object_id)
+        changes.append("desc")
+
+
+def _apply_object_location_fields(
+    session: Session,
+    area: Area,
+    obj: Object,
+    object_id: str,
+    located_area_id: str,
+    fields: dict[str, str],
+    changes: list[str],
+) -> Optional[str]:
+    dest_area_id = (
+        fields.get("area", located_area_id).strip()
+        if "area" in fields
+        else located_area_id
+    )
+    if "area" in fields and dest_area_id not in session.areas:
+        return f"Unknown area {dest_area_id!r}."
+
+    target_pos = obj.position
+    if "pos" in fields:
+        target_pos, err = parse_position(fields["pos"])
+        if err:
+            return err
+        assert target_pos is not None
+
+    dest_area = session.areas[dest_area_id]
+    if not dest_area.is_valid_position(target_pos):
+        return (
+            f"Invalid position {target_pos}. "
+            f"{dest_area.format_grid_bounds_message()}"
+        )
+
+    if dest_area_id != located_area_id:
+        for index, candidate in enumerate(area.objects):
+            if candidate.id == object_id:
+                area.objects.pop(index)
+                break
+        obj.position = target_pos
+        dest_area.add_object(obj)
+        changes.append("area")
+        if "pos" in fields:
+            changes.append("pos")
+    elif "pos" in fields and target_pos != obj.position:
+        obj.position = target_pos
+        changes.append("pos")
+    return None
+
+
+def edit_object_for_session(session: Session, arg: str) -> str:
+    """
+    Parse and edit an object anywhere in a multi-area session.
+
+    Supports ``area <area_id>`` to move the object between areas (with optional ``pos``).
+    """
+    tokens, err = tokenize_args(arg)
+    if err:
+        return err
+    if not tokens:
+        return (
+            'Usage: edit-object <id> [pdesc "..."] [desc "..."] [appearance "..."] '
+            '[name "..."] [area <area_id>] [pos x,y] ... '
+            '| add-action ... | remove-action <name>'
+        )
+
+    object_id = tokens[0]
+    if not object_id.startswith("obj_"):
+        return (
+            f"Commands require object id (e.g. obj_ball_01), not display name. "
+            f"Use 'objects' or 'list' to look up ids."
+        )
+
+    located: tuple[str, Area, Object] | None = None
+    for area_id, area in session.areas.items():
+        obj = area.get_object_by_id(object_id)
+        if obj is not None:
+            located = (area_id, area, obj)
+            break
+    if located is None:
+        return f"Object '{object_id}' not found. Use 'objects' or 'list' to look up ids."
+
+    located_area_id, area, obj = located
+
+    if len(tokens) > 1:
+        sub = tokens[1].lower()
+        if sub == "add-action":
+            return _edit_object_add_action(obj, tokens)
+        if sub == "remove-action":
+            return _edit_object_remove_action(obj, tokens)
+
+    fields, err = parse_field_tokens(
+        tokens[1:],
+        {"name", "desc", "pdesc", "appearance", "pos", "area"},
+    )
+    if err:
+        return err
+    if not fields:
+        return (
+            "At least one field to change is required "
+            "(name, pdesc, desc, appearance, area, or pos)."
+        )
+
+    changes: list[str] = []
+    location_err = _apply_object_location_fields(
+        session, area, obj, object_id, located_area_id, fields, changes
+    )
+    if location_err:
+        return location_err
+
+    current_area_id = located_area_id
+    if "area" in fields and fields["area"].strip() != located_area_id:
+        current_area_id = fields["area"].strip()
+    current_area = session.areas[current_area_id]
+
+    _apply_object_content_fields(current_area, obj, object_id, fields, changes)
+
+    if not changes:
+        return f"No changes applied to {object_id}."
+
+    return f"Updated object {object_id} ({', '.join(changes)})."
+
+
 def edit_object_from_args(area: Area, arg: str) -> str:
     """
     Parse and edit an object.
@@ -407,26 +558,7 @@ def edit_object_from_args(area: Area, arg: str) -> str:
         return "At least one field to change is required (name, pdesc, desc, appearance, or pos)."
 
     changes: list[str] = []
-
-    if "name" in fields and fields["name"] != obj.name:
-        obj.name = fields["name"]
-        changes.append("name")
-
-    if "pdesc" in fields and fields["pdesc"] != obj.passive_description:
-        obj.passive_description = fields["pdesc"]
-        changes.append("pdesc")
-
-    if "appearance" in fields and fields["appearance"] != obj.appearance:
-        obj.appearance = fields["appearance"]
-        changes.append("appearance")
-
-    if "desc" in fields and fields["desc"] != obj.description:
-        obj.description = fields["desc"]
-        if fields["desc"]:
-            area.invalidate_object_knowledge(object_id)
-        else:
-            area.clear_object_examination_history(object_id)
-        changes.append("desc")
+    _apply_object_content_fields(area, obj, object_id, fields, changes)
 
     if "pos" in fields:
         position, err = parse_position(fields["pos"])
@@ -463,10 +595,14 @@ def delete_object_by_id(area: Area, object_id: str) -> str:
 def _build_agent_memory(fields: dict[str, str]) -> tuple[Optional[Memory], Optional[str]]:
     """Construct Memory from create-agent fields (memory + optional module config)."""
     memory_module_id = fields.get("memory")
+    memory_window_raw = fields.get("memory-window")
     memory_budget_raw = fields.get("memory-budget")
     summary_interval_raw = fields.get("memory-summary-interval")
     summary_max_raw = fields.get("memory-summary-max")
     summary_tail_raw = fields.get("memory-summary-tail")
+
+    if memory_window_raw is not None and memory_module_id not in (None, "recent_turns"):
+        return None, "memory-window is only valid with memory recent_turns."
 
     if memory_budget_raw is not None and memory_module_id not in (None, "salient_turns"):
         return None, "memory-budget is only valid with memory salient_turns."
@@ -484,6 +620,12 @@ def _build_agent_memory(fields: dict[str, str]) -> tuple[Optional[Memory], Optio
             )
 
     module_config: dict[str, int] = {}
+    if memory_window_raw is not None:
+        try:
+            module_config["window"] = int(memory_window_raw)
+        except ValueError:
+            return None, "memory-window must be an integer."
+
     if memory_budget_raw is not None:
         try:
             module_config["char_budget"] = int(memory_budget_raw)
@@ -510,6 +652,7 @@ def _build_agent_memory(fields: dict[str, str]) -> tuple[Optional[Memory], Optio
 
     if (
         memory_module_id is None
+        and memory_window_raw is None
         and memory_budget_raw is None
         and summary_interval_raw is None
         and summary_max_raw is None
@@ -535,7 +678,7 @@ def create_agent_from_args(area: Area, arg: str) -> tuple[Optional[Agent], str]:
     """
     Parse and create an agent.
 
-    Usage: name "..." [pdesc "..."] [desc "..."] [appearance "..."] [personality "..."] [memory MODULE_ID] [memory-budget N] [memory-summary-interval N] [memory-summary-max N] [memory-summary-tail N] at x,y
+    Usage: name "..." [pdesc "..."] [desc "..."] [appearance "..."] [personality "..."] [memory MODULE_ID] [memory-window N] [memory-budget N] [memory-summary-interval N] [memory-summary-max N] [memory-summary-tail N] at x,y
     """
     tokens, err = tokenize_args(arg)
     if err:
@@ -543,8 +686,9 @@ def create_agent_from_args(area: Area, arg: str) -> tuple[Optional[Agent], str]:
     if not tokens:
         return None, (
             'Usage: create-agent name "..." [pdesc "..."] [desc "..."] [appearance "..."] '
-            '[personality "..."] [move-speed N] [memory MODULE_ID] [memory-budget N] '
-            '[memory-summary-interval N] [memory-summary-max N] [memory-summary-tail N] at x,y'
+            '[personality "..."] [move-speed N] [memory MODULE_ID] [memory-window N] '
+            '[memory-budget N] [memory-summary-interval N] [memory-summary-max N] '
+            '[memory-summary-tail N] at x,y'
         )
 
     fields, err = parse_field_tokens(
@@ -557,6 +701,7 @@ def create_agent_from_args(area: Area, arg: str) -> tuple[Optional[Agent], str]:
             "personality",
             "move-speed",
             "memory",
+            "memory-window",
             "memory-budget",
             "memory-summary-interval",
             "memory-summary-max",
@@ -620,6 +765,181 @@ def create_agent_from_args(area: Area, arg: str) -> tuple[Optional[Agent], str]:
     )
 
 
+def _apply_agent_content_fields(
+    area: Area,
+    agent: Agent,
+    agent_id: str,
+    fields: dict[str, str],
+    changes: list[str],
+) -> Optional[str]:
+    if "name" in fields and fields["name"] != agent.name:
+        if agent_name_conflicts_with_commands(fields["name"]):
+            return reserved_agent_name_message(fields["name"])
+        if agent_name_taken(area, fields["name"], exclude_agent_id=agent_id):
+            return f"Agent name '{fields['name']}' is already in use."
+        agent.name = fields["name"]
+        changes.append("name")
+
+    if "pdesc" in fields and fields["pdesc"] != agent.passive_description:
+        agent.passive_description = fields["pdesc"]
+        changes.append("pdesc")
+
+    if "appearance" in fields and fields["appearance"] != agent.appearance:
+        agent.appearance = fields["appearance"]
+        changes.append("appearance")
+
+    if "desc" in fields and fields["desc"] != agent.description:
+        agent.description = fields["desc"]
+        if fields["desc"]:
+            area.invalidate_entity_knowledge(agent_id)
+        else:
+            area.clear_entity_examination_history(agent_id)
+        changes.append("desc")
+
+    if "personality" in fields and fields["personality"] != agent.personality:
+        agent.personality = fields["personality"]
+        changes.append("personality")
+
+    if "move-speed" in fields:
+        move_speed, speed_err = parse_move_speed(fields["move-speed"])
+        if speed_err:
+            return speed_err
+        if move_speed != agent.move_speed:
+            agent.move_speed = move_speed
+            changes.append("move-speed")
+    return None
+
+
+def _apply_agent_location_fields(
+    session: Session,
+    agent_id: str,
+    located_area_id: str,
+    agent: Agent,
+    fields: dict[str, str],
+    changes: list[str],
+) -> Optional[str]:
+    dest_area_id = (
+        fields.get("area", located_area_id).strip()
+        if "area" in fields
+        else located_area_id
+    )
+    if "area" in fields and dest_area_id not in session.areas:
+        return f"Unknown area {dest_area_id!r}."
+
+    target_pos = agent.position
+    if "pos" in fields:
+        target_pos, err = parse_position(fields["pos"])
+        if err:
+            return err
+        assert target_pos is not None
+
+    if dest_area_id != located_area_id:
+        result = session.transfer_agent(agent_id, dest_area_id, target_pos)
+        if not result.ok:
+            return result.message
+        changes.append("area")
+        if "pos" in fields:
+            changes.append("pos")
+    elif "pos" in fields and target_pos != agent.position:
+        area = session.areas[located_area_id]
+        if not area.is_valid_position(target_pos):
+            return (
+                f"Invalid position {target_pos}. "
+                f"{area.format_grid_bounds_message()}"
+            )
+        agent.position = target_pos
+        changes.append("pos")
+    return None
+
+
+def edit_agent_for_session(session: Session, arg: str) -> EditAgentResult:
+    """
+    Parse and edit an agent anywhere in a multi-area session.
+
+    Supports ``area <area_id>`` to move the agent between areas (with optional ``pos``).
+    """
+    tokens, err = tokenize_args(arg)
+    if err:
+        return EditAgentResult(ok=False, message=err)
+    if not tokens:
+        return EditAgentResult(
+            ok=False,
+            message=(
+                'Usage: edit-agent <id> [pdesc "..."] [desc "..."] [appearance "..."] '
+                '[personality "..."] [move-speed N] [name "..."] [area <area_id>] [pos x,y] ...'
+            ),
+        )
+
+    agent_id = tokens[0]
+    if not agent_id.startswith("agent_"):
+        return EditAgentResult(
+            ok=False,
+            message=(
+                f"Commands require agent id (e.g. agent_01), not display name. "
+                f"Use 'agents' or 'list' to look up ids."
+            ),
+        )
+
+    located_area_id = session.agent_area.get(agent_id)
+    if located_area_id is None or located_area_id not in session.areas:
+        return EditAgentResult(
+            ok=False,
+            message=f"Agent '{agent_id}' not found. Use 'agents' or 'list' to look up ids.",
+        )
+    area = session.areas[located_area_id]
+    agent = area.get_agent_by_id(agent_id)
+    if agent is None:
+        return EditAgentResult(
+            ok=False,
+            message=f"Agent '{agent_id}' not found. Use 'agents' or 'list' to look up ids.",
+        )
+
+    fields, err = parse_field_tokens(
+        tokens[1:],
+        {"name", "pdesc", "desc", "appearance", "personality", "move-speed", "pos", "area"},
+    )
+    if err:
+        return EditAgentResult(ok=False, message=err)
+    if not fields:
+        return EditAgentResult(
+            ok=False,
+            message=(
+                "At least one field to change is required "
+                "(name, pdesc, desc, appearance, personality, move-speed, area, or pos)."
+            ),
+        )
+
+    old_name_lower = agent.name.lower()
+    changes: list[str] = []
+
+    location_err = _apply_agent_location_fields(
+        session, agent_id, located_area_id, agent, fields, changes
+    )
+    if location_err:
+        return EditAgentResult(ok=False, message=location_err)
+
+    current_area_id = located_area_id
+    if "area" in fields and fields["area"].strip() != located_area_id:
+        current_area_id = fields["area"].strip()
+    current_area = session.areas[current_area_id]
+
+    content_err = _apply_agent_content_fields(
+        current_area, agent, agent_id, fields, changes
+    )
+    if content_err:
+        return EditAgentResult(ok=False, message=content_err)
+
+    if not changes:
+        return EditAgentResult(ok=False, message=f"No changes applied to {agent_id}.")
+
+    return EditAgentResult(
+        ok=True,
+        message=f"Updated agent {agent_id} ({', '.join(changes)}).",
+        agent=agent,
+        old_name_lower=old_name_lower if "name" in changes else None,
+    )
+
+
 def edit_agent_from_args(area: Area, arg: str) -> EditAgentResult:
     """
     Parse and edit an agent.
@@ -674,47 +994,9 @@ def edit_agent_from_args(area: Area, arg: str) -> EditAgentResult:
     old_name_lower = agent.name.lower()
     changes: list[str] = []
 
-    if "name" in fields and fields["name"] != agent.name:
-        if agent_name_conflicts_with_commands(fields["name"]):
-            return EditAgentResult(
-                ok=False,
-                message=reserved_agent_name_message(fields["name"]),
-            )
-        if agent_name_taken(area, fields["name"], exclude_agent_id=agent_id):
-            return EditAgentResult(
-                ok=False,
-                message=f"Agent name '{fields['name']}' is already in use.",
-            )
-        agent.name = fields["name"]
-        changes.append("name")
-
-    if "pdesc" in fields and fields["pdesc"] != agent.passive_description:
-        agent.passive_description = fields["pdesc"]
-        changes.append("pdesc")
-
-    if "appearance" in fields and fields["appearance"] != agent.appearance:
-        agent.appearance = fields["appearance"]
-        changes.append("appearance")
-
-    if "desc" in fields and fields["desc"] != agent.description:
-        agent.description = fields["desc"]
-        if fields["desc"]:
-            area.invalidate_entity_knowledge(agent_id)
-        else:
-            area.clear_entity_examination_history(agent_id)
-        changes.append("desc")
-
-    if "personality" in fields and fields["personality"] != agent.personality:
-        agent.personality = fields["personality"]
-        changes.append("personality")
-
-    if "move-speed" in fields:
-        move_speed, speed_err = parse_move_speed(fields["move-speed"])
-        if speed_err:
-            return EditAgentResult(ok=False, message=speed_err)
-        if move_speed != agent.move_speed:
-            agent.move_speed = move_speed
-            changes.append("move-speed")
+    content_err = _apply_agent_content_fields(area, agent, agent_id, fields, changes)
+    if content_err:
+        return EditAgentResult(ok=False, message=content_err)
 
     if "pos" in fields:
         position, err = parse_position(fields["pos"])

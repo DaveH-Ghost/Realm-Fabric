@@ -4,7 +4,7 @@ Example web app for [Realm-Fabric](https://github.com/) — wraps the engine `Se
 
 **Location:** `examples/web/realm-studio` in the Realm-Fabric repo.
 
-**Status:** **V0.4.2** — emote turn action, speak as optional step, action ranges in session units, Run turn token hint, **Last prompt / Last response** debug panels. Tag **`v0.4.2`** when ready.
+**Status:** **V0.4.3** — memory module on **Create agent**, plus V0.4.2 emote/speak/debug and V0.4.1 prompt layout.
 
 ## Quick start
 
@@ -48,6 +48,7 @@ uv run uvicorn backend.app:app --host 127.0.0.1 --port 8765 --reload
 - **Area toolbar** — dropdown (room / hall / …); **+ Area**, **Edit area**, **Delete area**
 - **Agents elsewhere** — sidebar list when agents are in other areas
 - **Right-click** — create/edit/delete on tiles and tokens; **Play as** for agents; **Manage actions…** on objects
+- **Create agent** — memory module dropdown (`recent_turns`, `salient_turns`, `rolling_summary`) and module-specific options
 - **Manage actions…** — add/edit/remove object actions; effect picker (`delete_self`, `random_move_self`, `move_area`); **?** on result/passive fields lists template variables
 - **Stacked tiles** — manage menu when multiple entities share a cell
 - **Toolbar** — active-agent dropdown; **Emit event…**; **Run turn ▶** (hover shows ~input token estimate)
@@ -121,9 +122,10 @@ Set **Move speed (steps per turn)** in create/edit agent modals, or via CLI (`mo
 | `GET` | `/api/prompt-slots` | Slot names + preview snippets (optional `agent_id`) |
 | `GET` | `/api/prompt-block-catalog` | Addable block types, slot/section options, section defaults |
 | `PUT` | `/api/vision-units` | `{ "units": "ft", "units_per_tile": 5 }` — session distance labels |
+| `GET` | `/api/memory-modules` | Memory module catalog for create-agent (ids, defaults, option ranges) |
 | `GET` | `/api/interact-template-vars` | Placeholders for object action result/passive text |
 
-See [v0.4.2-changelog.md](../../../docs/v0.4.2-changelog.md) for V0.4.2 release notes. [v0.4.1-changelog.md](../../../docs/v0.4.1-changelog.md) covers prompt layout and vision units.
+See [v0.4.3-changelog.md](../../../docs/v0.4.3-changelog.md) for V0.4.3 release notes. [v0.4.2-changelog.md](../../../docs/v0.4.2-changelog.md) covers emote and debug panels.
 
 ## Tests
 
@@ -131,7 +133,7 @@ See [v0.4.2-changelog.md](../../../docs/v0.4.2-changelog.md) for V0.4.2 release 
 uv run pytest
 ```
 
-**49** smoke/integration tests (`test_api.py`, `test_snapshot_compat.py`) via FastAPI `TestClient` (mocked LLM — no API key or running server).
+**51** smoke/integration tests (`test_api.py`, `test_snapshot_compat.py`) via FastAPI `TestClient` (mocked LLM — no API key or running server).
 
 From repo root, engine tests remain separate:
 

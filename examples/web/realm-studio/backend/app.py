@@ -31,6 +31,7 @@ from backend.session_store import get_session_store
 from backend.snapshot_compat import normalize_state_snapshot
 from backend.turn_runner import run_llm_turn
 from backend.vision_units_api import put_vision_units as api_put_vision_units
+from backend.memory_modules_api import get_memory_modules_catalog
 from backend.prompt_api import (
     get_prompt_block_catalog_route as api_get_prompt_block_catalog,
     get_prompt_blocks as api_get_prompt_blocks,
@@ -48,7 +49,7 @@ _ENGINE_SRC = _REPO_ROOT / "src"
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="realm-studio", version="0.4.2")
+    app = FastAPI(title="realm-studio", version="0.4.3")
 
     app.add_middleware(
         CORSMiddleware,
@@ -196,6 +197,10 @@ def create_app() -> FastAPI:
     @app.get("/api/prompt-block-catalog")
     def get_prompt_block_catalog_route() -> dict[str, object]:
         return api_get_prompt_block_catalog()
+
+    @app.get("/api/memory-modules")
+    def get_memory_modules_route() -> dict[str, object]:
+        return get_memory_modules_catalog()
 
     @app.post("/api/event")
     def post_event(body: EventRequest) -> dict[str, object]:

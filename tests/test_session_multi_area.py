@@ -163,3 +163,75 @@ def test_run_command_active_area():
     result = session.run_command("active-area hall")
     assert result.ok
     assert session.active_area_id == "hall"
+
+
+def test_edit_object_moves_between_areas():
+    from src.area_edit import create_object_from_args, edit_object_for_session
+
+    session = _two_area_session()
+    obj, _ = create_object_from_args(
+        session.areas["room"],
+        'name "Crate" desc "A crate." at 2,2',
+    )
+    assert obj is not None
+
+    message = edit_object_for_session(
+        session,
+        f"{obj.id} area hall pos 0,1",
+    )
+    assert message.startswith("Updated object")
+    assert "area" in message
+    assert session.areas["room"].get_object_by_id(obj.id) is None
+    moved = session.areas["hall"].get_object_by_id(obj.id)
+    assert moved is not None
+    assert moved.position == (0, 1)
+
+
+def test_edit_object_area_rejected_when_out_of_bounds():
+    from src.area_edit import create_object_from_args, edit_object_for_session
+
+    session = _two_area_session()
+    obj, _ = create_object_from_args(
+        session.areas["room"],
+        'name "Crate" desc "A crate." at 2,2',
+    )
+    assert obj is not None
+
+    message = edit_object_for_session(session, f"{obj.id} area hall pos 9,9")
+    assert "Invalid position" in message
+    assert session.areas["room"].get_object_by_id(obj.id) is not None
+
+
+def test_edit_agent_moves_between_areas():
+    from src.area_edit import edit_agent_for_session
+
+    session = _two_area_session()
+
+    result = edit_agent_for_session(session, "agent_01 area hall pos 2,2")
+    assert result.ok
+    assert "area" in result.message
+    assert session.areas["room"].get_agent_by_id("agent_01") is None
+    moved = session.areas["hall"].get_agent_by_id("agent_01")
+    assert moved is not None
+    assert moved.position == (2, 2)
+    assert session.agent_area["agent_01"] == "hall"
+
+
+def test_edit_agent_area_rejected_when_out_of_bounds():
+    from src.area_edit import edit_agent_for_session
+
+    session = _two_area_session()
+
+    result = edit_agent_for_session(session, "agent_01 area hall pos 9,9")
+    assert not result.ok
+    assert "outside" in result.message.lower() or "Invalid position" in result.message
+    assert session.areas["room"].get_agent_by_id("agent_01") is not None
+
+
+def test_run_command_edit_agent_moves_between_areas():
+    session = _two_area_session()
+
+    result = session.run_command("edit-agent agent_01 area hall pos 1,0")
+    assert result.ok
+    assert session.areas["room"].get_agent_by_id("agent_01") is None
+    assert session.areas["hall"].get_agent_by_id("agent_01") is not None
