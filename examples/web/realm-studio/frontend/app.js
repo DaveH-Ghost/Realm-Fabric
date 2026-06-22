@@ -53,6 +53,7 @@ const lastPromptEl = document.getElementById("last-prompt");
 const lastPromptEmptyEl = document.getElementById("last-prompt-empty");
 const lastResponseEl = document.getElementById("last-response");
 const lastResponseEmptyEl = document.getElementById("last-response-empty");
+const lastResponseTokensEl = document.getElementById("last-response-tokens");
 const promptLayoutEl = document.getElementById("prompt-layout");
 const promptLayoutStatusEl = document.getElementById("prompt-layout-status");
 const promptBlockListEl = document.getElementById("prompt-block-list");
@@ -317,9 +318,14 @@ function recordTurnResult(result) {
     }
   }
   if (result.llm_response) {
-    setLastResponse(result.llm_response);
+    setLastResponse(result.llm_response, {
+      prompt: result.prompt_tokens ?? null,
+      completion: result.completion_tokens ?? null,
+      total: result.total_tokens ?? null,
+      estimate: result.prompt_tokens_estimate ?? null,
+    });
     if (responseDebugEl.open) {
-      renderLastResponse(lastResponseEl, lastResponseEmptyEl);
+      renderLastResponse(lastResponseEl, lastResponseEmptyEl, lastResponseTokensEl);
     }
   }
 }
@@ -387,7 +393,12 @@ bindAreaManageButtons({
 });
 bindEmitEventButton(emitEventBtn);
 bindPromptDebug(promptDebugEl, lastPromptEl, lastPromptEmptyEl, () => getPrompt());
-bindResponseDebug(responseDebugEl, lastResponseEl, lastResponseEmptyEl);
+bindResponseDebug(
+  responseDebugEl,
+  lastResponseEl,
+  lastResponseEmptyEl,
+  lastResponseTokensEl,
+);
 initPromptLayout({
   detailsEl: promptLayoutEl,
   listEl: promptBlockListEl,

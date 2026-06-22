@@ -54,9 +54,9 @@ def test_run_logs_single_compound_phase(monkeypatch):
         return LLMResponse(
             parsed=AgentCompoundTurn(
                 reasoning="stay and speak",
-                move_target=None,
-                turn_action="none",
-                content="Hi.",
+                move=None,
+                action="none",
+                say="Hi.",
             ),
             raw_response="{}",
         )

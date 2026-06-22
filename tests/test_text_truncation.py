@@ -57,7 +57,7 @@ def test_truncate_keeps_second_sentence_when_it_starts_before_budget():
 
 def test_truncate_reasoning_via_schema():
     long_reasoning = "x" * 450
-    turn = AgentCompoundTurn(reasoning=long_reasoning, turn_action="none")
+    turn = AgentCompoundTurn(reasoning=long_reasoning, action="none")
     assert len(turn.reasoning) == 450
 
 
@@ -65,15 +65,15 @@ def test_truncate_reasoning_drops_late_sentences():
     first = "a" * 398 + ". "
     second = "b" * 100
     reasoning = first + second
-    turn = AgentCompoundTurn(reasoning=reasoning, turn_action="none")
+    turn = AgentCompoundTurn(reasoning=reasoning, action="none")
     assert turn.reasoning == "a" * 398 + "."
     assert "b" not in turn.reasoning
 
 
 def test_truncate_speak_via_schema():
     text = "A" * 501
-    turn = AgentCompoundTurn(reasoning="ok", turn_action="none", content=text)
-    assert len(turn.content) == 501
+    turn = AgentCompoundTurn(reasoning="ok", action="none", say=text)
+    assert len(turn.say) == 501
 
 
 def test_truncate_speak_many_sentences_no_sentence_cap():
@@ -88,11 +88,11 @@ def test_truncate_speak_many_sentences_no_sentence_cap():
 
 def test_speak_at_budget_unchanged():
     text = "A" * 400
-    turn = AgentCompoundTurn(reasoning="x", turn_action="none", content=text)
-    assert len(turn.content) == 400
+    turn = AgentCompoundTurn(reasoning="x", action="none", say=text)
+    assert len(turn.say) == 400
 
 
 def test_reasoning_exactly_at_budget():
     text = "A" * REASONING_MAX_CHARS
-    turn = AgentCompoundTurn(reasoning=text, turn_action="none")
+    turn = AgentCompoundTurn(reasoning=text, action="none")
     assert len(turn.reasoning) == REASONING_MAX_CHARS

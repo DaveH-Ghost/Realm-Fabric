@@ -14,8 +14,8 @@ def test_default_profile_prompt_contains_required_sections():
     prompt = session.build_prompt()
     assert "Passive Vision:" in prompt
     assert "Memory:" in prompt
-    assert "move_target" in prompt
-    assert "turn_action" in prompt
+    assert '"move"' in prompt
+    assert '"action"' in prompt
 
 
 def test_default_profile_matches_build_compound_prompt():
@@ -84,7 +84,7 @@ def test_custom_minimal_template_injects_context():
     prompt = profile.build_prompt(ctx)
     assert "You are Explorer." in prompt
     assert "You are at (1, 1)" in prompt
-    assert "move_target" in prompt
+    assert '"move"' in prompt
     assert "---" in prompt
 
 

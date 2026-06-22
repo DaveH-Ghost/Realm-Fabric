@@ -42,8 +42,8 @@ def test_run_compound_turn_moves_agent():
     result = session.run_compound_turn(
         AgentCompoundTurn(
             reasoning="move north",
-            move_target="1,2",
-            turn_action="none",
+            move="1,2",
+            action="none",
         ),
     )
     assert result.ok
@@ -64,8 +64,8 @@ def test_run_compound_turn_by_agent_id():
     result = session.run_compound_turn(
         AgentCompoundTurn(
             reasoning="step",
-            move_target="0,1",
-            turn_action="none",
+            move="0,1",
+            action="none",
         ),
         agent_id=goblin.id,
     )
@@ -139,8 +139,8 @@ def test_format_debug_state_after_compound_turn():
     session.run_compound_turn(
         AgentCompoundTurn(
             reasoning="move",
-            move_target="1,2",
-            turn_action="none",
+            move="1,2",
+            action="none",
         ),
     )
     report = session.format_debug_state()
@@ -172,16 +172,16 @@ def test_web_handler_flow_create_then_turn():
     session.run_compound_turn(
         AgentCompoundTurn(
             reasoning="walk over",
-            move_target="4,4",
-            turn_action="none",
+            move="4,4",
+            action="none",
         ),
     )
     eat = session.run_compound_turn(
         AgentCompoundTurn(
             reasoning="eat",
-            turn_action="interact",
+            action="interact",
             target=cookie_id,
-            action_name="eat",
+            verb="eat",
         ),
     )
     assert eat.ok

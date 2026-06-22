@@ -9,12 +9,12 @@ You can look at: obj_ball_01, obj_sign_01
 Output:
 {
   "reasoning": "The ball is at (2, 2). I will move closer, examine it, and comment.",
-  "move_target": "2,3",
-  "look_target": "obj_ball_01",
-  "content": "Interesting ball.",
-  "turn_action": "none",
+  "move": "2,3",
+  "look": "obj_ball_01",
+  "say": "Interesting ball.",
+  "action": "none",
   "target": null,
-  "action_name": null
+  "verb": null
 }
 
 Example 2: Stay in place and speak
@@ -27,12 +27,12 @@ You can look at: obj_ball_01, obj_sign_01
 Output:
 {
   "reasoning": "Nothing new to examine. I will speak from here.",
-  "move_target": null,
-  "look_target": null,
-  "content": "Hello, room.",
-  "turn_action": "none",
+  "move": null,
+  "look": null,
+  "say": "Hello, room.",
+  "action": "none",
   "target": null,
-  "action_name": null
+  "verb": null
 }
 
 Example 3: Move only
@@ -45,10 +45,10 @@ You may move to any coordinate (x, y) where x is an integer from 0 to 4 and y is
 Output:
 {
   "reasoning": "The sign is at (2, 4). I will move closer.",
-  "move_target": "2,3",
-  "look_target": null,
-  "content": null,
-  "turn_action": "none",
+  "move": "2,3",
+  "look": null,
+  "say": null,
+  "action": "none",
   "target": null,
-  "action_name": null
+  "verb": null
 }

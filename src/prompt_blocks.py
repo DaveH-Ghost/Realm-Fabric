@@ -126,14 +126,7 @@ def default_prompt_blocks() -> list[PromptBlock]:
         PromptBlock(type="slot", name="look_and_interact"),
         PromptBlock(type="text", content="\n\nMemory:\n"),
         PromptBlock(type="slot", name="memory"),
-        PromptBlock(
-            type="text",
-            content=(
-                "\n\nPlan your full compound turn (move, then look, then turn action)."
-                "\n\nSpoken text should be things you say out loud (~500 characters; "
-                "excess is trimmed at sentence boundaries).\n\n"
-            ),
-        ),
+        PromptBlock(type="text", content="\n\n"),
         PromptBlock(
             type="section",
             name="output_format",

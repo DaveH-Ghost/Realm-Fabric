@@ -94,8 +94,8 @@ def test_snapshot_after_move_updates_position_and_session_turn():
     session.run_compound_turn(
         AgentCompoundTurn(
             reasoning="move",
-            move_target="2,2",
-            turn_action="none",
+            move="2,2",
+            action="none",
         ),
     )
     snap = session.snapshot()

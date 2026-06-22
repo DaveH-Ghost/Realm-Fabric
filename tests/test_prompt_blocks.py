@@ -167,7 +167,7 @@ def test_move_instructions_slot_omits_coordinates():
     ]
     rendered = render_prompt_blocks(blocks, ctx, agent=agent, area=area)
     assert "You may move to any coordinate" not in rendered
-    assert "move_target to an entity id" in rendered
+    assert "move may be an entity id" in rendered
 
 
 def test_move_instructions_move_speed_with_units():

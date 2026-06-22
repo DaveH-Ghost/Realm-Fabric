@@ -312,6 +312,37 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 
 ---
 
+## V0.4.4
+
+**Focus:** **Prompt and schema token reduction** — shrink default compound-turn input (~966 est. tokens pre-release) before future lorebook and richer memory. Builds on V0.4.3.
+
+**Status:** ✅ **Complete** — see [v0.4.4-changelog.md](v0.4.4-changelog.md) for slices **0.4.4a–d**. Tag **`v0.4.4`** when ready.
+
+| Slice | Theme | Status |
+|-------|--------|--------|
+| **0.4.4a** | Baseline + token budget regression test | ✅ |
+| **0.4.4b** | Compact rules, look/interact, output_format, dedupe glue | ✅ |
+| **0.4.4c** | Compact JSON keys (`move`, `look`, `say`, `action`, `verb`) | ✅ |
+| **0.4.4d** | Release polish, tag **`v0.4.4`** | ✅ |
+
+- **Prompt** — terse default `compound_rules`; dynamic slots unchanged; verbose rules still editable in realm-studio Prompt layout
+- **Schema** — shorter LLM JSON keys; legacy 0.4.3 keys accepted via normalization shim
+- **Deferred:** lorebook, richer memory beyond current modules → post–V0.4.4; swappable schemas → **V0.5+**
+
+---
+
+## V0.4.5
+
+**Focus:** **Session save/load** — full snapshot round-trip (world + memory + prompt blocks) + realm-studio export/import.
+
+**Status:** ⬜ **Planned** — not started.
+
+- `Session.from_snapshot()` / extended save format with `snapshot_version: 1`
+- `GET /api/session/export`, `POST /api/session/import` in realm-studio
+- Snapshot includes V0.4.4 JSON key names and prompt block overrides
+
+---
+
 **Notes**
 
 - Prefer adding sections to the [V0.2.5 changelog](v0.2.5-changelog.md) or [V0.3.0 changelog](v0.3.0-changelog.md) over a readiness checklist for new versions.

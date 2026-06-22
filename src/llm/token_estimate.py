@@ -1,5 +1,8 @@
 """Rough prompt token estimates for UI hints (V0.4.2)."""
 
+# Default demo session budget (V0.4.4). ~966 est. tokens pre-0.4.4; tightened after compaction.
+DEFAULT_PROMPT_TOKEN_BUDGET = 650
+
 
 def estimate_prompt_tokens(text: str) -> int:
     """

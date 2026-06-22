@@ -172,10 +172,10 @@ def test_failed_interact_after_move_shows_move_in_passive_result():
         area,
         AgentCompoundTurn(
             reasoning="approach and eat from too far",
-            move_target="4,3",
-            turn_action="interact",
+            move="4,3",
+            action="interact",
             target=cookie.id,
-            action_name="eat",
+            verb="eat",
         ),
         next_turn_number_for_agent(goblin),
     )
@@ -210,9 +210,9 @@ def test_goblin_interact_eat_deletes_cookie():
         area,
         AgentCompoundTurn(
             reasoning="eat",
-            turn_action="interact",
+            action="interact",
             target=cookie.id,
-            action_name="eat",
+            verb="eat",
         ),
         next_turn_number_for_agent(goblin),
     )
@@ -286,9 +286,9 @@ def test_explorer_memory_records_goblin_eat_not_passive_vision():
         area,
         AgentCompoundTurn(
             reasoning="eat",
-            turn_action="interact",
+            action="interact",
             target=cookie.id,
-            action_name="eat",
+            verb="eat",
         ),
         next_turn_number_for_agent(goblin),
     )
@@ -340,9 +340,9 @@ def test_result_only_interact_leaves_object():
         area,
         AgentCompoundTurn(
             reasoning="smell",
-            turn_action="interact",
+            action="interact",
             target=obj.id,
-            action_name="smell",
+            verb="smell",
         ),
         next_turn_number_for_agent(goblin),
     )
@@ -409,9 +409,9 @@ def test_random_move_self_moves_ball(monkeypatch):
         area,
         AgentCompoundTurn(
             reasoning="kick",
-            turn_action="interact",
+            action="interact",
             target="obj_ball_01",
-            action_name="kick",
+            verb="kick",
         ),
         next_turn_number_for_agent(explorer),
     )

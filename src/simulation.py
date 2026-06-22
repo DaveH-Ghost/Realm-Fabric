@@ -56,16 +56,16 @@ def execute_nav_phase(
     agent: Agent, area: Area, turn: AgentCompoundTurn
 ) -> list[TurnStep]:
     """Run optional move from compound turn. Commits position changes."""
-    if not turn.move_target:
+    if not turn.move:
         return []
 
-    outcome = do_move(agent, area, turn.move_target)
+    outcome = do_move(agent, area, turn.move)
     return [
         _make_step(
             "move",
             turn.reasoning,
             outcome,
-            target=turn.move_target,
+            target=turn.move,
         )
     ]
 
@@ -81,34 +81,34 @@ def execute_action_phase(
     """Run optional look and turn action from compound turn."""
     steps: list[TurnStep] = []
 
-    if turn.look_target:
-        outcome = do_look(agent, area, turn.look_target)
+    if turn.look:
+        outcome = do_look(agent, area, turn.look)
         steps.append(
             _make_step(
                 "look",
                 turn.reasoning,
                 outcome,
-                target=turn.look_target,
+                target=turn.look,
             )
         )
 
-    if turn.content and str(turn.content).strip():
-        outcome = do_speak(agent, area, turn.content)
+    if turn.say and str(turn.say).strip():
+        outcome = do_speak(agent, area, turn.say)
         steps.append(
             _make_step(
                 "speak",
                 turn.reasoning,
                 outcome,
-                content=turn.content,
+                content=turn.say,
             )
         )
 
-    if turn.turn_action == "interact":
+    if turn.action == "interact":
         outcome = do_interact(
             agent,
             area,
             turn.target or "",
-            turn.action_name or "",
+            turn.verb or "",
             session=session,
             source_area_id=source_area_id,
         )
@@ -118,15 +118,15 @@ def execute_action_phase(
                 turn.reasoning,
                 outcome,
                 target=turn.target,
-                content=turn.action_name,
+                content=turn.verb,
             )
         )
-    elif turn.turn_action == "emote":
+    elif turn.action == "emote":
         outcome = do_emote(
             agent,
             area,
             turn.target or "",
-            turn.action_name or "",
+            turn.verb or "",
         )
         steps.append(
             _make_step(
@@ -134,7 +134,7 @@ def execute_action_phase(
                 turn.reasoning,
                 outcome,
                 target=turn.target,
-                content=turn.action_name,
+                content=turn.verb,
             )
         )
 

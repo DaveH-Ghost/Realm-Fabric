@@ -2,10 +2,11 @@
 
 A grid-based agent simulation framework designed around structured output and narrative roleplay.
 
-**Current Status:** **V0.4.3** (`0.4.3` in `pyproject.toml`) + [**realm-studio**](examples/web/realm-studio) example app. Tag **`v0.4.3`** when ready. Ships: **create-agent memory module** + options, **edit location** panels (object/agent), **multi-step witness broadcast** (speak + emote) — plus V0.4.2 emote/speak/debug, V0.4.1 prompt layout, and V0.4.0 movement / multi-area.
+**Current Status:** **V0.4.4** (`0.4.4` in `pyproject.toml`) + [**realm-studio**](examples/web/realm-studio) example app. Tag **`v0.4.4`** when ready. Ships: **compact default prompt** (~500 est. input tokens, down from ~966) and **compact JSON keys** (`move`, `look`, `say`, `action`, `verb`) — plus V0.4.3 memory UI, V0.4.2 emote/speak/debug, V0.4.1 prompt layout, and V0.4.0 movement / multi-area.
 
 **Documentation:**
 
+- [V0.4.4 changelog](docs/v0.4.4-changelog.md) — prompt/schema token reduction (**0.4.4a–d**) ✅
 - [V0.4.3 changelog](docs/v0.4.3-changelog.md) — memory module UI, edit location, witness broadcast (**0.4.3a–c**) ✅
 - [V0.4.2 changelog](docs/v0.4.2-changelog.md) — emote, speak step, action range units, debug panels (**0.4.2a–e**) ✅
 - [V0.4.1 changelog](docs/v0.4.1-changelog.md) — truncation, prompt blocks, prompt editor, vision units (**0.4.1a–d**) ✅
@@ -13,7 +14,7 @@ A grid-based agent simulation framework designed around structured output and na
 - [V0.3.2 changelog](docs/v0.3.2-changelog.md) — **realm-studio** GM events, pannable grid, token images (0.3.2a–e) ✅
 - [V0.3.1 changelog](docs/v0.3.1-changelog.md) — **realm-studio** web app (0.3.1a–f) ✅
 - [V0.3.0 changelog](docs/v0.3.0-changelog.md) — engine refactor (0.3.0a–e)
-- [Roadmap](docs/ROADMAP.md) — version plans (**V0.4.3** ✅; **V0.4.2** ✅; **V0.4.1** ✅; **V0.4.0** ✅; V0.3.x ✅)
+- [Roadmap](docs/ROADMAP.md) — version plans (**V0.4.4** ✅; **V0.4.5** save/load planned; V0.4.x ✅)
 - [V0.2.5 changelog](docs/v0.2.5-changelog.md) — memory / prompt slices (0.2.5a–g)
 - [Long-term goals](LONG_TERM_GOALS.md) — aspirational features
 - [V0 implementation checklist](docs/v0-implementation-readiness-checklist.md) — V0 historical design reference
@@ -171,15 +172,15 @@ Session **Units** + **Units per tile** (sidebar) feed relative bearing in passiv
 
 Engine API: `Session.get_prompt_blocks()`, `Session.set_prompt_blocks()`, `Session.build_prompt()` uses blocks when set. See [v0.4.1-changelog](docs/v0.4.1-changelog.md).
 
-### Compound turns (V0.4.2)
+### Compound turns (V0.4.4)
 
 Pipeline per agent turn: **move → look → speak → turn action** (`interact` | `emote` | `none`).
 
-- **Speak** — optional `content` (independent of `turn_action`); speak and interact/emote can combine in one turn
-- **Emote** — `turn_action: "emote"` with past-tense `action_name` and optional `target` (entity id or free text)
-- **Action ranges** — interact lines in prompts use session **Units** when set (`range 5 ft`, etc.)
+- **Speak** — optional `say` field (independent of `action`); speak and interact/emote can combine in one turn
+- **Emote** — `action: "emote"` with past-tense `verb` and optional `target` (entity id or free text)
+- **Compact JSON** — `move`, `look`, `say`, `action`, `verb`, `target`, `reasoning` (legacy 0.4.3 keys still accepted on parse)
 
-**Breaking (0.4.2):** `"turn_action": "speak"` rejected; optional `confidence` / `emotion` fields removed — use emote for non-verbal expression. See [v0.4.2-changelog](docs/v0.4.2-changelog.md).
+**Breaking (0.4.4):** LLM JSON uses compact keys; `move_target` / `look_target` / `content` / `turn_action` / `action_name` are normalized when parsing. See [v0.4.4-changelog](docs/v0.4.4-changelog.md).
 
 ### Multi-agent (V0.1 Section 3)
 
@@ -356,7 +357,7 @@ Tests use [pytest](https://docs.pytest.org/) and run **without** an API key or n
 
 | Suite | Where to run | Count | What it covers |
 |-------|----------------|-------|----------------|
-| **Engine** | Repo root (`uv run pytest`) | **396** | `tests/` — perception, emote, prompt blocks, truncation, editing, Session API, multi-area, pathing, snapshots, etc. |
+| **Engine** | Repo root (`uv run pytest`) | **415** | `tests/` — perception, prompt tokens, emote, prompt blocks, Session API, snapshots, etc. |
 | **realm-studio** | `examples/web/realm-studio` (`uv run pytest`) | **49** | HTTP smoke — health, multi-area state, prompt blocks, vision units, areas CRUD, object actions, events, turn, debug panels |
 
 Root `pyproject.toml` sets `testpaths = ["tests"]` only. The example app has its own `pyproject.toml` and does **not** get picked up when you run pytest from the repo root.
@@ -415,6 +416,7 @@ uv run pytest -x
 | `tests/test_emote.py` | Emote turn action, witness phrasing (V0.4.2) |
 | `tests/test_observations.py` | Multi-step witness broadcast (V0.4.3) |
 | `tests/test_token_estimate.py` | Prompt token estimate helper (V0.4.2) |
+| `tests/test_prompt_tokens.py` | Default prompt token budget regression (V0.4.4) |
 | `tests/test_object_actions.py` | Effect registry, interact range/vision, `delete_self`, ball `kick` |
 | `tests/test_move_area_effect.py` | `move_area` effect, cross-area transfer (V0.4.0d) |
 | `tests/test_interact_templates.py` | Result/passive template placeholders |

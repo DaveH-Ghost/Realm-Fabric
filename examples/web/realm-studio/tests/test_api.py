@@ -229,11 +229,13 @@ def _fake_compound_response(_prompt):
     return LLMResponse(
         parsed=AgentCompoundTurn(
             reasoning="stay and speak",
-            move_target=None,
-            turn_action="none",
-            content="Hello from the test.",
+            action="none",
+            say="Hello from the test.",
         ),
         raw_response="{}",
+        prompt_tokens=512,
+        completion_tokens=42,
+        total_tokens=554,
     )
 
 
@@ -251,6 +253,11 @@ def test_post_turn_success(client, monkeypatch):
     assert "areas" in data["snapshot"]
     assert "prompt" in data
     assert data["llm_response"] == "{}"
+    assert data["prompt_tokens"] == 512
+    assert data["completion_tokens"] == 42
+    assert data["total_tokens"] == 554
+    assert isinstance(data["prompt_tokens_estimate"], int)
+    assert data["prompt_tokens_estimate"] > 0
 
 
 def test_get_prompt(client):

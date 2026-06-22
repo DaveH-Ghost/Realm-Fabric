@@ -114,8 +114,8 @@ def test_session_with_custom_area():
     result = session.run_compound_turn(
         AgentCompoundTurn(
             reasoning="edge",
-            move_target="2,2",
-            turn_action="none",
+            move="2,2",
+            action="none",
         ),
     )
     assert result.ok
@@ -124,8 +124,8 @@ def test_session_with_custom_area():
     off_grid = session.run_compound_turn(
         AgentCompoundTurn(
             reasoning="oops",
-            move_target="5,5",
-            turn_action="none",
+            move="5,5",
+            action="none",
         ),
     )
     assert off_grid.ok

@@ -99,12 +99,12 @@ def parse_compound_step_arg(arg: str) -> ParsedCompoundStep:
 
     turn = AgentCompoundTurn(
         reasoning="[manual step-compound]",
-        move_target=move_target,
-        look_target=look_target,
-        content=speak_content,
-        turn_action=turn_action,
+        move=move_target,
+        look=look_target,
+        say=speak_content,
+        action=turn_action,
         target=target,
-        action_name=action_name,
+        verb=action_name,
     )
 
     return ParsedCompoundStep(turn=turn)

@@ -11,7 +11,7 @@ from src.area import create_initial_area
 
 
 def compound(**kwargs) -> AgentCompoundTurn:
-    defaults = {"reasoning": "Test reasoning.", "turn_action": "none"}
+    defaults = {"reasoning": "Test reasoning.", "action": "none"}
     defaults.update(kwargs)
     return AgentCompoundTurn(**defaults)
 
@@ -23,7 +23,7 @@ def test_compound_turn_creates_and_records_turn_record():
     record = run_compound_turn(
         agent,
         area,
-        compound(look_target="obj_ball_01"),
+        compound(look="obj_ball_01"),
         turn_number=1,
     )
 
@@ -42,7 +42,7 @@ def test_compound_preserves_reasoning():
     record = run_compound_turn(
         agent,
         area,
-        compound(reasoning="Full turn thoughts.", look_target="obj_ball_01"),
+        compound(reasoning="Full turn thoughts.", look="obj_ball_01"),
         turn_number=42,
     )
 
@@ -54,7 +54,7 @@ def test_compound_move_success():
     agent = area.get_agent()
 
     record = run_compound_turn(
-        agent, area, compound(move_target="2,3"), turn_number=1
+        agent, area, compound(move="2,3"), turn_number=1
     )
 
     assert agent.position == (2, 3)
@@ -67,7 +67,7 @@ def test_compound_move_failure_off_grid():
     agent = area.get_agent()
 
     record = run_compound_turn(
-        agent, area, compound(move_target="5,5"), turn_number=1
+        agent, area, compound(move="5,5"), turn_number=1
     )
 
     assert agent.position == (1, 1)
@@ -83,7 +83,7 @@ def test_compound_look_marks_object():
     run_compound_turn(
         agent,
         area,
-        compound(look_target="obj_ball_01"),
+        compound(look="obj_ball_01"),
         turn_number=1,
     )
 
@@ -98,7 +98,7 @@ def test_compound_speak_records_text():
     record = run_compound_turn(
         agent,
         area,
-        compound(turn_action="none", content=spoken),
+        compound(action="none", say=spoken),
         turn_number=1,
     )
 
@@ -114,7 +114,7 @@ def test_multiple_compound_turns_accumulate():
         run_compound_turn(
             agent,
             area,
-            compound(move_target="2,1"),
+            compound(move="2,1"),
             turn_number=i + 1,
         )
 
@@ -129,11 +129,9 @@ def test_build_compound_prompt_sections():
 
     assert "You are Explorer" in prompt
     assert "Passive Vision:" in prompt
-    assert prompt.index("Passive Vision:") < prompt.index(
-        "Each turn you may plan a **compound turn**"
-    )
+    assert prompt.index("Passive Vision:") < prompt.index("Compound turn order")
     assert "compound turn" in prompt.lower()
-    assert "move_target" in prompt
-    assert "turn_action" in prompt
+    assert '"move"' in prompt
+    assert '"action"' in prompt
     assert "Memory:" in prompt
     assert "Example 1: Move, look, and speak" in prompt

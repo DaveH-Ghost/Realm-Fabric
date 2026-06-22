@@ -16,8 +16,4 @@ Passive Vision:
 Memory:
 {{memory}}
 
-Plan your full compound turn (move, then look, then turn action).
-
-Spoken text should be things you say out loud (~500 characters; excess is trimmed at sentence boundaries).
-
 {{output_format}}

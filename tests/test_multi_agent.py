@@ -12,13 +12,13 @@ from src.area_edit import create_agent_from_args, edit_object_from_args
 
 
 def _compound(**kwargs) -> AgentCompoundTurn:
-    defaults = {"reasoning": "test", "turn_action": "none"}
+    defaults = {"reasoning": "test", "action": "none"}
     defaults.update(kwargs)
     return AgentCompoundTurn(**defaults)
 
 
 def _speak(content: str, **kwargs) -> AgentCompoundTurn:
-    return _compound(turn_action="none", content=content, **kwargs)
+    return _compound(action="none", say=content, **kwargs)
 
 
 def test_get_agents_returns_copy():
@@ -143,7 +143,7 @@ def test_failed_move_does_not_update_passive_result():
     run_compound_turn(
         goblin,
         area,
-        _compound(move_target="-1,0"),
+        _compound(move="-1,0"),
         next_turn_number_for_agent(goblin),
     )
 

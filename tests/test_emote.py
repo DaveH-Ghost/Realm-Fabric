@@ -80,9 +80,9 @@ def test_emote_witness_at_you_in_memory():
         area,
         AgentCompoundTurn(
             reasoning="Friendly.",
-            turn_action="emote",
+            action="emote",
             target=goblin.id,
-            action_name="smiled",
+            verb="smiled",
         ),
         turn_number=1,
         session_turn=1,
@@ -101,9 +101,9 @@ def test_emote_compound_turn_step():
         area,
         AgentCompoundTurn(
             reasoning="Point.",
-            turn_action="emote",
+            action="emote",
             target=sign.id,
-            action_name="pointed",
+            verb="pointed",
         ),
         turn_number=1,
     )
@@ -114,11 +114,11 @@ def test_emote_compound_turn_step():
 def test_emote_schema_validation():
     turn = AgentCompoundTurn(
         reasoning="x",
-        turn_action="emote",
+        action="emote",
         target="obj_sign_01",
-        action_name="waved",
+        verb="waved",
     )
-    assert turn.turn_action == "emote"
+    assert turn.action == "emote"
 
 
 def test_prompt_mentions_emote():
@@ -131,6 +131,6 @@ def test_prompt_mentions_emote():
 
 def test_step_compound_emote():
     parsed = parse_compound_step_arg("emote obj_sign_01 pointed")
-    assert parsed.turn.turn_action == "emote"
+    assert parsed.turn.action == "emote"
     assert parsed.turn.target == "obj_sign_01"
-    assert parsed.turn.action_name == "pointed"
+    assert parsed.turn.verb == "pointed"

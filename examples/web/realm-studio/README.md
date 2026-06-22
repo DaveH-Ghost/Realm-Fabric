@@ -4,7 +4,7 @@ Example web app for [Realm-Fabric](https://github.com/) — wraps the engine `Se
 
 **Location:** `examples/web/realm-studio` in the Realm-Fabric repo.
 
-**Status:** **V0.4.3** — memory module on **Create agent**, plus V0.4.2 emote/speak/debug and V0.4.1 prompt layout.
+**Status:** **V0.4.4** — compact prompt + JSON schema, plus V0.4.3 create-agent memory and V0.4.2 emote/speak/debug.
 
 ## Quick start
 
@@ -113,7 +113,7 @@ Set **Move speed (steps per turn)** in create/edit agent modals, or via CLI (`mo
 | `POST` | `/api/create-area` | Create empty area |
 | `POST` | `/api/edit-area` | Edit area description / grid size |
 | `POST` | `/api/delete-area` | Delete empty area |
-| `POST` | `/api/turn` | LLM compound turn (optional `agent_id`, `include_examples`); returns `prompt`, `llm_response`, `steps` |
+| `POST` | `/api/turn` | LLM compound turn (optional `agent_id`, `include_examples`); returns `prompt`, `prompt_tokens`, `completion_tokens`, `total_tokens`, `prompt_tokens_estimate`, `llm_response`, `steps` |
 | `POST` | `/api/event` | `{ "text": "..." }` → `emit_area_event` (no turn consumed) |
 | `GET` | `/api/prompt` | Build compound prompt (debug); includes `prompt_tokens` estimate |
 | `GET` | `/api/prompt-blocks` | Session prompt block list |

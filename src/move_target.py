@@ -135,8 +135,7 @@ def format_move_instructions(
     if include_coordinate_moves:
         lines.append(area.format_move_coordinate_rule())
     lines.append(
-        "You may set move_target to an entity id (obj_* or agent_*) to move "
-        "to that entity's current tile."
+        "move may be an entity id (obj_* or agent_*) for that tile."
     )
     if agent.move_speed is not None:
         lines.append(

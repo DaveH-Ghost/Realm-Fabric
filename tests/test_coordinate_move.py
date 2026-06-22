@@ -90,8 +90,8 @@ def test_schema_rejects_cardinal_move_target():
     with pytest.raises(ValidationError) as exc_info:
         AgentCompoundTurn(
             reasoning="Old.",
-            move_target="north",
-            turn_action="none",
+            move="north",
+            action="none",
         )
     assert "ERR:INVALID_TARGET" in str(exc_info.value)
 
@@ -111,8 +111,8 @@ def test_other_agent_vision_after_successful_move():
         area,
         AgentCompoundTurn(
             reasoning="Repositioning.",
-            move_target="2,3",
-            turn_action="none",
+            move="2,3",
+            action="none",
         ),
         turn_number=1,
     )
@@ -130,8 +130,8 @@ def test_nav_phase_via_simulation():
         area,
         AgentCompoundTurn(
             reasoning="Test.",
-            move_target="3,1",
-            turn_action="none",
+            move="3,1",
+            action="none",
         ),
     )
     assert agent.position == (3, 1)
@@ -147,6 +147,6 @@ def test_prompt_uses_coordinate_move_not_cardinals():
         "You may move to any coordinate (x, y) where x is an integer from 0 to 4 and "
         "y is an integer from 0 to 4." in prompt
     )
-    assert "move_target" in prompt
+    assert '"move"' in prompt
     assert "cardinal direction" not in prompt.lower()
     assert "\n- north\n" not in prompt

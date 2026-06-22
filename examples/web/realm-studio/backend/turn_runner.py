@@ -49,6 +49,7 @@ def run_llm_turn(
             return {"ok": False, "message": gate.message}
 
         from src.llm.client import LLMParseError, get_compound_turn
+        from src.llm.token_estimate import estimate_prompt_tokens
 
         try:
             prompt = session.build_prompt(agent_id)
@@ -72,6 +73,9 @@ def run_llm_turn(
             "steps": _serialize_steps(result.record),
             "prompt": prompt,
             "prompt_tokens": response.prompt_tokens,
+            "completion_tokens": response.completion_tokens,
+            "total_tokens": response.total_tokens,
+            "prompt_tokens_estimate": estimate_prompt_tokens(prompt),
             "llm_response": response.raw_response,
         }
     finally:

@@ -20,18 +20,18 @@ from src.area_edit import create_agent_from_args
 
 def compound(
     *,
-    move_target=None,
-    look_target=None,
-    turn_action="none",
-    content=None,
+    move=None,
+    look=None,
+    action="none",
+    say=None,
     reasoning="reasoning",
 ) -> AgentCompoundTurn:
     return AgentCompoundTurn(
         reasoning=reasoning,
-        move_target=move_target,
-        look_target=look_target,
-        turn_action=turn_action,
-        content=content,
+        move=move,
+        look=look,
+        action=action,
+        say=say,
     )
 
 
@@ -43,7 +43,7 @@ def test_nav_null_action_speak_only():
     record = run_compound_turn(
         agent,
         area,
-        compound(turn_action="none", content="Hello."),
+        compound(action="none", say="Hello."),
         turn_number=1,
     )
 
@@ -61,10 +61,10 @@ def test_move_look_speak_in_order():
         agent,
         area,
         compound(
-            move_target="2,3",
-            look_target="obj_ball_01",
-            turn_action="none",
-            content="Hi.",
+            move="2,3",
+            look="obj_ball_01",
+            action="none",
+            say="Hi.",
         ),
         turn_number=1,
     )
@@ -80,9 +80,9 @@ def test_post_move_look_on_same_tile_as_object():
     area = create_initial_area()
     agent = area.get_agent()
 
-    execute_nav_phase(agent, area, compound(move_target="2,2"))
+    execute_nav_phase(agent, area, compound(move="2,2"))
     steps = execute_action_phase(
-        agent, area, compound(look_target="obj_ball_01", turn_action="none")
+        agent, area, compound(look="obj_ball_01", action="none")
     )
     assert steps[0].result.startswith("You looked at")
     assert "scuffs" in steps[0].result
@@ -96,9 +96,9 @@ def test_invalid_look_after_valid_move_keeps_move():
         agent,
         area,
         compound(
-            move_target="2,3",
-            look_target="obj_missing_99",
-            turn_action="none",
+            move="2,3",
+            look="obj_missing_99",
+            action="none",
         ),
         turn_number=1,
     )
@@ -116,10 +116,10 @@ def test_turn_record_has_structured_steps():
         agent,
         area,
         compound(
-            move_target="2,3",
-            look_target="obj_ball_01",
-            turn_action="none",
-            content="Hi.",
+            move="2,3",
+            look="obj_ball_01",
+            action="none",
+            say="Hi.",
             reasoning="full turn",
         ),
         turn_number=1,
@@ -137,7 +137,7 @@ def test_passive_result_look_wins_over_move():
     run_compound_turn(
         agent,
         area,
-        compound(move_target="2,2", look_target="obj_ball_01", turn_action="none"),
+        compound(move="2,2", look="obj_ball_01", action="none"),
         turn_number=1,
     )
 
@@ -159,10 +159,10 @@ def test_passive_result_speak_wins_over_move_and_look():
         goblin,
         area,
         compound(
-            move_target="2,3",
-            look_target="obj_ball_01",
-            turn_action="none",
-            content="Hi.",
+            move="2,3",
+            look="obj_ball_01",
+            action="none",
+            say="Hi.",
         ),
         next_turn_number_for_agent(goblin),
     )
@@ -176,19 +176,19 @@ def test_passive_result_speak_wins_over_move_and_look():
 
 def test_step_compound_parser():
     parsed = parse_compound_step_arg('2,3 look obj_ball_01 speak Hello.')
-    assert parsed.turn.move_target == "2,3"
-    assert parsed.turn.look_target == "obj_ball_01"
-    assert parsed.turn.content == "Hello."
-    assert parsed.turn.turn_action == "none"
+    assert parsed.turn.move == "2,3"
+    assert parsed.turn.look == "obj_ball_01"
+    assert parsed.turn.say == "Hello."
+    assert parsed.turn.action == "none"
 
     stay = parse_compound_step_arg("- look obj_ball_01")
-    assert stay.turn.move_target is None
+    assert stay.turn.move is None
 
     interact = parse_compound_step_arg("2,3 interact obj_cookie_01 eat")
-    assert interact.turn.move_target == "2,3"
-    assert interact.turn.turn_action == "interact"
+    assert interact.turn.move == "2,3"
+    assert interact.turn.action == "interact"
     assert interact.turn.target == "obj_cookie_01"
-    assert interact.turn.action_name == "eat"
+    assert interact.turn.verb == "eat"
 
 
 def test_compound_prompt_includes_turn_fields():
@@ -196,7 +196,7 @@ def test_compound_prompt_includes_turn_fields():
     agent = area.get_agent()
     prompt = build_compound_prompt(agent, area)
     assert "compound turn" in prompt.lower()
-    assert "move_target" in prompt
-    assert "turn_action" in prompt
-    assert "look_target" in prompt
+    assert '"move"' in prompt
+    assert '"action"' in prompt
+    assert '"look"' in prompt
     assert "Memory:" in prompt

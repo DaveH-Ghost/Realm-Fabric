@@ -89,8 +89,8 @@ def test_compound_turn_uses_agent_area_not_active_area():
     result = session.run_compound_turn(
         AgentCompoundTurn(
             reasoning="patrol",
-            move_target="0,1",
-            turn_action="none",
+            move="0,1",
+            action="none",
         ),
         agent_id="agent_02",
     )

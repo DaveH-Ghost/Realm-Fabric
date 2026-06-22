@@ -108,9 +108,9 @@ def character_block(
     if opts["include_name"]:
         parts.append(f"You are {agent.name}.")
     if opts["include_personality"]:
-        parts.append(f"Your personality: {agent.personality}")
+        parts.append(f"Personality: {agent.personality}")
     if opts["include_description"]:
-        parts.append(f"Your detailed description: {agent.description}")
+        parts.append(f"Description: {agent.description}")
     return _join_character_parts(parts)
 
 
@@ -181,26 +181,20 @@ def _character_block(agent: Agent) -> str:
 
 
 def _compound_turn_rules() -> str:
-    return """Each turn you may plan a **compound turn** executed in this order:
-1. **Move** (optional): move to an in-bounds coordinate (x, y), an entity id (obj_* / agent_*), or stay (move_target null).
-2. **Look** (optional): examine one entity from passive vision (at most one look_target).
-3. **Speak** (optional): dialogue in content when you want to say something (content null to stay silent).
-4. **Turn action** (optional): interact with a listed object action, emote at a target, or none.
+    return """Compound turn order: move → look → speak → action.
 
-Important rules:
-- You plan from your **current** position and vision. Your move runs first; look, speak, and turn action happen **after** that move.
-- Only pick look/interact targets you expect to be valid after moving.
-- move: use move_target "x,y" (e.g. "2,3"), an entity id from the list below, or null to stay. You cannot move outside the grid.
-- look: optional; a list of objects you can look at will be provided.
-- Hidden detail is marked "[?]"; stale examined knowledge is "[?] [changed]".
-- Other agents show their most recent observable action on their vision line.
-- speak: set content to your dialogue (aim for ~500 characters; longer text is trimmed at sentence boundaries). Leave content null to skip speaking.
-- interact: turn_action "interact" with target object id + action_name when listed below.
-- You need to be adjacent or on the same tile as most objects to interact with them.
-- emote: turn_action "emote" with target (entity id or free text) + action_name (past tense, e.g. "pointed", "smiled").
-- turn_action "none": end after optional move/look/speak without interacting or emoting.
+Rules:
+- Plan from current position and vision; move runs first, then look, speak, and action.
+- move: "x,y", entity id (obj_* / agent_*), or null to stay; stay in grid bounds.
+- look: one entity id from passive vision, or null.
+- Hidden detail: [?]; stale examined: [?] [changed].
+- Other agents show their latest observable action on their vision line.
+- speak: set say to dialogue or null.
+- interact: action "interact" + target + verb.
+- emote: action "emote" + target (id or text) + verb (past tense, e.g. pointed).
+- action "none": skip interact/emote after optional move/look/speak.
 
-Always respond with a single, valid JSON object. Do not add any text before or after the JSON."""
+Reply with a single valid JSON object only."""
 
 
 def _format_interact_block(
@@ -246,18 +240,6 @@ def look_and_interact_block(
     if interact_block:
         lines.append("")
         lines.append(interact_block)
-    lines.append("")
-    lines.append(
-        "Emote examples (action_name is past tense): "
-        'turn_action "emote", target "obj_sign_01", action_name "pointed" → '
-        "You pointed at the Wooden Sign. / Explorer pointed at the Wooden Sign. "
-        'target "agent_goblin_01", action_name "smiled" → You smiled at Goblin.'
-    )
-    lines.append("")
-    lines.append(
-        'Speak: set content to dialogue, or null to stay silent. '
-        'Turn action: "interact" (listed object action), "emote" (target + past-tense action_name), or "none".'
-    )
     return "\n".join(lines)
 
 
@@ -285,16 +267,15 @@ def _look_and_interact_block(agent: Agent, area: Area) -> str:
 
 def compound_output_format() -> str:
     return (
-        "Respond with ONLY a valid JSON object matching this exact structure "
-        "(no extra text, no markdown):\n"
+        "JSON only (no markdown):\n"
         "{\n"
-        '  "reasoning": "Your private thoughts (~400 characters; trimmed at sentence boundaries if longer).",\n'
-        '  "move_target": "2,3" | "obj_ball_01" | null,\n'
-        '  "look_target": "obj_ball_01" | null,\n'
-        '  "content": "spoken text (~500 characters; trimmed at sentence boundaries) or null",\n'
-        '  "turn_action": "interact" | "emote" | "none",\n'
-        '  "target": "obj_cookie_01" | "agent_goblin_01" | null,\n'
-        '  "action_name": "eat" | "pointed" | null\n'
+        '  "reasoning": "private thoughts (~400 chars max)",\n'
+        '  "move": "2,3" | "obj_ball_01" | null,\n'
+        '  "look": "obj_ball_01" | null,\n'
+        '  "say": "dialogue (~500 chars max) or null",\n'
+        '  "action": "interact" | "emote" | "none",\n'
+        '  "target": "obj_* | agent_* | text or null",\n'
+        '  "verb": "eat | pointed | null"\n'
         "}"
     )
 
@@ -305,8 +286,8 @@ def build_prompt_context(agent: Agent, area: Area) -> PromptContext:
     return PromptContext(
         character=_character_block(agent),
         character_name=f"You are {agent.name}.",
-        character_personality=f"Your personality: {agent.personality}",
-        character_description=f"Your detailed description: {agent.description}",
+        character_personality=f"Personality: {agent.personality}",
+        character_description=f"Description: {agent.description}",
         passive_vision=build_passive_vision(agent, area),
         memory=memory_body,
         area_description=area.get_area_description(),

@@ -130,9 +130,9 @@ def test_compound_turn_interact_move_area_via_session():
 
     turn = AgentCompoundTurn(
         reasoning="Leave the room.",
-        turn_action="interact",
+        action="interact",
         target=door.id,
-        action_name="walk_through",
+        verb="walk_through",
     )
     record = run_compound_turn(
         explorer,

@@ -7,6 +7,31 @@ const MAX_LOG_ENTRIES = 50;
 let turnLogEntries = [];
 let lastPromptText = null;
 let lastResponseText = null;
+let lastResponseTokens = null;
+
+function formatTokenMeta(tokens) {
+  if (!tokens) return "";
+  const lines = [];
+  const input =
+    tokens.prompt != null ? Number(tokens.prompt).toLocaleString() : "—";
+  const output =
+    tokens.completion != null ? Number(tokens.completion).toLocaleString() : "—";
+  const total =
+    tokens.total != null ? Number(tokens.total).toLocaleString() : "—";
+  lines.push(`Input (API): ${input}`);
+  lines.push(`Output (API): ${output}`);
+  lines.push(`Total (API): ${total}`);
+  if (tokens.estimate != null) {
+    const est = Number(tokens.estimate).toLocaleString();
+    if (tokens.prompt != null) {
+      lines.push(`Pre-turn estimate: ~${est} input tokens`);
+      lines.push(`Estimate vs actual input: ~${est} → ${input}`);
+    } else {
+      lines.push(`Pre-turn estimate: ~${est} input tokens`);
+    }
+  }
+  return lines.join("\n");
+}
 
 export function renderPassiveVision(snapshot, visionEl, emptyEl) {
   const text = snapshot?.passive_vision?.trim();
@@ -165,25 +190,40 @@ function formatResponseText(text) {
   }
 }
 
-export function setLastResponse(text) {
+export function setLastResponse(text, tokens = null) {
   lastResponseText = text ?? null;
+  lastResponseTokens = tokens ?? null;
 }
 
-export function renderLastResponse(responseEl, emptyEl) {
+export function renderLastResponse(responseEl, emptyEl, tokensEl = null) {
   if (!lastResponseText) {
     responseEl.textContent = "";
     responseEl.classList.add("hidden");
     emptyEl.classList.remove("hidden");
+    if (tokensEl) {
+      tokensEl.textContent = "";
+      tokensEl.classList.add("hidden");
+    }
     return;
+  }
+  if (tokensEl) {
+    const meta = formatTokenMeta(lastResponseTokens);
+    if (meta) {
+      tokensEl.textContent = meta;
+      tokensEl.classList.remove("hidden");
+    } else {
+      tokensEl.textContent = "";
+      tokensEl.classList.add("hidden");
+    }
   }
   responseEl.textContent = formatResponseText(lastResponseText);
   responseEl.classList.remove("hidden");
   emptyEl.classList.add("hidden");
 }
 
-export function bindResponseDebug(detailsEl, responseEl, emptyEl) {
+export function bindResponseDebug(detailsEl, responseEl, emptyEl, tokensEl = null) {
   detailsEl.addEventListener("toggle", () => {
     if (!detailsEl.open) return;
-    renderLastResponse(responseEl, emptyEl);
+    renderLastResponse(responseEl, emptyEl, tokensEl);
   });
 }

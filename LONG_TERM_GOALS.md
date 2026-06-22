@@ -13,7 +13,7 @@ Treat this file like a trophy case. Checking something off here should feel like
 
 Concrete improvements we expect to build — not current-version scope, but not distant dreams either.
 
-- [ ] **Coordinate move and target move** — Support both explicit coordinate moves (`move_target: "2,3"`) and object-target moves (move toward a named object or tile). When move gains a per-turn range and pathfinding, target move walks as close as possible; if the destination is unreachable, stop at the nearest reachable tile.
+- [ ] **Lorebook / world-info injection (SillyTavern-style)** — Keyword- or tag-triggered lore entries injected into prompts for setting depth. V0.4.4 reduced default prompt overhead (~966 → ~500 est. tokens) to leave headroom; design after V0.4.5 save/load.
 - [ ] **Multiplayer / shared sessions** — Server-authoritative `Session`, rooms, auth, and multiple clients on one world (WebSocket or equivalent). V0.3.1 realm-studio stays single-player demo; V0.4 multi-area may inform snapshot shape but netcode is not current scope. See [ROADMAP.md](docs/ROADMAP.md) V0.4 for multi-area (separate from multiplayer).
 
 ---
@@ -61,6 +61,9 @@ This section is for goals that have actually been completed. When something move
 
 - [x] **Compound D&D-shaped agent turns (V0.2, v0.2.0)**  
   Two-phase LLM per turn (navigation then action): optional coordinate move, optional look, optional speak or object interact. `step-compound` manual parity; structured `TurnRecord.steps` for future memory ingestion. See [v0.2-implementation-readiness-checklist.md](docs/v0.2-implementation-readiness-checklist.md).
+
+- [x] **Coordinate and entity-target move (V0.4.0 + V0.4.4 JSON)**  
+  Compound turns accept coordinate `"x,y"` or entity id (`obj_*` / `agent_*`) as move targets; optional `move_speed` pathing. V0.4.4 compact JSON field `move`. See [v0.4.0-changelog.md](docs/v0.4.0-changelog.md).
 
 ---
 

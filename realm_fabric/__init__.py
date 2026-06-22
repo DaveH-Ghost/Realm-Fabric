@@ -1,5 +1,5 @@
 """
-realm_fabric — public engine API for Realm-Fabric (V0.4.2).
+realm_fabric — public engine API for Realm-Fabric (V0.4.4).
 
 Downstream projects should import from this package. Modules under ``src.*``
 remain importable for the CLI and tests but are not guaranteed stable.

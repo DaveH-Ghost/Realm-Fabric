@@ -101,7 +101,7 @@ def test_prompt_uses_memory_section():
     run_compound_turn(
         agent,
         area,
-        AgentCompoundTurn(reasoning="x", turn_action="none", content="Hello."),
+        AgentCompoundTurn(reasoning="x", action="none", say="Hello."),
         turn_number=1,
     )
     prompt = build_compound_prompt(agent, area)
@@ -122,14 +122,14 @@ def test_multi_agent_witness_ingested_into_observer_memory():
     run_compound_turn(
         explorer,
         area,
-        AgentCompoundTurn(reasoning="intro", turn_action="none", content="Hello."),
+        AgentCompoundTurn(reasoning="intro", action="none", say="Hello."),
         turn_number=1,
         session_turn=1,
     )
     run_compound_turn(
         goblin,
         area,
-        AgentCompoundTurn(reasoning="reply", turn_action="none", content="Hi back."),
+        AgentCompoundTurn(reasoning="reply", action="none", say="Hi back."),
         turn_number=1,
         session_turn=2,
     )
@@ -145,7 +145,7 @@ def test_actor_does_not_witness_own_action():
     run_compound_turn(
         agent,
         area,
-        AgentCompoundTurn(reasoning="solo", turn_action="none", content="Alone."),
+        AgentCompoundTurn(reasoning="solo", action="none", say="Alone."),
         turn_number=1,
     )
     memory_text = agent.memory.render_prompt_block(agent, area)
@@ -160,7 +160,7 @@ def test_turn_count_uses_total_not_window_size():
         run_compound_turn(
             agent,
             area,
-            AgentCompoundTurn(reasoning="x", turn_action="none"),
+            AgentCompoundTurn(reasoning="x", action="none"),
             turn_number=i,
         )
     assert agent.memory.turn_count == 11

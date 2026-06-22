@@ -323,8 +323,8 @@ class ManualStepper(cmd.Cmd):
             return
         nav = AgentCompoundTurn(
             reasoning="[manual step-nav]",
-            move_target=arg.strip(),
-            turn_action="none",
+            move=arg.strip(),
+            action="none",
         )
         for step in execute_nav_phase(self.agent, self.session.get_area_for_agent(self.agent), nav):
             print(step.result)

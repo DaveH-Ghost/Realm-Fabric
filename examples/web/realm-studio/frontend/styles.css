@@ -345,6 +345,18 @@ button:hover {
   color: #a8a8b8;
 }
 
+.response-token-meta {
+  margin: 0 0 0.5rem;
+  padding: 0.45rem 0.55rem;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: #b8b8c8;
+  background: #1a1a22;
+  border: 1px solid #2e2e38;
+  border-radius: 4px;
+  white-space: pre-wrap;
+}
+
 .panel-empty {
   margin: 0;
   font-size: 0.78rem;

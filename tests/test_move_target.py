@@ -110,10 +110,10 @@ def test_move_unknown_entity_id_fails_without_position_change():
 def test_schema_accepts_entity_id_move_target():
     turn = AgentCompoundTurn(
         reasoning="Go to the ball.",
-        move_target="obj_ball_01",
-        turn_action="none",
+        move="obj_ball_01",
+        action="none",
     )
-    assert turn.move_target == "obj_ball_01"
+    assert turn.move == "obj_ball_01"
 
 
 def test_compound_nav_phase_move_to_object_id():
@@ -125,8 +125,8 @@ def test_compound_nav_phase_move_to_object_id():
         area,
         AgentCompoundTurn(
             reasoning="To the ball.",
-            move_target="obj_ball_01",
-            turn_action="none",
+            move="obj_ball_01",
+            action="none",
         ),
     )
 
@@ -144,6 +144,5 @@ def test_prompt_move_instructions_entity_id_line():
     assert "obj_ball_01 Ceramic Ball at" not in prompt
     assert "You may move to any coordinate" in prompt
     assert (
-        "You may set move_target to an entity id (obj_* or agent_*) to move "
-        "to that entity's current tile."
+        "move may be an entity id (obj_* or agent_*) for that tile."
     ) in prompt
