@@ -822,3 +822,208 @@ def test_session_import_fails_without_custom_module(client):
     detail = response.json()["detail"]
     assert "rolling_summary_custom" in detail
     assert "not found" in detail.lower()
+
+
+_LOREBOOK_JSON = """{
+  "entries": {
+    "0": {
+      "uid": 0,
+      "key": ["midway"],
+      "keysecondary": [],
+      "comment": "Midway",
+      "content": "The Midway is a megastructure.",
+      "constant": true,
+      "disable": false,
+      "selective": false,
+      "selectiveLogic": 0,
+      "order": 0
+    }
+  }
+}"""
+
+
+def test_create_lorebook_api(client):
+    response = client.post("/api/lorebooks", json={"name": "Scratch pad"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert data["lorebook_id"] == "scratch-pad"
+    assert data["lorebook"]["entries"] == []
+
+    detail = client.get("/api/lorebooks/scratch-pad").json()
+    assert detail["ok"] is True
+    assert detail["lorebook"]["name"] == "Scratch pad"
+
+
+def test_load_demo_lorebook_api(client):
+    response = client.post("/api/lorebooks/load-demo")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    assert data["lorebook_id"] == "realm-fabric-demo"
+    assert len(data["lorebook"]["entries"]) == 3
+
+    listing = client.get("/api/lorebooks").json()
+    ids = {book["id"] for book in listing["lorebooks"]}
+    assert "realm-fabric-demo" in ids
+
+
+def test_upload_lorebook_and_list(client):
+    response = client.post(
+        "/api/lorebooks/upload",
+        files={"file": ("test.lorebook.json", _LOREBOOK_JSON, "application/json")},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["ok"] is True
+    book_id = data["lorebook_id"]
+
+    listing = client.get("/api/lorebooks").json()
+    ids = {book["id"] for book in listing["lorebooks"]}
+    assert book_id in ids
+
+    detail = client.get(f"/api/lorebooks/{book_id}").json()
+    assert detail["ok"] is True
+    assert detail["lorebook"]["entries"][0]["content"].startswith("The Midway")
+
+
+def test_put_lorebook_updates_entry(client):
+    client.post(
+        "/api/lorebooks/upload",
+        files={"file": ("edit-me.lorebook.json", _LOREBOOK_JSON, "application/json")},
+    )
+    book_id = client.get("/api/lorebooks").json()["lorebooks"][0]["id"]
+    book = client.get(f"/api/lorebooks/{book_id}").json()["lorebook"]
+    book["entries"][0]["content"] = "Updated lore text."
+    book["entries"][0]["enabled"] = False
+    response = client.put(f"/api/lorebooks/{book_id}", json=book)
+    assert response.status_code == 200
+    saved = response.json()["lorebook"]["entries"][0]
+    assert saved["content"] == "Updated lore text."
+    assert saved["enabled"] is False
+
+
+def test_put_lorebook_add_and_remove_entries(client):
+    client.post(
+        "/api/lorebooks/upload",
+        files={"file": ("mutable.lorebook.json", _LOREBOOK_JSON, "application/json")},
+    )
+    book_id = client.get("/api/lorebooks").json()["lorebooks"][0]["id"]
+    book = client.get(f"/api/lorebooks/{book_id}").json()["lorebook"]
+    assert len(book["entries"]) == 1
+
+    book["entries"].append(
+        {
+            "uid": 99,
+            "enabled": True,
+            "constant": False,
+            "keys": ["session-only"],
+            "keys_secondary": [],
+            "selective": False,
+            "selective_logic": 0,
+            "content": "Custom session lore.",
+            "comment": "Session extra",
+            "order": 1,
+            "ignore_budget": False,
+        }
+    )
+    response = client.put(f"/api/lorebooks/{book_id}", json=book)
+    assert response.status_code == 200
+    saved = response.json()["lorebook"]
+    assert len(saved["entries"]) == 2
+    assert saved["entries"][1]["content"] == "Custom session lore."
+    downloaded = client.get(f"/api/lorebooks/{book_id}/download").json()
+    new_entry = downloaded["entries"]["99"]
+    assert new_entry["probability"] == 100
+    assert new_entry["depth"] == 4
+
+    book = saved
+    book["entries"] = [book["entries"][1]]
+    response = client.put(f"/api/lorebooks/{book_id}", json=book)
+    assert response.status_code == 200
+    saved = response.json()["lorebook"]
+    assert len(saved["entries"]) == 1
+    assert saved["entries"][0]["comment"] == "Session extra"
+
+
+_LOREBOOK_WITH_DEFERRED = """{
+  "entries": {
+    "0": {
+      "uid": 0,
+      "key": ["midway"],
+      "content": "The Midway is a megastructure.",
+      "constant": true,
+      "disable": false,
+      "selective": false,
+      "selectiveLogic": 0,
+      "order": 0,
+      "probability": 100,
+      "position": 4
+    }
+  }
+}"""
+
+
+def test_download_lorebook_st_json(client):
+    client.post(
+        "/api/lorebooks/upload",
+        files={
+            "file": ("world.lorebook.json", _LOREBOOK_WITH_DEFERRED, "application/json"),
+        },
+    )
+    book_id = client.get("/api/lorebooks").json()["lorebooks"][0]["id"]
+    book = client.get(f"/api/lorebooks/{book_id}").json()["lorebook"]
+    book["entries"][0]["content"] = "Edited Midway text."
+    book["entries"][0]["enabled"] = False
+    client.put(f"/api/lorebooks/{book_id}", json=book)
+
+    response = client.get(f"/api/lorebooks/{book_id}/download")
+    assert response.status_code == 200
+    assert "attachment" in response.headers.get("content-disposition", "").lower()
+    payload = response.json()
+    entry = payload["entries"]["0"]
+    assert entry["content"] == "Edited Midway text."
+    assert entry["disable"] is True
+    assert entry["constant"] is True
+    assert entry["probability"] == 100
+    assert entry["position"] == 4
+    assert "enabled" not in entry
+
+
+def test_lorebook_scan_config_api(client):
+    listing = client.get("/api/lorebooks/scan-config").json()
+    assert listing["ok"] is True
+    source_ids = {row["id"] for row in listing["sources"]}
+    assert "passive_vision" in source_ids
+    assert "memory" in source_ids
+
+    updated = client.put(
+        "/api/lorebooks/scan-config",
+        json={"memory": False, "passive_vision": True},
+    ).json()
+    assert updated["ok"] is True
+    assert updated["config"]["memory"] is False
+    by_id = {row["id"]: row for row in updated["sources"]}
+    assert by_id["memory"]["enabled"] is False
+    assert by_id["passive_vision"]["enabled"] is True
+
+
+def test_prompt_preview_includes_lorebook_slot(client):
+    client.post(
+        "/api/lorebooks/upload",
+        files={"file": ("world.lorebook.json", _LOREBOOK_JSON, "application/json")},
+    )
+    book_id = client.get("/api/lorebooks").json()["lorebooks"][0]["id"]
+    base = client.get("/api/prompt-blocks").json()["blocks"]
+    blocks = list(base)
+    blocks.insert(
+        1,
+        {
+            "type": "slot",
+            "name": "lorebook",
+            "options": {"lorebook_id": book_id},
+        },
+    )
+    preview = client.post("/api/prompt-blocks/preview", json={"blocks": blocks}).json()
+    lore_block = next(b for b in preview["blocks"] if b.get("name") == "lorebook")
+    assert "World info:" in lore_block.get("preview", "")

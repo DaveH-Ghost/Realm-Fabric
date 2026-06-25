@@ -2,7 +2,7 @@
 
 Grid-based LLM agent simulation engine: multi-area worlds, compound turns (move → look → speak → interact/emote), pluggable memory modules, and a stable `realm_fabric` library API. The `realm` CLI and [realm-studio](examples/web/realm-studio) are reference clients — apps build on the engine with their own UI and scenarios.
 
-**Current version:** **V0.4.6** (`0.4.6` in `pyproject.toml`) — custom memory modules, realm-studio settings gear, save/load validation for unloaded modules.
+**Current version:** **V0.5.0** (`0.5.0` in `pyproject.toml`) — SillyTavern lorebooks, optional `lorebook` prompt slot, realm-studio Lorebooks tab.
 
 ## Quick start
 
@@ -55,6 +55,10 @@ add-memory-module path\to\my_module.py
 
 Saves store `module_id` + state only (no bundled source). Import **fails** if a save references a module that is not loaded. Example: [examples/custom_memory/](examples/custom_memory/).
 
+## Lorebooks (V0.5.0)
+
+Load SillyTavern-style `.json` lorebooks into the session (CLI `load-lorebook` or realm-studio **Lorebooks** tab). Add a `lorebook` prompt block (per book) in Prompt layout to inject matched world info. Not included in the default prompt layout.
+
 ## CLI reference
 
 Full command list, world editing, and compound-turn examples: [docs/cli.md](docs/cli.md).
@@ -76,6 +80,7 @@ No API key or network required — LLM calls are mocked in tests.
 
 | Doc | Topic |
 |-----|--------|
+| [V0.5.0 changelog](docs/v0.5.0-changelog.md) | Lorebooks, prompt slot, Lorebooks tab |
 | [V0.4.6 changelog](docs/v0.4.6-changelog.md) | Custom memory modules, settings, README |
 | [V0.4.5 changelog](docs/v0.4.5-changelog.md) | Session save/load |
 | [Roadmap](docs/ROADMAP.md) | Version plans |

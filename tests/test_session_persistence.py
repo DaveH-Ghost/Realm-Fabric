@@ -259,6 +259,42 @@ def test_validate_snapshot_modules_helper():
         )
 
 
+def test_v1_snapshot_import_has_empty_lorebooks():
+    session = Session.from_default()
+    data = build_save_snapshot(session)
+    data["snapshot_version"] = 1
+    data.pop("lorebooks", None)
+    restored = load_session_from_snapshot(data)
+    assert restored.list_lorebooks() == []
+
+
+def test_lorebook_round_trip_in_v2_snapshot():
+    from src.lorebook import load_lorebook_from_dict
+
+    session = Session.from_default()
+    book = load_lorebook_from_dict(
+        {
+            "entries": {
+                "0": {
+                    "uid": 0,
+                    "key": ["test"],
+                    "content": "Lore content.",
+                    "constant": True,
+                    "disable": False,
+                    "order": 0,
+                }
+            }
+        },
+        filename="demo.lorebook.json",
+    )
+    session.update_lorebook(book)
+    restored = Session.from_snapshot(build_save_snapshot(session))
+    loaded = restored.get_lorebook("demo")
+    assert loaded is not None
+    assert loaded.entries[0].content == "Lore content."
+    assert restored.lorebook_char_budget == session.lorebook_char_budget
+
+
 def test_session_to_save_dict_alias():
     session = Session.from_default()
     assert session.to_save_dict()["snapshot_version"] == SNAPSHOT_VERSION

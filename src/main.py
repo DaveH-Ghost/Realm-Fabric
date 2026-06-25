@@ -63,6 +63,8 @@ class ManualStepper(cmd.Cmd):
         "- 'create-object' / 'edit-object' / 'delete-object' : edit objects (see 'effects')\n"
         "- 'create-agent' / 'edit-agent' / 'delete-agent' : edit agents (see 'memory-modules')\n"
         "- 'add-memory-module <path>' : load a custom memory module from a .py file\n"
+        "- 'load-lorebook <path>' : load a SillyTavern lorebook JSON file\n"
+        "- 'lorebooks' : list loaded lorebooks\n"
         "- 'emit-event \"...\"' : room-wide event all agents perceive (no turn)\n"
         "- 'prompt' : show the full prompt that would be sent to the LLM\n"
         "- 'fewshots on/off' : toggle few-shot examples in prompts (off by default)\n"
@@ -200,6 +202,27 @@ class ManualStepper(cmd.Cmd):
             print(f"Could not load memory module: {exc}")
             return
         print(f"Loaded memory module {module_id!r} from {path}")
+
+    def do_load_lorebook(self, arg):
+        """Load a SillyTavern lorebook JSON file. Usage: load-lorebook <path>"""
+        path = arg.strip()
+        if not path:
+            print("Usage: load-lorebook <path>")
+            return
+        try:
+            book = self.session.load_lorebook_from_path(path)
+        except (OSError, ValueError, TypeError) as exc:
+            print(f"Could not load lorebook: {exc}")
+            return
+        print(
+            f"Loaded lorebook {book.id!r} ({book.name}, {len(book.entries)} entries) from {path}"
+        )
+
+    def do_lorebooks(self, arg):
+        """List loaded lorebooks (read-only)."""
+        from src.lorebook.listing import format_lorebooks_list
+
+        print(format_lorebooks_list(self.session.list_lorebooks()))
 
     def do_agents(self, arg):
         """List all agents in the active area. Does not consume a turn."""

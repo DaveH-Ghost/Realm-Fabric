@@ -13,7 +13,6 @@ Treat this file like a trophy case. Checking something off here should feel like
 
 Concrete improvements we expect to build — not current-version scope, but not distant dreams either.
 
-- [ ] **Lorebook / world-info injection (SillyTavern-style)** — Keyword- or tag-triggered lore entries injected into prompts for setting depth. V0.4.4 reduced default prompt overhead (~966 → ~500 est. tokens) to leave headroom; V0.4.5 save/load is done — lorebook is next design target (V0.5+).
 - [ ] **Multiplayer / shared sessions** — Server-authoritative `Session`, rooms, auth, and multiple clients on one world (WebSocket or equivalent). V0.3.1 realm-studio stays single-player demo; V0.4 multi-area may inform snapshot shape but netcode is not current scope. See [ROADMAP.md](docs/ROADMAP.md) V0.4 for multi-area (separate from multiplayer).
 
 ---
@@ -64,6 +63,9 @@ This section is for goals that have actually been completed. When something move
 
 - [x] **Session save/load (V0.4.5, `0.4.5`)**  
   Full snapshot round-trip: multi-area world, objects, agents, look knowledge, all memory modules (`export_state` / `restore_state`), prompt block overrides, vision settings. CLI `export-session` / `import-session`; realm-studio save/load buttons and API. See [v0.4.5-changelog.md](docs/v0.4.5-changelog.md).
+
+- [x] **Lorebook / world-info injection (V0.5.0, `0.5.0`)**  
+  SillyTavern JSON import, session-level lorebooks, keyword/constant matching, optional per-book `lorebook` prompt slot, realm-studio Lorebooks tab. See [v0.5.0-changelog.md](docs/v0.5.0-changelog.md).
 
 - [x] **Coordinate and entity-target move (V0.4.0 + V0.4.4 JSON)**  
   Compound turns accept coordinate `"x,y"` or entity id (`obj_*` / `agent_*`) as move targets; optional `move_speed` pathing. V0.4.4 compact JSON field `move`. See [v0.4.0-changelog.md](docs/v0.4.0-changelog.md).

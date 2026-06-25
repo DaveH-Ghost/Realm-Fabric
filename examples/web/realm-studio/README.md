@@ -4,7 +4,7 @@ Example web app for [Realm-Fabric](https://github.com/) — wraps the engine `Se
 
 **Location:** `examples/web/realm-studio` in the Realm-Fabric repo.
 
-**Status:** **V0.4.6** — settings gear (in-memory LLM + custom memory upload), loaded-only memory catalog, session save/load validation for custom modules.
+**Status:** **V0.5.0** — lorebooks tab, optional `lorebook` prompt block, ST JSON import.
 
 ## Quick start
 
@@ -33,6 +33,18 @@ Use `--no-browser` to skip opening the browser.
 - [uv](https://docs.astral.sh/uv/)
 - Realm-Fabric engine at repo root (path dependency on `realm-fabric`)
 - **OpenRouter API key** for LLM turns (area edits and object actions work without it)
+
+## Lorebooks (V0.5.0)
+
+Use the **Lorebooks** tab (top nav) to load SillyTavern-style `.json` files and edit entries (enable, constant, keys, content, add/delete). The right-hand **Keyword scan sources** panel shows what text is scanned for keyword matches (per active agent) and lets you toggle each source, including **passive vision**. **Download JSON** exports the session copy in ST load format. Each loaded book gets its own id (from the filename).
+
+To inject lore into prompts:
+
+1. Load one or more lorebooks in the **Lorebooks** tab.
+2. On **Main**, open **Prompt layout** → add a **Dynamic slot** → choose **lorebook** → pick which book.
+3. Save layout. Matched entries appear as `World info:` in the prompt (constants always; others when keywords match).
+
+Lorebooks are saved in session JSON (`snapshot_version: 2`).
 
 ## Settings (V0.4.6)
 
@@ -105,4 +117,4 @@ uv run pytest
 
 ## What's next
 
-**V0.5+** — lorebook, swappable turn schemas — see [ROADMAP.md](../../../docs/ROADMAP.md).
+**V0.5+** — richer ST parity, swappable turn schemas — see [ROADMAP.md](../../../docs/ROADMAP.md).

@@ -551,7 +551,7 @@ wheels = [
 
 [[package]]
 name = "realm-fabric"
-version = "0.4.6"
+version = "0.5.0"
 source = { editable = "../../../" }
 dependencies = [
     { name = "openai" },
@@ -573,7 +573,7 @@ dev = [{ name = "pytest", specifier = ">=9.0.3" }]
 
 [[package]]
 name = "realm-studio"
-version = "0.4.6"
+version = "0.5.0"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },

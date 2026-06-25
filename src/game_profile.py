@@ -61,8 +61,13 @@ class GameProfile:
         area: Area | None = None,
         vision_units: str = "",
         units_per_tile: int | None = None,
+        lorebooks: dict | None = None,
+        lorebook_char_budget: int | None = None,
+        lorebook_scan_config=None,
+        passive_vision: str = "",
     ) -> str:
         """Assemble the LLM prompt from engine-built context."""
+        from src.lorebook.models import DEFAULT_LOREBOOK_CHAR_BUDGET
         from src.prompt_blocks import render_prompt_blocks
 
         show_examples = (
@@ -71,6 +76,11 @@ class GameProfile:
             else include_examples
         )
         use_blocks = blocks
+        budget = (
+            DEFAULT_LOREBOOK_CHAR_BUDGET
+            if lorebook_char_budget is None
+            else lorebook_char_budget
+        )
         if use_blocks is None:
             prompt = self.template.render_context(ctx)
         else:
@@ -81,6 +91,10 @@ class GameProfile:
                 area=area,
                 vision_units=vision_units,
                 units_per_tile=units_per_tile,
+                lorebooks=lorebooks,
+                lorebook_char_budget=budget,
+                lorebook_scan_config=lorebook_scan_config,
+                passive_vision=passive_vision or ctx.passive_vision,
             )
         if show_examples and self.few_shot_examples.strip():
             prompt = (

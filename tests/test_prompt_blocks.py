@@ -265,3 +265,60 @@ def test_prompt_block_catalog_lists_all_types():
     assert section_names == {"compound_rules", "output_format"}
     compound = next(opt for opt in section_entry["options"] if opt["name"] == "compound_rules")
     assert compound["default_content"]
+
+
+def test_lorebook_prompt_slot_requires_id():
+    blocks, err = prompt_blocks_from_dicts([{"type": "slot", "name": "lorebook"}])
+    assert blocks == []
+    assert "lorebook_id" in (err or "")
+
+
+def test_lorebook_prompt_slot_renders_with_session_book():
+    from src.lorebook import load_lorebook_from_dict
+    from src.prompt_blocks import validate_prompt_blocks
+
+    session = Session.from_default()
+    book = load_lorebook_from_dict(
+        {
+            "entries": {
+                "0": {
+                    "uid": 0,
+                    "key": [],
+                    "content": "Shared world fact.",
+                    "constant": True,
+                    "disable": False,
+                    "order": 0,
+                }
+            }
+        },
+        book_id="world",
+    )
+    session.update_lorebook(book)
+    blocks = [
+        PromptBlock(
+            type="slot",
+            name="lorebook",
+            options={"lorebook_id": "world"},
+        )
+    ]
+    assert validate_prompt_blocks(blocks) is None
+    agent = session.get_active_agent()
+    area = session.get_area_for_agent(agent)
+    ctx = build_prompt_context(agent, area)
+    text = render_prompt_blocks(
+        blocks,
+        ctx,
+        agent=agent,
+        area=area,
+        lorebooks=session._lorebooks,
+    )
+    assert "World info:" in text
+    assert "Shared world fact." in text
+
+
+def test_prompt_block_catalog_includes_lorebook_slot():
+    catalog = prompt_block_catalog()
+    slot_type = next(item for item in catalog["block_types"] if item["type"] == "slot")
+    names = {opt["name"] for opt in slot_type["options"]}
+    assert "lorebook" in names
+    assert catalog.get("lorebook_slot") is not None

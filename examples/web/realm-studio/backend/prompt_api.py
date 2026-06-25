@@ -35,6 +35,10 @@ def _blocks_payload(session: Session, blocks, *, agent_id: str | None = None) ->
             area=area,
             vision_units=session.vision_units,
             units_per_tile=session.vision_units_per_tile,
+            lorebooks=session._lorebooks,
+            lorebook_char_budget=session.lorebook_char_budget,
+            lorebook_scan_config=session.lorebook_scan_config,
+            passive_vision=ctx.passive_vision,
         ),
         "uses_default": session.prompt_blocks_use_default(),
     }
@@ -85,6 +89,10 @@ def preview_prompt_blocks(
             area=area,
             vision_units=session.vision_units,
             units_per_tile=session.vision_units_per_tile,
+            lorebooks=session._lorebooks,
+            lorebook_char_budget=session.lorebook_char_budget,
+            lorebook_scan_config=session.lorebook_scan_config,
+            passive_vision=ctx.passive_vision,
         ),
     }
 

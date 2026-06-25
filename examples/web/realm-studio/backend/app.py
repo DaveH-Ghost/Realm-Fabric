@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -9,7 +10,7 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from src.llm.token_estimate import estimate_prompt_tokens
 
@@ -39,6 +40,18 @@ from backend.memory_module_upload import (
     load_cached_custom_modules,
     upload_memory_module,
 )
+from backend.lorebooks_api import (
+    create_lorebook,
+    delete_lorebook,
+    export_lorebook_download,
+    get_lorebook,
+    get_lorebook_scan_config,
+    list_lorebooks,
+    load_demo_lorebook,
+    put_lorebook,
+    put_lorebook_scan_config,
+    upload_lorebook,
+)
 from backend.memory_modules_api import get_memory_modules_catalog
 from backend.settings_api import get_llm_settings, put_llm_settings
 from backend.prompt_api import (
@@ -64,7 +77,7 @@ async def _app_lifespan(_app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(title="realm-studio", version="0.4.6", lifespan=_app_lifespan)
+    app = FastAPI(title="realm-studio", version="0.5.0", lifespan=_app_lifespan)
 
     app.add_middleware(
         CORSMiddleware,
@@ -216,6 +229,95 @@ def create_app() -> FastAPI:
     @app.get("/api/memory-modules")
     def get_memory_modules_route() -> dict[str, object]:
         return get_memory_modules_catalog()
+
+    @app.get("/api/lorebooks")
+    def get_lorebooks_route() -> dict[str, object]:
+        return list_lorebooks(get_session_store().session)
+
+    @app.post("/api/lorebooks")
+    def create_lorebook_route(body: dict | None = None) -> dict[str, object]:
+        result = create_lorebook(get_session_store().session, body or {})
+        if not result.get("ok"):
+            raise HTTPException(status_code=400, detail=result.get("message", "Create failed"))
+        return result
+
+    @app.post("/api/lorebooks/load-demo")
+    def load_demo_lorebook_route() -> dict[str, object]:
+        result = load_demo_lorebook(get_session_store().session)
+        if not result.get("ok"):
+            raise HTTPException(status_code=404, detail=result.get("message", "Not found"))
+        return result
+
+    @app.get("/api/lorebooks/scan-config")
+    def get_lorebook_scan_config_route(agent_id: str | None = None) -> dict[str, object]:
+        result = get_lorebook_scan_config(
+            get_session_store().session,
+            agent_id=agent_id,
+        )
+        if not result.get("ok"):
+            raise HTTPException(status_code=404, detail=result.get("message", "Not found"))
+        return result
+
+    @app.put("/api/lorebooks/scan-config")
+    def put_lorebook_scan_config_route(body: dict) -> dict[str, object]:
+        result = put_lorebook_scan_config(get_session_store().session, body)
+        if not result.get("ok"):
+            raise HTTPException(status_code=400, detail=result.get("message", "Update failed"))
+        return result
+
+    @app.get("/api/lorebooks/{book_id}")
+    def get_lorebook_route(book_id: str) -> dict[str, object]:
+        result = get_lorebook(get_session_store().session, book_id)
+        if not result.get("ok"):
+            raise HTTPException(status_code=404, detail=result.get("message", "Not found"))
+        return result
+
+    @app.get("/api/lorebooks/{book_id}/download")
+    def download_lorebook_route(book_id: str) -> Response:
+        result = export_lorebook_download(get_session_store().session, book_id)
+        if not result.get("ok"):
+            raise HTTPException(status_code=404, detail=result.get("message", "Not found"))
+        filename = str(result["filename"])
+        body = json.dumps(result["payload"], indent=2, ensure_ascii=False)
+        return Response(
+            content=body,
+            media_type="application/json",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    @app.put("/api/lorebooks/{book_id}")
+    def put_lorebook_route(book_id: str, body: dict) -> dict[str, object]:
+        result = put_lorebook(get_session_store().session, book_id, body)
+        if not result.get("ok"):
+            raise HTTPException(status_code=400, detail=result.get("message", "Update failed"))
+        return result
+
+    @app.delete("/api/lorebooks/{book_id}")
+    def delete_lorebook_route(book_id: str) -> dict[str, object]:
+        result = delete_lorebook(get_session_store().session, book_id)
+        if not result.get("ok"):
+            raise HTTPException(status_code=404, detail=result.get("message", "Not found"))
+        return result
+
+    @app.post("/api/lorebooks/upload")
+    async def upload_lorebook_route(file: UploadFile = File(...)) -> dict[str, object]:
+        if not file.filename or not file.filename.lower().endswith(".json"):
+            raise HTTPException(status_code=400, detail="Upload must be a .json file.")
+        raw = await file.read()
+        try:
+            source = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise HTTPException(
+                status_code=400, detail="Lorebook file must be UTF-8 text."
+            ) from exc
+        result = upload_lorebook(
+            get_session_store().session,
+            source=source,
+            filename=file.filename,
+        )
+        if not result.get("ok"):
+            raise HTTPException(status_code=400, detail=result.get("message", "Upload failed"))
+        return result
 
     @app.post("/api/memory-modules/upload")
     async def upload_memory_module_route(

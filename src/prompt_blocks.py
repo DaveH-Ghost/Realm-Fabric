@@ -21,6 +21,9 @@ from src.llm.prompt_context import (
 )
 from src.agent import Agent
 from src.area import Area
+from src.lorebook.matcher import build_scan_corpus, render_lorebook
+from src.lorebook.models import DEFAULT_LOREBOOK_CHAR_BUDGET, Lorebook
+from src.lorebook.scan_config import LorebookScanConfig
 from src.prompt_template import prompt_context_slots
 
 BlockType = Literal["slot", "text", "section"]
@@ -37,6 +40,7 @@ SLOT_DESCRIPTIONS: dict[str, str] = {
     "rules": "Alias for compound_rules",
     "move_instructions": "Move targets and move_speed guidance",
     "look_and_interact": "Look targets and available object interactions",
+    "lorebook": "Inject matched entries from one loaded lorebook (requires lorebook_id option)",
     "output_format": "JSON output shape (editable as a section block)",
 }
 
@@ -135,6 +139,21 @@ def default_prompt_blocks() -> list[PromptBlock]:
     ]
 
 
+def _validate_lorebook_slot(options: dict[str, Any] | None) -> str | None:
+    if not options:
+        return "lorebook slot requires options with lorebook_id."
+    book_id = str(options.get("lorebook_id", "")).strip()
+    if not book_id:
+        return "lorebook slot requires options.lorebook_id."
+    unknown = set(options) - {"lorebook_id"}
+    if unknown:
+        return (
+            f"Unknown lorebook option(s): {', '.join(sorted(unknown))}. "
+            "Allowed: lorebook_id."
+        )
+    return None
+
+
 def _validate_slot_options(slot_name: str, options: dict[str, Any] | None) -> str | None:
     if not options:
         return None
@@ -175,7 +194,12 @@ def validate_prompt_blocks(blocks: list[PromptBlock]) -> str | None:
                 return f"{prefix}: unknown slot {block.name!r}. Known: {known}."
             if block.content is not None:
                 return f"{prefix}: slot block must not include content."
-            opt_err = _validate_slot_options(block.name, block.options)
+            if block.name == "lorebook":
+                opt_err = _validate_lorebook_slot(block.options)
+            elif block.options:
+                opt_err = _validate_slot_options(block.name, block.options)
+            else:
+                opt_err = None
             if opt_err:
                 return f"{prefix}: {opt_err}"
         elif block.type == "text":
@@ -237,9 +261,29 @@ def render_slot_block(
     area: Area | None = None,
     vision_units: str = "",
     units_per_tile: int | None = None,
+    lorebooks: dict[str, Lorebook] | None = None,
+    lorebook_char_budget: int = DEFAULT_LOREBOOK_CHAR_BUDGET,
+    lorebook_scan_config: LorebookScanConfig | None = None,
+    passive_vision: str = "",
 ) -> str:
     """Render one slot block, applying per-block options when supported."""
     assert block.name is not None
+    if block.name == "lorebook":
+        if agent is None or area is None or not block.options:
+            return ""
+        book_id = str(block.options.get("lorebook_id", "")).strip()
+        books = lorebooks or {}
+        book = books.get(book_id)
+        if book is None:
+            return ""
+        corpus = build_scan_corpus(
+            agent=agent,
+            area=area,
+            memory_text=ctx.memory,
+            passive_vision=passive_vision,
+            scan_config=lorebook_scan_config,
+        )
+        return render_lorebook(book, corpus, char_budget=lorebook_char_budget)
     if block.name == "character":
         return render_character_slot(ctx, block.options)
     if block.name == "passive_vision":
@@ -279,8 +323,13 @@ def render_prompt_blocks(
     area: Area | None = None,
     vision_units: str = "",
     units_per_tile: int | None = None,
+    lorebooks: dict[str, Lorebook] | None = None,
+    lorebook_char_budget: int = DEFAULT_LOREBOOK_CHAR_BUDGET,
+    lorebook_scan_config: LorebookScanConfig | None = None,
+    passive_vision: str = "",
 ) -> str:
     """Render *blocks* using live values from *ctx*."""
+    vision_text = passive_vision or ctx.passive_vision
     parts: list[str] = []
     for block in blocks:
         if block.type == "text":
@@ -294,6 +343,10 @@ def render_prompt_blocks(
                     area=area,
                     vision_units=vision_units,
                     units_per_tile=units_per_tile,
+                    lorebooks=lorebooks,
+                    lorebook_char_budget=lorebook_char_budget,
+                    lorebook_scan_config=lorebook_scan_config,
+                    passive_vision=vision_text,
                 )
             )
         elif block.type == "section":
@@ -310,8 +363,13 @@ def enrich_blocks_with_previews(
     area: Area | None = None,
     vision_units: str = "",
     units_per_tile: int | None = None,
+    lorebooks: dict[str, Lorebook] | None = None,
+    lorebook_char_budget: int = DEFAULT_LOREBOOK_CHAR_BUDGET,
+    lorebook_scan_config: LorebookScanConfig | None = None,
+    passive_vision: str = "",
 ) -> list[dict[str, Any]]:
     """Serialize blocks and attach rendered previews for slot rows."""
+    vision_text = passive_vision or ctx.passive_vision
     enriched: list[dict[str, Any]] = []
     for block in blocks:
         data = block.to_dict()
@@ -323,6 +381,10 @@ def enrich_blocks_with_previews(
                 area=area,
                 vision_units=vision_units,
                 units_per_tile=units_per_tile,
+                lorebooks=lorebooks,
+                lorebook_char_budget=lorebook_char_budget,
+                lorebook_scan_config=lorebook_scan_config,
+                passive_vision=vision_text,
             )
         enriched.append(data)
     return enriched
@@ -394,4 +456,9 @@ def prompt_block_catalog() -> dict[str, Any]:
             },
         ],
         "slot_settings": SLOT_SETTINGS,
+        "lorebook_slot": {
+            "name": "lorebook",
+            "description": SLOT_DESCRIPTIONS["lorebook"],
+            "requires_option": "lorebook_id",
+        },
     }

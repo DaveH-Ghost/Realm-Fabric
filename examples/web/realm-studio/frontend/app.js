@@ -5,6 +5,7 @@
 import { hasAppearance, resolveAppearanceUrl } from "./appearance.js";
 import { exportSession, getPrompt, getState, importSession, postTurn } from "./api.js";
 import { initPromptLayout, reloadPromptLayoutIfOpen } from "./promptLayout.js";
+import { initAppTabs, initLorebooks, refreshLorebookList, refreshLorebookScanPanel } from "./lorebooks.js";
 import { initSettings } from "./settings.js";
 import { initVisionUnits, syncVisionUnitsFromSnapshot } from "./visionUnits.js";
 import { initGridViewport, maybeCenterGrid } from "./gridViewport.js";
@@ -371,10 +372,12 @@ async function refreshAfterMutation(snapshot) {
     renderState(snapshot);
     updateStatusLine(lastSnapshot);
     await reloadPromptLayoutIfOpen();
+    void refreshLorebookScanPanel();
     return;
   }
   await fetchState();
   await reloadPromptLayoutIfOpen();
+  void refreshLorebookScanPanel();
 }
 
 initUi({
@@ -388,6 +391,14 @@ initVisionUnits({
   onUpdatedFn: refreshAfterMutation,
 });
 initSettings({ showToastFn: showToast });
+initAppTabs();
+initLorebooks({
+  showToastFn: showToast,
+  getActiveAgentIdFn: resolveActiveAgentIdForPrompt,
+  onLorebooksChangedFn: () => {
+    void reloadPromptLayoutIfOpen();
+  },
+});
 initGridViewport(gridViewportEl, gridWorldEl);
 bindGridContextMenu(gridEl);
 if (activeAreaSelect) bindActiveAreaSelect(activeAreaSelect, refreshAfterMutation);
@@ -420,6 +431,8 @@ initPromptLayout({
   addVariantSelect: promptAddVariantSelect,
   addContentWrap: promptAddContentWrap,
   addContentInput: promptAddContentInput,
+  addLorebookWrap: document.getElementById("prompt-add-lorebook-wrap"),
+  addLorebookIdSelect: document.getElementById("prompt-add-lorebook-id"),
   addBtn: promptAddBtn,
   showToastFn: showToast,
   getActiveAgentIdFn: () => lastSnapshot?.active_agent_id ?? null,

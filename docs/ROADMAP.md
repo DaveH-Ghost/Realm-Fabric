@@ -362,6 +362,22 @@ See [v0.4.6-changelog.md](v0.4.6-changelog.md).
 
 ---
 
+## V0.5.0
+
+**Focus:** **Lorebooks** — SillyTavern JSON import, optional `lorebook` prompt slot, realm-studio Lorebooks tab.
+
+**Status:** ✅ **Done** — tag **`v0.5.0`** when ready.
+
+- `src/lorebook/` — ST import, keyword matcher, char budget
+- Session lorebook CRUD; `lorebook` slot (one book per block; not in default layout)
+- `snapshot_version: 2` with `lorebooks` array (v1 import supported)
+- realm-studio: Main | Lorebooks tabs; load/edit entries; prompt layout book picker
+- CLI: `load-lorebook`, `lorebooks`
+
+See [v0.5.0-changelog.md](v0.5.0-changelog.md).
+
+---
+
 **Notes**
 
 - Prefer adding sections to the [V0.2.5 changelog](v0.2.5-changelog.md) or [V0.3.0 changelog](v0.3.0-changelog.md) over a readiness checklist for new versions.

@@ -479,3 +479,131 @@ export async function uploadMemoryModule(file) {
   }
   return data;
 }
+
+export async function getLorebooks() {
+  const res = await fetch("/api/lorebooks");
+  const data = await res.json();
+  if (!res.ok || !data.ok) {
+    throw new Error(data.message || `GET /api/lorebooks failed: HTTP ${res.status}`);
+  }
+  return data;
+}
+
+export async function createLorebook(payload = {}) {
+  const res = await fetch("/api/lorebooks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const detail = data.detail || data.message || `HTTP ${res.status}`;
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+  return data;
+}
+
+export async function loadDemoLorebook() {
+  const res = await fetch("/api/lorebooks/load-demo", { method: "POST" });
+  const data = await res.json();
+  if (!res.ok) {
+    const detail = data.detail || data.message || `HTTP ${res.status}`;
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+  return data;
+}
+
+export async function getLorebook(bookId) {
+  const res = await fetch(`/api/lorebooks/${encodeURIComponent(bookId)}`);
+  const data = await res.json();
+  if (!res.ok) {
+    const detail = data.detail || data.message || `HTTP ${res.status}`;
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+  return data;
+}
+
+export async function putLorebook(bookId, lorebook) {
+  const res = await fetch(`/api/lorebooks/${encodeURIComponent(bookId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(lorebook),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const detail = data.detail || data.message || `HTTP ${res.status}`;
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+  return data;
+}
+
+export async function deleteLorebook(bookId) {
+  const res = await fetch(`/api/lorebooks/${encodeURIComponent(bookId)}`, {
+    method: "DELETE",
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const detail = data.detail || data.message || `HTTP ${res.status}`;
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+  return data;
+}
+
+export async function getLorebookScanConfig(agentId) {
+  const query = agentId ? `?agent_id=${encodeURIComponent(agentId)}` : "";
+  const res = await fetch(`/api/lorebooks/scan-config${query}`);
+  const data = await res.json();
+  if (!res.ok) {
+    const detail = data.detail || data.message || `HTTP ${res.status}`;
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+  return data;
+}
+
+export async function putLorebookScanConfig(config) {
+  const res = await fetch("/api/lorebooks/scan-config", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(config),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const detail = data.detail || data.message || `HTTP ${res.status}`;
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+  return data;
+}
+
+export async function downloadLorebook(bookId) {
+  const res = await fetch(`/api/lorebooks/${encodeURIComponent(bookId)}/download`);
+  if (!res.ok) {
+    let message = `HTTP ${res.status}`;
+    try {
+      const data = await res.json();
+      message = data.detail || data.message || message;
+    } catch {
+      // ignore non-JSON error bodies
+    }
+    throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+  }
+  const blob = await res.blob();
+  const disposition = res.headers.get("Content-Disposition") || "";
+  const match = disposition.match(/filename="([^"]+)"/);
+  const filename = match?.[1] || `${bookId}.lorebook.json`;
+  return { blob, filename };
+}
+
+export async function uploadLorebook(file) {
+  const form = new FormData();
+  form.append("file", file, file.name);
+  const res = await fetch("/api/lorebooks/upload", {
+    method: "POST",
+    body: form,
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    const detail = data.detail || data.message || `HTTP ${res.status}`;
+    throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+  }
+  return data;
+}

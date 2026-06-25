@@ -23,10 +23,12 @@ from src.memory_modules.registry import (
 )
 from src.object import Object
 from src.object_action import ObjectAction
+from src.lorebook.models import Lorebook
 from src.prompt_blocks import prompt_blocks_from_dicts
 from src.snapshot import serialize_area_block, serialize_object
 
-SNAPSHOT_VERSION = 1
+SNAPSHOT_VERSION = 2
+SUPPORTED_SNAPSHOT_VERSIONS = frozenset({1, 2})
 
 __all__ = [
     "SNAPSHOT_VERSION",
@@ -203,6 +205,9 @@ def build_save_snapshot(session: object) -> dict[str, Any]:
         "active_area_id": session.active_area_id,
         "vision_units": session.vision_units,
         "vision_units_per_tile": session.vision_units_per_tile,
+        "lorebook_char_budget": session.lorebook_char_budget,
+        "lorebook_scan_config": session.lorebook_scan_config.to_dict(),
+        "lorebooks": [book.to_dict() for book in session.list_lorebooks()],
         "prompt_blocks": prompt_blocks,
         "agent_area": dict(session.agent_area),
         "areas": {
@@ -225,10 +230,10 @@ def load_session_from_snapshot(data: dict[str, Any]):
     from src.session import Session
 
     version = data.get("snapshot_version")
-    if version != SNAPSHOT_VERSION:
+    if version not in SUPPORTED_SNAPSHOT_VERSIONS:
         raise ValueError(
             f"Unsupported snapshot_version {version!r} "
-            f"(expected {SNAPSHOT_VERSION})"
+            f"(supported: {sorted(SUPPORTED_SNAPSHOT_VERSIONS)})"
         )
 
     validate_snapshot_modules(data)
@@ -275,6 +280,20 @@ def load_session_from_snapshot(data: dict[str, Any]):
     session.vision_units = str(data.get("vision_units", ""))
     per_tile = data.get("vision_units_per_tile")
     session.vision_units_per_tile = int(per_tile) if per_tile is not None else None
+    session.lorebook_char_budget = int(
+        data.get("lorebook_char_budget", session.lorebook_char_budget)
+    )
+    from src.lorebook.scan_config import LorebookScanConfig
+
+    session.lorebook_scan_config = LorebookScanConfig.from_dict(
+        data.get("lorebook_scan_config")
+    )
+
+    lorebooks_raw = data.get("lorebooks") or []
+    if lorebooks_raw:
+        for item in lorebooks_raw:
+            book = Lorebook.from_dict(item)
+            session.update_lorebook(book)
 
     prompt_blocks = data.get("prompt_blocks")
     if prompt_blocks is not None:

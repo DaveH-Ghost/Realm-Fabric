@@ -1097,3 +1097,376 @@ button:hover {
   font-style: normal;
   margin-bottom: 0.5rem;
 }
+
+.app-tabs {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.35rem 1rem 0;
+  border-bottom: 1px solid #3a3a48;
+  background: #1e1e28;
+  flex-shrink: 0;
+}
+
+.app-tab {
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: none;
+  color: #a8a8b8;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.app-tab.active {
+  color: #f0f0f5;
+  background: #2a2a36;
+  border-color: #3a3a48;
+}
+
+.tab-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tab-panel.hidden {
+  display: none;
+}
+
+.tab-panel > .layout {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.lorebooks-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1.25rem 1rem;
+  width: 100%;
+  overflow: hidden;
+}
+
+.lorebooks-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 1rem;
+  overflow: hidden;
+}
+
+.lorebooks-main {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.lorebooks-scan-panel {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem;
+  background: #1e1e28;
+  border: 1px solid #3a3a48;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.lorebooks-scan-panel h3 {
+  margin: 0 0 0.35rem;
+  font-size: 0.9rem;
+  color: #d8d8e4;
+}
+
+.lorebooks-scan-hint {
+  color: #9a9aa8;
+  font-size: 0.78rem;
+  margin: 0 0 0.5rem;
+  line-height: 1.35;
+}
+
+.lorebook-scan-sources {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: #4a4a58 #1f1f2a;
+}
+
+.lorebook-scan-source {
+  border: 1px solid #3a3a48;
+  border-radius: 6px;
+  padding: 0.5rem 0.6rem;
+  background: #181820;
+}
+
+.lorebook-scan-source label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #d8d8e4;
+  cursor: pointer;
+}
+
+.lorebook-scan-source-preview {
+  margin: 0.35rem 0 0 1.35rem;
+  font-size: 0.72rem;
+  color: #a8a8b8;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 5rem;
+  overflow-y: auto;
+}
+
+@media (max-width: 900px) {
+  .lorebooks-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .lorebooks-scan-panel {
+    max-height: 14rem;
+  }
+}
+
+.lorebooks-header {
+  flex-shrink: 0;
+}
+
+.lorebooks-header h2 {
+  margin: 0 0 0.35rem;
+}
+
+.lorebooks-hint {
+  color: #a8a8b8;
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.lorebooks-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.lorebooks-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 10rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #4a4a58 #1f1f2a;
+}
+
+.lorebooks-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lorebooks-list::-webkit-scrollbar-thumb {
+  background: #4a4a58;
+  border-radius: 3px;
+}
+
+.lorebooks-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #3a3a48;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  background: #242430;
+}
+
+.lorebooks-list-id {
+  color: #888;
+  font-size: 0.85em;
+}
+
+.lorebooks-list-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.lorebooks-remove-btn {
+  color: #f5a8a8;
+}
+
+.lorebook-editor {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #3a3a48;
+  overflow: hidden;
+}
+
+.lorebook-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.lorebook-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  flex-shrink: 0;
+}
+
+.lorebook-editor-toolbar .panel-empty {
+  margin: 0;
+  flex: 1;
+  min-width: 8rem;
+}
+
+.lorebook-entries {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+  scrollbar-width: thin;
+  scrollbar-color: #4a4a58 #1f1f2a;
+}
+
+.lorebook-entries::-webkit-scrollbar {
+  width: 8px;
+}
+
+.lorebook-entries::-webkit-scrollbar-thumb {
+  background: #4a4a58;
+  border-radius: 4px;
+}
+
+.lorebook-editor-footer {
+  flex-shrink: 0;
+  padding-top: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.lorebook-entry-card {
+  border: 1px solid #3a3a48;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  background: #1f1f2a;
+  flex-shrink: 0;
+}
+
+.lorebook-entry-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+}
+
+.lorebook-entry-card:not(.collapsed) .lorebook-entry-header {
+  margin-bottom: 0.5rem;
+}
+
+.lorebook-entry-toggle {
+  background: transparent;
+  border: none;
+  color: #a8a8b8;
+  cursor: pointer;
+  padding: 0.15rem 0.35rem;
+  font-size: 0.85rem;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.lorebook-entry-toggle:hover {
+  color: #e8e8ec;
+  background: #2a2a36;
+}
+
+.lorebook-entry-card.collapsed .lorebook-entry-body {
+  display: none;
+}
+
+.lorebook-entry-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.lorebook-entry-title {
+  font-weight: 600;
+  color: #d8d8e4;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.lorebook-entry-delete-btn {
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid #5a3a3a;
+  color: #f5a8a8;
+  border-radius: 4px;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.lorebook-entry-delete-btn:hover {
+  background: #3a2828;
+}
+
+.lorebook-entry-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.lorebook-entry-field input,
+.lorebook-entry-field textarea {
+  width: 100%;
+  font: inherit;
+  background: #12121a;
+  color: #eee;
+  border: 1px solid #3a3a48;
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+}
+
+.lorebook-entry-field textarea {
+  resize: vertical;
+  min-height: 4rem;
+}

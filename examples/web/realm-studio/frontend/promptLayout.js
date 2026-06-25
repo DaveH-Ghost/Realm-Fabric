@@ -7,6 +7,7 @@ import {
   getPromptBlockCatalog,
   getPromptBlocks,
   getPromptSlots,
+  getLorebooks,
   previewPromptBlocks,
   putPromptBlocks,
   resetPromptBlocks,
@@ -42,6 +43,8 @@ let addVariantLabel;
 let addVariantSelect;
 let addContentWrap;
 let addContentInput;
+let addLorebookWrap;
+let addLorebookIdSelect;
 let addBtn;
 
 export function initPromptLayout({
@@ -59,6 +62,8 @@ export function initPromptLayout({
   addVariantSelect: variantSelect,
   addContentWrap: contentWrap,
   addContentInput: contentInput,
+  addLorebookWrap: lorebookWrap,
+  addLorebookIdSelect: lorebookIdSelect,
   addBtn: addButton,
   showToastFn,
   getActiveAgentIdFn,
@@ -78,6 +83,8 @@ export function initPromptLayout({
   addVariantSelect = variantSelect;
   addContentWrap = contentWrap;
   addContentInput = contentInput;
+  addLorebookWrap = lorebookWrap;
+  addLorebookIdSelect = lorebookIdSelect;
   addBtn = addButton;
   showToast = showToastFn;
   getActiveAgentId = getActiveAgentIdFn;
@@ -90,6 +97,7 @@ export function initPromptLayout({
     addBlockFromForm().catch((err) => showToast(String(err.message || err), true));
   });
   addTypeSelect.addEventListener("change", () => syncAddBlockForm());
+  addVariantSelect?.addEventListener("change", () => syncVariantSubform());
   document.addEventListener("click", (e) => {
     if (openSettingsIndex == null) return;
     if (e.target.closest(".prompt-block-settings-popover")) return;
@@ -153,11 +161,24 @@ function populateAddTypeSelect() {
   }
 }
 
+function syncVariantSubform() {
+  const type = addTypeSelect.value;
+  const variant = addVariantSelect?.value || "";
+  const isLorebookSlot = type === "slot" && variant === "lorebook";
+  addLorebookWrap?.classList.toggle("hidden", !isLorebookSlot);
+  if (isLorebookSlot) {
+    void populateLorebookIdSelect();
+  }
+}
+
 function syncAddBlockForm() {
   const type = addTypeSelect.value;
   const entry = catalogEntryForType(type);
+  const variant = addVariantSelect?.value || "";
+  const isLorebookSlot = type === "slot" && variant === "lorebook";
   addVariantWrap.classList.toggle("hidden", type === "text");
   addContentWrap.classList.toggle("hidden", type !== "text");
+  addLorebookWrap?.classList.toggle("hidden", !isLorebookSlot);
 
   if (type === "text") {
     addContentInput.value = entry?.default_content ?? "";
@@ -174,6 +195,36 @@ function syncAddBlockForm() {
       ? `${item.name} — ${item.description}`
       : item.name;
     addVariantSelect.appendChild(option);
+  }
+  if (isLorebookSlot) {
+    void populateLorebookIdSelect();
+  }
+}
+
+async function populateLorebookIdSelect() {
+  if (!addLorebookIdSelect) return;
+  addLorebookIdSelect.innerHTML = "";
+  try {
+    const data = await getLorebooks();
+    const books = data.lorebooks || [];
+    if (books.length === 0) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "(load a lorebook first)";
+      addLorebookIdSelect.appendChild(option);
+      return;
+    }
+    for (const book of books) {
+      const option = document.createElement("option");
+      option.value = book.id;
+      option.textContent = `${book.name} (${book.id})`;
+      addLorebookIdSelect.appendChild(option);
+    }
+  } catch (err) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = String(err.message || err);
+    addLorebookIdSelect.appendChild(option);
   }
 }
 
@@ -315,7 +366,10 @@ function buildBlockRow(block, index) {
     const meta = slotMeta(block.name);
     const label = document.createElement("div");
     label.className = "prompt-block-label";
-    label.textContent = `Slot: ${block.name}`;
+    const lorebookId = block.options?.lorebook_id;
+    label.textContent = lorebookId
+      ? `Slot: ${block.name} (${lorebookId})`
+      : `Slot: ${block.name}`;
     const desc = document.createElement("div");
     desc.className = "prompt-block-desc";
     desc.textContent = meta.description || "";
@@ -447,7 +501,15 @@ function buildBlockFromCatalog(type, variantName, textContent) {
     throw new Error(`Unknown block type ${type}.`);
   }
   if (type === "slot") {
-    return { type: "slot", name: variantName };
+    const block = { type: "slot", name: variantName };
+    if (variantName === "lorebook") {
+      const bookId = addLorebookIdSelect?.value?.trim();
+      if (!bookId) {
+        throw new Error("Select a lorebook for the lorebook slot.");
+      }
+      block.options = { lorebook_id: bookId };
+    }
+    return block;
   }
   if (type === "text") {
     return { type: "text", content: textContent ?? "" };

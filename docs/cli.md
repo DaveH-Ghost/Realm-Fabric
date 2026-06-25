@@ -32,6 +32,15 @@ Built-in ids: `recent_turns`, `salient_turns`, `rolling_summary`. Create-agent u
 
 Custom module contract: [examples/custom_memory/README.md](../examples/custom_memory/README.md).
 
+## Lorebooks
+
+| Command | Description |
+|---------|-------------|
+| `load-lorebook <path>` | Load a SillyTavern `.json` lorebook into the session |
+| `lorebooks` | List loaded lorebooks |
+
+Add a `lorebook` prompt block in realm-studio Prompt layout (or custom `prompt_blocks`) to inject matched entries.
+
 ## World editing
 
 ```

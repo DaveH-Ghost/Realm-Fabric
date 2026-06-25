@@ -20,7 +20,7 @@
 
     <h1>realm-studio</h1>
 
-    <p class="subtitle">V0.4.6 — custom memory modules</p>
+    <p class="subtitle">V0.5.0 — lorebooks</p>
 
     <label class="active-area-label">
 
@@ -79,6 +79,12 @@
 
   </header>
 
+  <nav class="app-tabs" role="tablist" aria-label="realm-studio views">
+    <button type="button" id="tab-main" class="app-tab active" role="tab" aria-selected="true">Main</button>
+    <button type="button" id="tab-lorebooks" class="app-tab" role="tab" aria-selected="false">Lorebooks</button>
+  </nav>
+
+  <div id="main-tab-panel" class="tab-panel">
   <main class="layout">
 
     <section class="grid-panel" aria-label="Area grid">
@@ -197,6 +203,11 @@
 
           </label>
 
+          <label class="prompt-block-field hidden" id="prompt-add-lorebook-wrap">
+            <span>Lorebook</span>
+            <select id="prompt-add-lorebook-id" aria-label="Lorebook id"></select>
+          </label>
+
           <label class="prompt-block-field hidden" id="prompt-add-content-wrap">
 
             <span>Initial text</span>
@@ -264,6 +275,52 @@
     </aside>
 
   </main>
+  </div>
+
+  <div id="lorebooks-tab-panel" class="tab-panel hidden">
+    <section class="lorebooks-panel" aria-label="Lorebooks">
+      <div class="lorebooks-layout">
+      <div class="lorebooks-main">
+      <header class="lorebooks-header">
+        <h2>Lorebooks</h2>
+        <p class="lorebooks-hint">Load a JSON lorebook, create a blank one, or try the demo. Edit entries here; add a lorebook slot in Prompt layout (Main tab) to inject matched text.</p>
+        <div class="lorebooks-toolbar">
+          <input type="file" id="lorebook-upload-input" accept=".json,application/json" />
+          <button type="button" id="lorebook-upload-btn" class="settings-action-btn">Load lorebook</button>
+          <button type="button" id="lorebook-create-btn" class="settings-action-btn">Create lorebook</button>
+          <button type="button" id="lorebook-load-demo-btn" class="modal-cancel">Load demo lorebook</button>
+        </div>
+        <p id="lorebooks-list-empty" class="panel-empty">No lorebooks loaded.</p>
+        <ul id="lorebooks-list" class="lorebooks-list hidden"></ul>
+      </header>
+      <div id="lorebook-editor" class="lorebook-editor hidden">
+        <div class="lorebook-editor-header">
+          <h3 id="lorebook-editor-title">Edit lorebook</h3>
+          <button type="button" id="lorebook-editor-close" class="modal-cancel">Close editor</button>
+        </div>
+        <div class="lorebook-editor-toolbar">
+          <p id="lorebook-editor-status" class="panel-empty"></p>
+          <button type="button" id="lorebook-add-entry" class="settings-action-btn">Add entry</button>
+          <button type="button" id="lorebook-expand-all" class="modal-cancel">Expand all</button>
+          <button type="button" id="lorebook-collapse-all" class="modal-cancel">Collapse all</button>
+        </div>
+        <div id="lorebook-entries" class="lorebook-entries"></div>
+        <div class="lorebook-editor-footer">
+          <button type="button" id="lorebook-editor-download" class="modal-cancel">Download JSON</button>
+          <button type="button" id="lorebook-editor-save" class="settings-action-btn">Save changes</button>
+          <p id="lorebook-editor-error" class="modal-error" aria-live="polite"></p>
+        </div>
+      </div>
+      </div>
+      <aside class="lorebooks-scan-panel" aria-label="Lorebook keyword scan sources">
+        <h3>Keyword scan sources</h3>
+        <p id="lorebook-scan-agent" class="lorebooks-scan-hint">Previews use the active agent.</p>
+        <p class="lorebooks-scan-hint">Lorebook entries match when a keyword appears in any enabled source below (constants always inject).</p>
+        <ul id="lorebook-scan-sources" class="lorebook-scan-sources"></ul>
+      </aside>
+      </div>
+    </section>
+  </div>
 
 
 

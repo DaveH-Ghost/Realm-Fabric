@@ -139,6 +139,13 @@ class Session:
         self._prompt_blocks: list | None = None
         self.vision_units: str = ""
         self.vision_units_per_tile: int | None = None
+        from src.lorebook.models import DEFAULT_LOREBOOK_CHAR_BUDGET, Lorebook
+
+        self._lorebooks: dict[str, Lorebook] = {}
+        self.lorebook_char_budget = DEFAULT_LOREBOOK_CHAR_BUDGET
+        from src.lorebook.scan_config import LorebookScanConfig
+
+        self.lorebook_scan_config = LorebookScanConfig()
 
     @property
     def area(self) -> Area:
@@ -381,7 +388,44 @@ class Session:
             area=area,
             vision_units=self.vision_units,
             units_per_tile=self.vision_units_per_tile,
+            lorebooks=self._lorebooks,
+            lorebook_char_budget=self.lorebook_char_budget,
+            lorebook_scan_config=self.lorebook_scan_config,
+            passive_vision=ctx.passive_vision,
         )
+
+    def list_lorebooks(self) -> list:
+        """Return loaded lorebooks sorted by id."""
+        from src.lorebook.models import Lorebook
+
+        books: list[Lorebook] = list(self._lorebooks.values())
+        return sorted(books, key=lambda book: book.id)
+
+    def get_lorebook(self, book_id: str):
+        return self._lorebooks.get(book_id)
+
+    def load_lorebook_from_path(self, path: str):
+        """Load a SillyTavern lorebook JSON file into the session (overwrites same id)."""
+        from src.lorebook import load_lorebook_from_path
+
+        book = load_lorebook_from_path(path)
+        self._lorebooks[book.id] = book
+        return book
+
+    def load_lorebook_from_dict(self, data: dict, *, filename: str = ""):
+        """Load lorebook data (ST ``entries`` shape) into the session."""
+        from src.lorebook import load_lorebook_from_dict
+
+        book = load_lorebook_from_dict(data, filename=filename)
+        self._lorebooks[book.id] = book
+        return book
+
+    def update_lorebook(self, book) -> None:
+        """Replace a lorebook by id."""
+        self._lorebooks[book.id] = book
+
+    def remove_lorebook(self, book_id: str) -> bool:
+        return self._lorebooks.pop(book_id, None) is not None
 
     def get_prompt_blocks(self) -> list:
         """Return the session prompt layout (custom or profile default)."""
