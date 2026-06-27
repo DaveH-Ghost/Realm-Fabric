@@ -30,11 +30,12 @@ from backend.schemas import (
     PromptBlocksPreviewRequest,
     PromptBlocksRequest,
     TurnRequest,
+    ManualTurnRequest,
     VisionUnitsRequest,
 )
 from backend.session_store import get_session_store
 from backend.snapshot_compat import normalize_state_snapshot
-from backend.turn_runner import run_llm_turn
+from backend.turn_runner import run_llm_turn, run_manual_turn
 from backend.vision_units_api import put_vision_units as api_put_vision_units
 from backend.memory_module_upload import (
     load_cached_custom_modules,
@@ -180,6 +181,14 @@ def create_app() -> FastAPI:
             get_session_store().session,
             agent_id=body.agent_id,
             include_examples=body.include_examples,
+        )
+
+    @app.post("/api/turn/manual")
+    def post_manual_turn(body: ManualTurnRequest) -> dict[str, object]:
+        return run_manual_turn(
+            get_session_store().session,
+            body.compound_turn,
+            agent_id=body.agent_id,
         )
 
     @app.get("/api/prompt")

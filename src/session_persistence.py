@@ -99,6 +99,8 @@ def deserialize_object(data: dict[str, Any]) -> Object:
         passive_description=data.get("passive_description", ""),
         actions=actions,
         appearance=data.get("appearance", ""),
+        blocks_movement=bool(data.get("blocks_movement", True)),
+        movement_exceptions=list(data.get("movement_exceptions", [])),
     )
 
 
@@ -136,6 +138,9 @@ def serialize_agent_for_save(agent: Agent, *, area_id: str) -> dict[str, Any]:
         "last_action": agent.last_action,
         "appearance": agent.appearance,
         "move_speed": agent.move_speed,
+        "blocks_movement": agent.blocks_movement,
+        "movement_exceptions": list(agent.movement_exceptions),
+        "is_player": agent.is_player,
         "area_id": area_id,
         "memory": {
             "looked_at": sorted(agent.memory.looked_at),
@@ -169,6 +174,9 @@ def deserialize_agent(data: dict[str, Any]) -> Agent:
         last_action=data.get("last_action"),
         appearance=data.get("appearance", ""),
         move_speed=data.get("move_speed"),
+        blocks_movement=bool(data.get("blocks_movement", False)),
+        movement_exceptions=list(data.get("movement_exceptions", [])),
+        is_player=bool(data.get("is_player", False)),
     )
 
 

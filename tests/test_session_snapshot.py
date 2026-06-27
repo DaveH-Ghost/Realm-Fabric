@@ -94,14 +94,14 @@ def test_snapshot_after_move_updates_position_and_session_turn():
     session.run_compound_turn(
         AgentCompoundTurn(
             reasoning="move",
-            move="2,2",
+            move="3,1",
             action="none",
         ),
     )
     snap = session.snapshot()
     assert snap["session_turn"] == 1
     explorer = snap["agents"][0]
-    assert explorer["position"] == [2, 2]
+    assert explorer["position"] == [3, 1]
 
 
 def test_snapshot_after_create_object():
@@ -172,6 +172,9 @@ def test_serialize_agent_public_fields():
         "memory_module",
         "appearance",
         "move_speed",
+        "blocks_movement",
+        "movement_exceptions",
+        "is_player",
     }
 
 

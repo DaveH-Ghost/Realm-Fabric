@@ -1,12 +1,15 @@
 """
-Run one LLM compound turn for realm-studio (mirrors CLI ``run``).
+Run compound turns for realm-studio (LLM or manual player input).
 """
 
 from __future__ import annotations
 
 from typing import Any
 
+from pydantic import ValidationError
+
 from realm_fabric import Session
+from src.llm.schemas import AgentCompoundTurn
 from src.memory import TurnRecord
 
 from backend.snapshot_compat import normalize_state_snapshot
@@ -23,6 +26,55 @@ def _serialize_steps(record: TurnRecord) -> list[dict[str, Any]]:
         }
         for step in record.steps
     ]
+
+
+def _resolve_agent(session: Session, agent_id: str | None):
+    if agent_id is not None:
+        return session.get_agent(agent_id)
+    return session.get_active_agent()
+
+
+def run_manual_turn(
+    session: Session,
+    turn_payload: dict[str, Any],
+    *,
+    agent_id: str | None = None,
+) -> dict[str, Any]:
+    """Validate manual compound JSON and run a player-agent turn (no LLM)."""
+    if agent_id is not None and session.get_agent(agent_id) is None:
+        return {"ok": False, "message": f"Agent {agent_id!r} not found."}
+
+    agent = _resolve_agent(session, agent_id)
+    if agent is None:
+        return {"ok": False, "message": "No active agent."}
+    if not agent.is_player:
+        return {
+            "ok": False,
+            "message": "Manual turns are only available for player agents.",
+        }
+
+    gate = session.gate_agent_turn(agent_id)
+    if not gate.ok:
+        return {"ok": False, "message": gate.message}
+
+    try:
+        compound_turn = AgentCompoundTurn.model_validate(turn_payload)
+    except ValidationError as exc:
+        return {"ok": False, "message": str(exc)}
+
+    result = session.run_compound_turn(compound_turn, agent_id=agent_id)
+    if not result.ok or result.record is None:
+        return {"ok": False, "message": result.message}
+
+    return {
+        "ok": True,
+        "message": result.message,
+        "snapshot": normalize_state_snapshot(
+            session.snapshot(include_private=True)
+        ),
+        "steps": _serialize_steps(result.record),
+        "manual_turn": True,
+    }
 
 
 def run_llm_turn(
@@ -43,6 +95,16 @@ def run_llm_turn(
     try:
         if agent_id is not None and session.get_agent(agent_id) is None:
             return {"ok": False, "message": f"Agent {agent_id!r} not found."}
+
+        agent = _resolve_agent(session, agent_id)
+        if agent is not None and agent.is_player:
+            return {
+                "ok": False,
+                "message": (
+                    f"{agent.name} is a player agent; use the manual turn form "
+                    "(Run turn ▶)."
+                ),
+            }
 
         gate = session.gate_agent_turn(agent_id)
         if not gate.ok:

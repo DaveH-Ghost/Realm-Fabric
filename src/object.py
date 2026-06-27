@@ -51,3 +51,9 @@ class Object:
     Ignored by the simulation, passive vision, and LLM prompts. Empty means
     no custom token image.
     """
+
+    blocks_movement: bool = True
+    """When True, other movers cannot enter this object's tile (unless excepted)."""
+
+    movement_exceptions: list[str] = field(default_factory=list)
+    """Entity ids allowed to pass through or stand on this object's tile."""

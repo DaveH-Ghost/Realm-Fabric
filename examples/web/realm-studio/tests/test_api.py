@@ -515,6 +515,49 @@ def test_post_command_create_object(client):
     assert "Test Crate" in names
 
 
+def test_post_command_create_object_blocks_movement(client):
+    response = client.post(
+        "/api/command",
+        json={
+            "line": (
+                'create-object name "Passable" pdesc "Open." at 1,3 blocks-movement false'
+            ),
+        },
+    )
+    assert response.json()["ok"] is True
+
+    state = client.get("/api/state").json()
+    obj = next(o for o in _room(state)["objects"] if o["name"] == "Passable")
+    assert obj["blocks_movement"] is False
+
+
+def test_post_command_edit_object_movement_exceptions(client):
+    create = client.post(
+        "/api/command",
+        json={
+            "line": 'create-object name "Gate" pdesc "A gate." at 0,4',
+        },
+    )
+    assert create.json()["ok"] is True
+    state_after_create = client.get("/api/state").json()
+    obj_id = next(
+        o["id"] for o in _room(state_after_create)["objects"] if o["name"] == "Gate"
+    )
+
+    edit = client.post(
+        "/api/command",
+        json={
+            "line": f'edit-object {obj_id} movement-exception agent_01',
+        },
+    )
+    assert edit.json()["ok"] is True
+
+    state = client.get("/api/state").json()
+    obj = next(o for o in _room(state)["objects"] if o["id"] == obj_id)
+    assert obj["blocks_movement"] is True
+    assert obj["movement_exceptions"] == ["agent_01"]
+
+
 def test_post_command_invalid(client):
     response = client.post(
         "/api/command",
@@ -1027,3 +1070,75 @@ def test_prompt_preview_includes_lorebook_slot(client):
     preview = client.post("/api/prompt-blocks/preview", json={"blocks": blocks}).json()
     lore_block = next(b for b in preview["blocks"] if b.get("name") == "lorebook")
     assert "World info:" in lore_block.get("preview", "")
+
+
+def _create_player_agent(client, name="Tester"):
+    response = client.post(
+        "/api/command",
+        json={
+            "line": (
+                f'create-agent name "{name}" personality "Manual tester." '
+                f"player true at 0,0"
+            ),
+        },
+    )
+    assert response.json()["ok"] is True
+    state = client.get("/api/state").json()
+    return next(agent for agent in state["agents"] if agent["name"] == name)
+
+
+def test_create_player_agent_in_snapshot(client):
+    agent = _create_player_agent(client)
+    assert agent["is_player"] is True
+    assert agent["id"].startswith("agent_")
+
+
+def test_post_manual_turn_moves_player(client):
+    agent = _create_player_agent(client)
+    client.post("/api/active-agent", json={"name_or_id": agent["id"]})
+
+    response = client.post(
+        "/api/turn/manual",
+        json={
+            "compound_turn": {
+                "reasoning": "Walk east.",
+                "move": "2,0",
+                "action": "none",
+            },
+        },
+    )
+    data = response.json()
+    assert data["ok"] is True
+    assert data["manual_turn"] is True
+    assert data["snapshot"]["session_turn"] == 1
+    updated = next(item for item in data["snapshot"]["agents"] if item["id"] == agent["id"])
+    assert updated["position"] == [2, 0]
+
+
+def test_post_turn_rejects_player_agent(client):
+    agent = _create_player_agent(client)
+    client.post("/api/active-agent", json={"name_or_id": agent["id"]})
+
+    response = client.post("/api/turn", json={})
+    data = response.json()
+    assert data["ok"] is False
+    assert "player" in data["message"].lower()
+
+
+def test_post_manual_turn_rejects_llm_agent(client, monkeypatch):
+    monkeypatch.setattr(
+        "src.llm.client.get_compound_turn",
+        _fake_compound_response,
+    )
+    response = client.post(
+        "/api/turn/manual",
+        json={
+            "compound_turn": {
+                "reasoning": "Nope.",
+                "action": "none",
+            },
+        },
+    )
+    data = response.json()
+    assert data["ok"] is False
+    assert "player" in data["message"].lower()

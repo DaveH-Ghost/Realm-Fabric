@@ -48,12 +48,14 @@ def test_partial_move_towards_coordinate():
 
     outcome = do_move(agent, area, "3,1")
 
-    assert agent.position == (2, 1)
-    assert outcome.result == "You moved towards (3, 1)."
-    assert outcome.passive_result == "Explorer moves towards (3, 1), stopping at (2, 1)."
+    assert agent.position in {(2, 1), (2, 0)}
+    assert "stopping at" in outcome.result
+    assert outcome.result.startswith("You moved towards (3, 1), stopping at ")
+    stop_label = outcome.result.split("stopping at ", 1)[1].rstrip(".")
+    assert stop_label == f"({agent.position[0]}, {agent.position[1]})"
 
 
-def test_partial_move_towards_entity_reaches_in_one_diagonal():
+def test_partial_move_towards_entity_when_already_adjacent():
     area = create_initial_area()
     agent = area.get_agent()
     agent.move_speed = 1
@@ -61,12 +63,11 @@ def test_partial_move_towards_entity_reaches_in_one_diagonal():
 
     outcome = do_move(agent, area, "obj_ball_01")
 
-    assert agent.position == (2, 2)
-    assert outcome.result == "You moved to Ceramic Ball at (2, 2)."
-    assert "towards" not in outcome.result.lower()
+    assert agent.position == (1, 1)
+    assert outcome.result == "You are already next to Ceramic Ball."
 
 
-def test_speed_one_stops_short_of_ball_from_origin():
+def test_speed_one_reaches_adjacent_tile_near_ball():
     area = create_initial_area()
     agent = area.get_agent()
     agent.move_speed = 1
@@ -75,8 +76,8 @@ def test_speed_one_stops_short_of_ball_from_origin():
     outcome = do_move(agent, area, "obj_ball_01")
 
     assert agent.position == (1, 1)
-    assert outcome.result == "You moved towards Ceramic Ball."
-    assert "stopping at (1, 1)" in outcome.passive_result
+    assert outcome.result == "You have successfully moved next to Ceramic Ball."
+    assert "(1, 1)" not in outcome.result
 
 
 def test_create_agent_with_move_speed():

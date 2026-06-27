@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from src.agent import Agent
 from src.area import Area
 from src.coordinates import CoordinateParseError, format_coordinate, parse_coordinate_target
+from src.grid import chebyshev_distance
+from src.occupancy import entity_blocks_for_mover
 
 
 class MoveTargetError(ValueError):
@@ -77,11 +79,55 @@ def resolve_move_target(area: Area, target: str) -> ResolvedMoveTarget:
     return ResolvedMoveTarget(position)
 
 
-def format_move_arrival_message(resolved: ResolvedMoveTarget) -> str:
-    label = format_coordinate(*resolved.position)
+def entity_goal_blocks_movement(
+    area: Area,
+    resolved: ResolvedMoveTarget,
+    mover_id: str,
+) -> bool:
+    """True when the resolved entity blocks *mover_id* from standing on its tile."""
+    if not resolved.entity_id:
+        return False
+    obj = area.get_object_by_id(resolved.entity_id)
+    if obj is not None:
+        return entity_blocks_for_mover(obj, mover_id)
+    other = area.get_agent_by_id(resolved.entity_id)
+    if other is not None:
+        return entity_blocks_for_mover(other, mover_id)
+    return False
+
+
+def _step_label(distance: int) -> str:
+    if distance == 1:
+        return "1 step"
+    return f"{distance} steps"
+
+
+def format_move_arrival_message(
+    resolved: ResolvedMoveTarget,
+    agent_position: tuple[int, int],
+    *,
+    goal_blocks_movement: bool,
+) -> str:
     if resolved.entity_name:
-        return f"You moved to {resolved.entity_name} at {label}."
-    return f"You moved to {label}."
+        if goal_blocks_movement and agent_position != resolved.position:
+            return f"You have successfully moved next to {resolved.entity_name}."
+        return f"You moved to {resolved.entity_name}."
+    return f"You moved to {format_coordinate(*resolved.position)}."
+
+
+def format_move_arrival_passive(
+    agent_name: str,
+    resolved: ResolvedMoveTarget,
+    agent_position: tuple[int, int],
+    *,
+    goal_blocks_movement: bool,
+) -> str:
+    if resolved.entity_name:
+        if goal_blocks_movement and agent_position != resolved.position:
+            return f"{agent_name} moves next to {resolved.entity_name}."
+        return f"{agent_name} moves to {resolved.entity_name}."
+    end_label = format_coordinate(*agent_position)
+    return f"{agent_name} moves to {end_label}."
 
 
 def format_move_target_label(resolved: ResolvedMoveTarget) -> str:
@@ -91,8 +137,62 @@ def format_move_target_label(resolved: ResolvedMoveTarget) -> str:
     return format_coordinate(*resolved.position)
 
 
-def format_move_towards_message(resolved: ResolvedMoveTarget) -> str:
-    return f"You moved towards {format_move_target_label(resolved)}."
+def format_already_at_message(
+    resolved: ResolvedMoveTarget,
+    agent_position: tuple[int, int],
+    standable_goal: tuple[int, int],
+    *,
+    goal_blocks_movement: bool,
+) -> str:
+    if resolved.entity_name:
+        if goal_blocks_movement and agent_position != resolved.position:
+            return f"You are already next to {resolved.entity_name}."
+        if agent_position == resolved.position:
+            return f"You are already at {resolved.entity_name}."
+        return f"You are already next to {resolved.entity_name}."
+    if agent_position == standable_goal and standable_goal != resolved.position:
+        here = format_coordinate(*agent_position)
+        goal = format_coordinate(*resolved.position)
+        return f"You are already at {here}, as close as you can get to {goal}."
+    return f"You are already at {format_coordinate(*agent_position)}."
+
+
+def format_unreachable_message(
+    resolved: ResolvedMoveTarget,
+    goal_label: str,
+    blocker_name: str | None,
+) -> str:
+    if resolved.entity_name:
+        label = resolved.entity_name
+        if blocker_name:
+            return f"You cannot reach {label}; {blocker_name} is blocking the way."
+        return f"You cannot reach {label}; movement is fully blocked."
+    if blocker_name:
+        return (
+            f"You cannot reach {goal_label}; "
+            f"{blocker_name} is blocking the way."
+        )
+    return f"You cannot reach {goal_label}; movement is fully blocked."
+
+
+def format_move_towards_message(
+    resolved: ResolvedMoveTarget,
+    stop_position: tuple[int, int],
+    *,
+    blocker_name: str | None = None,
+) -> str:
+    label = format_move_target_label(resolved)
+    if resolved.entity_id:
+        distance = chebyshev_distance(stop_position, resolved.position)
+        message = (
+            f"You moved towards {label}; "
+            f"you are still {_step_label(distance)} away."
+        )
+        if blocker_name:
+            message = f"{message} {blocker_name} is blocking the way."
+        return message
+    stop = format_coordinate(*stop_position)
+    return f"You moved towards {label}, stopping at {stop}."
 
 
 def format_move_towards_passive(
@@ -100,9 +200,16 @@ def format_move_towards_passive(
     resolved: ResolvedMoveTarget,
     stop_position: tuple[int, int],
 ) -> str:
+    label = format_move_target_label(resolved)
+    if resolved.entity_id:
+        distance = chebyshev_distance(stop_position, resolved.position)
+        return (
+            f"{agent_name} moves towards {label}; "
+            f"still {_step_label(distance)} away."
+        )
     stop = format_coordinate(*stop_position)
     return (
-        f"{agent_name} moves towards {format_move_target_label(resolved)}, "
+        f"{agent_name} moves towards {label}, "
         f"stopping at {stop}."
     )
 

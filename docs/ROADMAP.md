@@ -366,7 +366,7 @@ See [v0.4.6-changelog.md](v0.4.6-changelog.md).
 
 **Focus:** **Lorebooks** — SillyTavern JSON import, optional `lorebook` prompt slot, realm-studio Lorebooks tab.
 
-**Status:** ✅ **Done** — tag **`v0.5.0`** when ready.
+**Status:** ✅ **Shipped** — tag **`v0.5.0`**.
 
 - `src/lorebook/` — ST import, keyword matcher, char budget
 - Session lorebook CRUD; `lorebook` slot (one book per block; not in default layout)
@@ -375,6 +375,146 @@ See [v0.4.6-changelog.md](v0.4.6-changelog.md).
 - CLI: `load-lorebook`, `lorebooks`
 
 See [v0.5.0-changelog.md](v0.5.0-changelog.md).
+
+---
+
+## V0.6.0
+
+**Focus:** **Grid simulation depth** — multi-tile objects, movement blocking, interact pathing, merged passive-vision prompt, hidden objects and triggers. Builds on V0.5.0.
+
+**Status:** 🚧 **In progress** — **0.6.0a–b** done; **0.6.0c–e** planned.
+
+**Implementation order (proposed):**
+
+| Slice | Theme | Depends on |
+|-------|--------|------------|
+| **0.6.0a** | Movement blocking + pathfinder | ✅ Done |
+| **0.6.0b** | Interact pathing (overwrites move) | ✅ Done |
+| **0.6.0c** | Merge look + interact into passive vision | 📋 Planned |
+| **0.6.0d** | Multi-tile object footprints | 📋 Planned |
+| **0.6.0e** | Hidden objects + step-aware triggers | 📋 Planned |
+
+See [v0.6.0-changelog.md](v0.6.0-changelog.md).
+
+### 0.6.0a — Movement blocking + pathfinder
+
+- **Pathfinder** — BFS/A* on grid with same 5e step rules as today (diagonal + orthogonal cost 1); replace greedy `walk_towards` for blocked routes
+- **Blocking** — per-entity `blocks_movement` (objects blocking by default; agents **non-blocking** by default so units can share tiles, D&D-friendly)
+- **Selective pass-through** — `movement_exceptions: list[str]` on blocking entities (entity ids that may pass through *this* entity’s occupied tiles)
+- Footprint v1 can stay 1×1; pathfinder API should accept tile occupancy from day one
+
+### 0.6.0b — Interact pathing (overwrites move)
+
+- Choosing **`interact`** in a compound turn **replaces** explicit movement for that turn (document in schema + few-shots; reject or ignore `move` when interact is set)
+- Out of range: path toward **nearest valid interact tile** (within `action.range`) using full `move_speed` budget, then execute interact if in range
+- Already in range: no movement
+- Failure message in-world if still out of range after pathing (“too far to …”)
+
+### 0.6.0c — Merged passive vision + interactions
+
+- **Single prompt slot** — fold `look_and_interact` into passive vision (keep alias/migration for one release)
+- Global rule: objects with **`[?]`** can be looked at for detailed description
+- Empty look state: *“There are currently no objects you have not looked at and cannot gain any new information from looking.”*
+- **Interactions indented under each object** in passive vision (not a separate block)
+- List interactions reachable **after** full move budget toward the object (consistent with interact-overwrites-move)
+- Agents still show `[?]` for examination; no fake interaction lines on agents
+
+### 0.6.0d — Multi-tile objects
+
+- Axis-aligned **footprint** (`width`, `height`, anchor at `position`) — not arbitrary shapes in v1
+- Passive vision: one line per object (document center vs footprint in range rules)
+- **Range** — Chebyshev to **nearest tile** of footprint
+- **Blocking** — all footprint tiles when `blocks_movement` is true
+- Interact adjacency uses nearest valid tile within range
+
+### 0.6.0e — Hidden objects + triggers
+
+- **`hidden`** on objects — excluded from passive vision and look lists; still in world state, snapshots, GM tooling
+- **`reveal` / `hide`** — `edit-object` (and realm-studio) toggles; optional handler-driven reveal on look/interact (hooks align with 0.6.1)
+- New action kind **`trigger`** — engine-fired (not LLM `interact`); fires when an agent **enters or passes through** trigger range (Chebyshev, same as action range)
+- Evaluate triggers on **each step** along resolved paths (move, interact-path), not only endpoint; define dedupe (e.g. once per turn per trigger)
+- Story outcomes may call `Session.emit_area_event` from handlers
+- realm-studio: GM visibility for hidden objects (ghost/list) so designers can place traps
+
+### Cross-cutting (0.6.0)
+
+- Likely **`snapshot_version: 3`** — object footprint, blocking, hidden, action kinds, handler ids (if staged early)
+- **Tests** — pathfinder fixtures, interact-path edge cases, step triggers, multi-tile range
+- **CLI** — extend `create-object` / `edit-object` for blocking, hidden, footprint (or document studio-first for some flags)
+- **Deferred within 0.6.x** — line-of-sight vision, hearing range, tag-based movement exceptions (ids only in v1)
+
+---
+
+## V0.6.1
+
+**Focus:** **Pluggable interaction handlers** — remove hardcoded effect registry from the engine; apps register world-change behavior at runtime (same sustainability goal as custom memory modules).
+
+**Status:** 📋 **Planned** — ship **after** 0.6.0 triggers so interacts and triggers share one hook story.
+
+### Engine
+
+- Remove built-in **`object_effects` registry** (`delete_self`, `random_move_self`, `move_area` as core code paths)
+- **`ObjectAction`** — `result` / `passive` templates + **`handler_id`** + opaque **`params`** (handler optional = flavor-only interact)
+- **`InteractionHandler` protocol** — `(session, agent, obj, action) -> str | None` (error message or success)
+- **`register_interaction_handler(id, handler)`** — process-wide registry (parallel to memory modules)
+- Triggers call the same handler surface as `interact` actions
+- Snapshots store handler id + params; validate on import that handlers are registered
+
+### realm-studio (reference, not a library)
+
+- Register **reference handlers** at startup: `delete_self`, `random_move_self`, `move_area` (demo ball kick, doors)
+- **Manage actions…** UI maps to handler id + params — not engine-specific effect names
+- Other apps copy this pattern; they do **not** import behavior from realm-studio
+
+### Migration
+
+- CLI `effect` on `create-object` → `handler` + params (or JSON/studio-only)
+- Default profile / demo world registers reference handlers
+- `move_area` becomes a **reference handler**, not special-cased engine code
+
+See `docs/v0.6.1-changelog.md` (create when implementation starts).
+
+---
+
+## V0.7.0
+
+**Focus:** **Platform / app SDK** — make Realm Fabric a good base for new web apps, games, and roleplay projects **without** forking realm-studio. Builds on stabilized 0.6.x simulation + handler contracts.
+
+**Status:** 📋 **Planned**
+
+### Public API (`realm_fabric`)
+
+- Export stable types: lorebooks, prompt blocks, `LorebookScanConfig`, interaction handler registration, memory module protocol
+- **`tests/test_public_api_surface.py`** — fail if documented exports drift
+- Semver policy: what breaks in `realm_fabric` vs unstable `src.*`
+
+### Documentation
+
+- **`docs/building-on-realm-fabric.md`** — session lifecycle, snapshot vs save dict, turns vs GM commands, mocking LLM in tests, engine vs client-only fields (`appearance`)
+- Document **0.6.x** pathing, interact-path, and interaction handlers for app authors
+
+### Examples
+
+- **`examples/minimal-server/`** (or `http-kit`) — thin FastAPI: snapshot, command, turn, export/import; **no grid UI**
+- realm-studio remains the **full GM reference app**, not the template every project clones
+
+### Session hosting
+
+- Document patterns for per-room / per-user / per-campaign sessions (studio today = one global in-memory session)
+- Where custom memory modules and interaction handlers are loaded (process vs session scope)
+- Persistence beyond download/upload JSON (files, DB — patterns only unless scoped)
+
+### CLI / programmatic parity
+
+- Lorebooks, prompt layout, handler registration without realm-studio — via `Session` + CLI where practical
+- Headless bots and server-only apps are first-class
+
+### Distribution
+
+- Publish **`realm-fabric` on PyPI** (or document install story)
+- Changelog section: **App developer impact** per release
+
+See `docs/v0.7.0-changelog.md` (create when implementation starts).
 
 ---
 

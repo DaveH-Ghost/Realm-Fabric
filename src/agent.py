@@ -73,3 +73,16 @@ class Agent:
     ``None`` = unlimited (teleport to target tile). Positive int = path at most that
     many steps; may stop short with a "towards" result.
     """
+
+    blocks_movement: bool = False
+    """When True, other movers cannot enter this agent's tile (unless excepted)."""
+
+    movement_exceptions: list[str] = field(default_factory=list)
+    """Entity ids allowed to pass through or stand on this agent's tile."""
+
+    is_player: bool = False
+    """
+    Human-controlled agent (realm-studio manual turns).
+
+    Same simulation rules as other agents; skips LLM when running a turn.
+  """

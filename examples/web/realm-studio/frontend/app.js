@@ -3,7 +3,7 @@
  */
 
 import { hasAppearance, resolveAppearanceUrl } from "./appearance.js";
-import { exportSession, getPrompt, getState, importSession, postTurn } from "./api.js";
+import { exportSession, getPrompt, getState, importSession, postManualTurn, postTurn } from "./api.js";
 import { initPromptLayout, reloadPromptLayoutIfOpen } from "./promptLayout.js";
 import { initAppTabs, initLorebooks, refreshLorebookList, refreshLorebookScanPanel } from "./lorebooks.js";
 import { initSettings } from "./settings.js";
@@ -31,6 +31,7 @@ import {
   bindEmitEventButton,
   bindGridContextMenu,
   initUi,
+  openPlayerTurnModal,
   renderActiveAgentSelect,
   renderActiveAreaSelect,
   showToast,
@@ -101,8 +102,18 @@ function setRunTurnTokenHint(text) {
   }
 }
 
+function activeAgentFromSnapshot(snapshot) {
+  const snap = normalizeSnapshot(snapshot ?? lastSnapshot);
+  return asArray(snap.agents).find((agent) => agent.id === snap.active_agent_id) ?? null;
+}
+
 async function refreshRunTurnTokenHint() {
   if (turnInFlight || !runTurnBtn) return;
+  const active = activeAgentFromSnapshot();
+  if (active?.is_player) {
+    setRunTurnTokenHint("Player agent — manual turn form (no LLM)");
+    return;
+  }
   const seq = ++promptTokenHintSeq;
   const agentId = resolveActiveAgentIdForPrompt();
   try {
@@ -336,28 +347,56 @@ function recordTurnResult(result) {
   }
 }
 
+async function executeTurnResult(result) {
+  if (!result.ok) {
+    showToast(result.message, true);
+    statusEl.textContent = "Turn failed";
+    return;
+  }
+  if (result.snapshot) {
+    renderState(result.snapshot);
+    updateStatusLine(result.snapshot);
+  } else {
+    await fetchState();
+  }
+  recordTurnResult(result);
+  const stepCount = Array.isArray(result.steps) ? result.steps.length : 0;
+  const suffix = stepCount ? ` (${stepCount} step${stepCount === 1 ? "" : "s"})` : "";
+  showToast(`${result.message}${suffix}`, false);
+}
+
 async function runTurn() {
   if (turnInFlight) return;
+  const active = activeAgentFromSnapshot();
+  if (active?.is_player) {
+    openPlayerTurnModal(active.name, async (compoundTurn) => {
+      if (turnInFlight) return;
+      turnInFlight = true;
+      runTurnBtn.disabled = true;
+      statusEl.textContent = "Running player turn…";
+      try {
+        const result = await postManualTurn({
+          agentId: active.id,
+          compoundTurn,
+        });
+        await executeTurnResult(result);
+      } catch (err) {
+        showToast(String(err.message || err), true);
+        statusEl.textContent = "Error";
+      } finally {
+        turnInFlight = false;
+        runTurnBtn.disabled = false;
+      }
+    });
+    return;
+  }
+
   turnInFlight = true;
   runTurnBtn.disabled = true;
   statusEl.textContent = "Running LLM turn…";
   try {
     const result = await postTurn({});
-    if (!result.ok) {
-      showToast(result.message, true);
-      statusEl.textContent = "Turn failed";
-      return;
-    }
-    if (result.snapshot) {
-      renderState(result.snapshot);
-      updateStatusLine(result.snapshot);
-    } else {
-      await fetchState();
-    }
-    recordTurnResult(result);
-    const stepCount = Array.isArray(result.steps) ? result.steps.length : 0;
-    const suffix = stepCount ? ` (${stepCount} step${stepCount === 1 ? "" : "s"})` : "";
-    showToast(`${result.message}${suffix}`, false);
+    await executeTurnResult(result);
   } catch (err) {
     showToast(String(err.message || err), true);
     statusEl.textContent = "Error";

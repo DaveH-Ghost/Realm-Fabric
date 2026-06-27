@@ -57,15 +57,16 @@ def test_resolve_move_target_unknown_id():
     assert "ERR:INVALID_TARGET" in str(exc_info.value)
 
 
-def test_move_to_object_id_teleports_to_tile():
+def test_move_to_object_id_teleports_to_adjacent_tile():
     area = create_initial_area()
     agent = area.get_agent()
+    agent.position = (0, 0)
 
     outcome = do_move(agent, area, "obj_ball_01")
 
-    assert agent.position == (2, 2)
-    assert outcome.result == "You moved to Ceramic Ball at (2, 2)."
-    assert outcome.passive_result == "Explorer moves to (2, 2)."
+    assert agent.position == (1, 1)
+    assert outcome.result == "You have successfully moved next to Ceramic Ball."
+    assert outcome.passive_result == "Explorer moves next to Ceramic Ball."
 
 
 def test_move_to_agent_id_teleports_to_tile():
@@ -80,7 +81,7 @@ def test_move_to_agent_id_teleports_to_tile():
     outcome = do_move(explorer, area, goblin.id)
 
     assert explorer.position == (0, 3)
-    assert "Goblin" in outcome.result
+    assert outcome.result == "You moved to Goblin."
     assert explorer.position == goblin.position
 
 
@@ -91,7 +92,7 @@ def test_move_to_own_agent_id_already_there():
     outcome = do_move(agent, area, agent.id)
 
     assert agent.position == (1, 1)
-    assert outcome.result == "You are already at (1, 1)."
+    assert outcome.result == "You are already at Explorer."
     assert outcome.passive_result == ""
 
 
@@ -119,6 +120,7 @@ def test_schema_accepts_entity_id_move_target():
 def test_compound_nav_phase_move_to_object_id():
     area = create_initial_area()
     agent = area.get_agent()
+    agent.position = (0, 0)
 
     steps = execute_nav_phase(
         agent,
@@ -130,7 +132,7 @@ def test_compound_nav_phase_move_to_object_id():
         ),
     )
 
-    assert agent.position == (2, 2)
+    assert agent.position == (1, 1)
     assert len(steps) == 1
     assert "Ceramic Ball" in steps[0].result
 

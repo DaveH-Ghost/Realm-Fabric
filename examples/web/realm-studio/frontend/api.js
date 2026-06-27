@@ -113,6 +113,22 @@ export async function postTurn({ agentId, includeExamples } = {}) {
   return data;
 }
 
+export async function postManualTurn({ agentId, compoundTurn } = {}) {
+  const body = { compound_turn: compoundTurn };
+  if (agentId) body.agent_id = agentId;
+
+  const res = await fetch("/api/turn/manual", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || `HTTP ${res.status}`);
+  }
+  return data;
+}
+
 export async function postEvent(text) {
   const res = await fetch("/api/event", {
     method: "POST",
@@ -221,17 +237,28 @@ export function cliQuote(value) {
   return `"${text}"`;
 }
 
-export function buildCreateObject({ name, pdesc, desc, appearance, x, y, withEat }) {
+export function buildCreateObject({
+  name,
+  pdesc,
+  desc,
+  appearance,
+  x,
+  y,
+  blocksMovement = true,
+  movementExceptions = "",
+}) {
   let line =
     `create-object name ${cliQuote(name)} pdesc ${cliQuote(pdesc)} ` +
     `desc ${cliQuote(desc)} at ${x},${y}`;
   if (appearance) {
     line += ` appearance ${cliQuote(appearance)}`;
   }
-  if (withEat) {
-    line +=
-      " action eat range 0 effect delete_self " +
-      `result ${cliQuote("You ate it.")} passive ${cliQuote("{actor} ate it.")}`;
+  if (blocksMovement === false) {
+    line += " blocks-movement false";
+  }
+  const exceptions = String(movementExceptions ?? "").trim();
+  if (blocksMovement !== false && exceptions) {
+    line += ` movement-exception ${cliQuote(exceptions)}`;
   }
   return line;
 }
@@ -273,6 +300,7 @@ export function buildCreateAgent({
   moveSpeed,
   memoryModule,
   memoryOptions = {},
+  isPlayer,
   x,
   y,
 }) {
@@ -284,6 +312,9 @@ export function buildCreateAgent({
   }
   if (moveSpeed) {
     line += ` move-speed ${moveSpeed}`;
+  }
+  if (isPlayer) {
+    line += " player true";
   }
   const moduleId = String(memoryModule ?? "").trim() || "recent_turns";
   if (moduleId !== "recent_turns") {
@@ -300,6 +331,22 @@ export function buildCreateAgent({
   return line;
 }
 
+export function buildCompoundTurnPayload(data) {
+  const action = data.action || "none";
+  const payload = {
+    reasoning: data.reasoning,
+    action,
+  };
+  if (data.move?.trim()) payload.move = data.move.trim();
+  if (data.look?.trim()) payload.look = data.look.trim();
+  if (data.say?.trim()) payload.say = data.say.trim();
+  if (action === "interact" || action === "emote") {
+    payload.target = data.target.trim();
+    payload.verb = data.verb.trim();
+  }
+  return payload;
+}
+
 export function buildEditObject({
   id,
   name,
@@ -310,12 +357,21 @@ export function buildEditObject({
   sourceAreaId,
   x,
   y,
+  blocksMovement,
+  movementExceptions,
 }) {
   const parts = [`edit-object ${id}`];
   if (name) parts.push(`name ${cliQuote(name)}`);
   if (pdesc) parts.push(`pdesc ${cliQuote(pdesc)}`);
   if (desc) parts.push(`desc ${cliQuote(desc)}`);
   if (appearance !== undefined) parts.push(`appearance ${cliQuote(appearance)}`);
+  if (blocksMovement !== undefined) {
+    parts.push(`blocks-movement ${blocksMovement ? "true" : "false"}`);
+  }
+  if (blocksMovement !== undefined) {
+    const exceptions = String(movementExceptions ?? "").trim();
+    parts.push(`movement-exception ${cliQuote(exceptions)}`);
+  }
   const targetArea = String(areaId ?? "").trim();
   const originArea = String(sourceAreaId ?? "").trim();
   if (targetArea && originArea && targetArea !== originArea) {
@@ -333,6 +389,7 @@ export function buildEditAgent({
   personality,
   appearance,
   moveSpeed,
+  isPlayer,
   areaId,
   sourceAreaId,
   x,
@@ -350,6 +407,9 @@ export function buildEditAgent({
     } else {
       parts.push(`move-speed ${moveSpeed}`);
     }
+  }
+  if (isPlayer !== undefined) {
+    parts.push(`player ${isPlayer ? "true" : "false"}`);
   }
   const targetArea = String(areaId ?? "").trim();
   const originArea = String(sourceAreaId ?? "").trim();

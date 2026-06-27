@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from src.action_outcome import ActionOutcome
-from src.actions import do_emote, do_interact, do_move, do_speak
+from src.actions import do_emote, do_interact_phases, do_move, do_speak
 from src.agent import Agent
 from src.llm.schemas import AgentCompoundTurn
 from src.memory import Memory, StepKind, TurnRecord, TurnStep
@@ -56,6 +56,8 @@ def execute_nav_phase(
     agent: Agent, area: Area, turn: AgentCompoundTurn
 ) -> list[TurnStep]:
     """Run optional move from compound turn. Commits position changes."""
+    if turn.action == "interact":
+        return []
     if not turn.move:
         return []
 
@@ -104,7 +106,7 @@ def execute_action_phase(
         )
 
     if turn.action == "interact":
-        outcome = do_interact(
+        phases = do_interact_phases(
             agent,
             area,
             turn.target or "",
@@ -112,11 +114,20 @@ def execute_action_phase(
             session=session,
             source_area_id=source_area_id,
         )
+        if phases.path_move is not None:
+            steps.append(
+                _make_step(
+                    "move",
+                    turn.reasoning,
+                    phases.path_move,
+                    target=turn.target,
+                )
+            )
         steps.append(
             _make_step(
                 "interact",
                 turn.reasoning,
-                outcome,
+                phases.outcome,
                 target=turn.target,
                 content=turn.verb,
             )

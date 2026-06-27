@@ -20,6 +20,11 @@ class TurnRequest(BaseModel):
     include_examples: bool | None = None
 
 
+class ManualTurnRequest(BaseModel):
+    agent_id: str | None = None
+    compound_turn: dict[str, object]
+
+
 class EventRequest(BaseModel):
     text: str = Field(min_length=1)
 

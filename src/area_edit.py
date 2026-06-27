@@ -130,6 +130,45 @@ def parse_move_speed(value: str) -> tuple[Optional[int], Optional[str]]:
     return speed, None
 
 
+def parse_bool_field(value: str, *, field_name: str) -> tuple[Optional[bool], Optional[str]]:
+    """Parse true/false CLI flag values."""
+    text = value.strip().lower()
+    if text in ("true", "yes", "1", "on"):
+        return True, None
+    if text in ("false", "no", "0", "off"):
+        return False, None
+    return None, f"{field_name} must be true or false (got {value!r})."
+
+
+def parse_movement_exceptions(value: str) -> list[str]:
+    """Parse comma-separated entity ids for movement_exceptions."""
+    return [part.strip() for part in value.split(",") if part.strip()]
+
+
+def _apply_movement_fields(
+    entity: Agent | Object,
+    fields: dict[str, str],
+    changes: list[str],
+) -> Optional[str]:
+    if "blocks-movement" in fields:
+        blocks, err = parse_bool_field(
+            fields["blocks-movement"], field_name="blocks-movement"
+        )
+        if err:
+            return err
+        assert blocks is not None
+        if blocks != entity.blocks_movement:
+            entity.blocks_movement = blocks
+            changes.append("blocks-movement")
+
+    if "movement-exception" in fields:
+        exceptions = parse_movement_exceptions(fields["movement-exception"])
+        if exceptions != entity.movement_exceptions:
+            entity.movement_exceptions = exceptions
+            changes.append("movement-exception")
+    return None
+
+
 def parse_field_tokens(
     tokens: list[str], allowed: set[str]
 ) -> tuple[dict[str, str], Optional[str]]:
@@ -175,9 +214,11 @@ def format_agents_list(area: Area, active_agent: Optional[Agent]) -> str:
     else:
         for agent in area.agents:
             marker = " (active)" if agent is active_agent else ""
+            player_marker = " (player)" if agent.is_player else ""
             lines.append(
                 f"  - {agent.name} ({agent.id}) at {agent.position}"
-                f" {format_memory_module_label(agent.memory.module)}{marker}"
+                f" {format_memory_module_label(agent.memory.module)}"
+                f"{player_marker}{marker}"
             )
     return "\n".join(lines)
 
@@ -291,6 +332,8 @@ def create_object_from_args(area: Area, arg: str) -> tuple[Optional[Object], str
             "dest-at",
             "result",
             "passive",
+            "blocks-movement",
+            "movement-exception",
         },
     )
     if err:
@@ -326,6 +369,9 @@ def create_object_from_args(area: Area, arg: str) -> tuple[Optional[Object], str
         actions=actions,
         appearance=appearance,
     )
+    movement_err = _apply_movement_fields(obj, fields, [])
+    if movement_err:
+        return None, movement_err
     area.add_object(obj)
     action_note = ""
     if actions:
@@ -378,7 +424,7 @@ def _apply_object_content_fields(
     object_id: str,
     fields: dict[str, str],
     changes: list[str],
-) -> None:
+) -> Optional[str]:
     if "name" in fields and fields["name"] != obj.name:
         obj.name = fields["name"]
         changes.append("name")
@@ -398,6 +444,8 @@ def _apply_object_content_fields(
         else:
             area.clear_object_examination_history(object_id)
         changes.append("desc")
+
+    return _apply_movement_fields(obj, fields, changes)
 
 
 def _apply_object_location_fields(
@@ -490,14 +538,14 @@ def edit_object_for_session(session: Session, arg: str) -> str:
 
     fields, err = parse_field_tokens(
         tokens[1:],
-        {"name", "desc", "pdesc", "appearance", "pos", "area"},
+        {"name", "desc", "pdesc", "appearance", "pos", "area", "blocks-movement", "movement-exception"},
     )
     if err:
         return err
     if not fields:
         return (
             "At least one field to change is required "
-            "(name, pdesc, desc, appearance, area, or pos)."
+            "(name, pdesc, desc, appearance, area, pos, blocks-movement, or movement-exception)."
         )
 
     changes: list[str] = []
@@ -512,7 +560,9 @@ def edit_object_for_session(session: Session, arg: str) -> str:
         current_area_id = fields["area"].strip()
     current_area = session.areas[current_area_id]
 
-    _apply_object_content_fields(current_area, obj, object_id, fields, changes)
+    content_err = _apply_object_content_fields(current_area, obj, object_id, fields, changes)
+    if content_err:
+        return content_err
 
     if not changes:
         return f"No changes applied to {object_id}."
@@ -555,14 +605,16 @@ def edit_object_from_args(area: Area, arg: str) -> str:
         if sub == "remove-action":
             return _edit_object_remove_action(obj, tokens)
 
-    fields, err = parse_field_tokens(tokens[1:], {"name", "desc", "pdesc", "appearance", "pos"})
+    fields, err = parse_field_tokens(tokens[1:], {"name", "desc", "pdesc", "appearance", "pos", "blocks-movement", "movement-exception"})
     if err:
         return err
     if not fields:
-        return "At least one field to change is required (name, pdesc, desc, appearance, or pos)."
+        return "At least one field to change is required (name, pdesc, desc, appearance, pos, blocks-movement, or movement-exception)."
 
     changes: list[str] = []
-    _apply_object_content_fields(area, obj, object_id, fields, changes)
+    content_err = _apply_object_content_fields(area, obj, object_id, fields, changes)
+    if content_err:
+        return content_err
 
     if "pos" in fields:
         position, err = parse_position(fields["pos"])
@@ -719,6 +771,9 @@ def create_agent_from_args(area: Area, arg: str) -> tuple[Optional[Agent], str]:
             "memory-summary-max",
             "memory-summary-tail",
             "at",
+            "blocks-movement",
+            "movement-exception",
+            "player",
         },
     )
     if err:
@@ -769,6 +824,15 @@ def create_agent_from_args(area: Area, arg: str) -> tuple[Optional[Agent], str]:
         memory=memory,
         last_action=None,
     )
+    movement_err = _apply_movement_fields(agent, fields, [])
+    if movement_err:
+        return None, movement_err
+    if "player" in fields:
+        is_player, player_err = parse_bool_field(fields["player"], field_name="player")
+        if player_err:
+            return None, player_err
+        assert is_player is not None
+        agent.is_player = is_player
     area.add_agent(agent)
     module_note = f" {format_memory_module_label(memory.module)}"
     return agent, (
@@ -819,7 +883,17 @@ def _apply_agent_content_fields(
         if move_speed != agent.move_speed:
             agent.move_speed = move_speed
             changes.append("move-speed")
-    return None
+
+    if "player" in fields:
+        is_player, player_err = parse_bool_field(fields["player"], field_name="player")
+        if player_err:
+            return player_err
+        assert is_player is not None
+        if is_player != agent.is_player:
+            agent.is_player = is_player
+            changes.append("player")
+
+    return _apply_movement_fields(agent, fields, changes)
 
 
 def _apply_agent_location_fields(
@@ -908,7 +982,19 @@ def edit_agent_for_session(session: Session, arg: str) -> EditAgentResult:
 
     fields, err = parse_field_tokens(
         tokens[1:],
-        {"name", "pdesc", "desc", "appearance", "personality", "move-speed", "pos", "area"},
+        {
+            "name",
+            "pdesc",
+            "desc",
+            "appearance",
+            "personality",
+            "move-speed",
+            "pos",
+            "area",
+            "blocks-movement",
+            "movement-exception",
+            "player",
+        },
     )
     if err:
         return EditAgentResult(ok=False, message=err)
@@ -917,7 +1003,7 @@ def edit_agent_for_session(session: Session, arg: str) -> EditAgentResult:
             ok=False,
             message=(
                 "At least one field to change is required "
-                "(name, pdesc, desc, appearance, personality, move-speed, area, or pos)."
+                "(name, pdesc, desc, appearance, personality, move-speed, area, pos, or player)."
             ),
         )
 
@@ -990,7 +1076,19 @@ def edit_agent_from_args(area: Area, arg: str) -> EditAgentResult:
         )
 
     fields, err = parse_field_tokens(
-        tokens[1:], {"name", "pdesc", "desc", "appearance", "personality", "move-speed", "pos"}
+        tokens[1:],
+        {
+            "name",
+            "pdesc",
+            "desc",
+            "appearance",
+            "personality",
+            "move-speed",
+            "pos",
+            "blocks-movement",
+            "movement-exception",
+            "player",
+        },
     )
     if err:
         return EditAgentResult(ok=False, message=err)
@@ -999,7 +1097,7 @@ def edit_agent_from_args(area: Area, arg: str) -> EditAgentResult:
             ok=False,
             message=(
                 "At least one field to change is required "
-                "(name, pdesc, desc, appearance, personality, move-speed, or pos)."
+                "(name, pdesc, desc, appearance, personality, move-speed, pos, or player)."
             ),
         )
 

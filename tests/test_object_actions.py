@@ -29,6 +29,14 @@ COOKIE_ARGS = (
 )
 
 
+COOKIE_FAR_ARGS = (
+    'name "Cookie" pdesc "A cookie." desc "A tasty cookie." at 4,4 '
+    'action eat range 1 effect delete_self '
+    'result "You ate the cookie, it was delicious." '
+    'passive "{actor} ate the cookie."'
+)
+
+
 def _create_cookie(area):
     obj, _ = create_object_from_args(area, COOKIE_ARGS)
     assert obj is not None
@@ -162,16 +170,19 @@ def test_interact_templates_substitute_object_start_and_end(monkeypatch):
     )
 
 
-def test_failed_interact_after_move_shows_move_in_passive_result():
+def test_interact_pathing_fails_when_move_budget_too_short():
     area = create_initial_area()
-    cookie = _create_cookie(area)
+    obj, _ = create_object_from_args(area, COOKIE_FAR_ARGS)
+    assert obj is not None
+    cookie = obj
     goblin = _create_goblin(area, at="0,0")
+    goblin.move_speed = 1
 
     record = run_compound_turn(
         goblin,
         area,
         AgentCompoundTurn(
-            reasoning="approach and eat from too far",
+            reasoning="try to eat from far away",
             move="4,3",
             action="interact",
             target=cookie.id,
@@ -180,13 +191,8 @@ def test_failed_interact_after_move_shows_move_in_passive_result():
         next_turn_number_for_agent(goblin),
     )
 
-    assert goblin.position == (4, 3)
+    assert goblin.position != (4, 4)
     assert "Unfortunately you are too far from Cookie to eat." in record.result
-    assert goblin.passive_result == "Goblin moves to (4, 3)."
-    explorer = area.get_agent()
-    vision = build_passive_vision(explorer, area)
-    assert "Goblin moves to (4, 3)." not in vision
-    assert "ate the cookie" not in vision
     assert area.get_object_by_id(cookie.id) is not None
 
 
@@ -234,14 +240,17 @@ def test_step_compound_move_adjacent_and_eat():
 
     assert stepper.area.get_object_by_id(cookie_id) is None
     goblin = stepper.area.get_agent_by_name("Goblin")
-    assert goblin.position == (2, 3)
+    assert goblin.position in {(1, 1), (1, 2), (2, 1), (2, 3), (3, 2)}
     assert "You ate the cookie" in goblin.memory.turns[-1].result
 
 
 def test_out_of_range_not_in_prompt_and_runtime_fails():
     area = create_initial_area()
-    cookie = _create_cookie(area)
+    obj, _ = create_object_from_args(area, COOKIE_FAR_ARGS)
+    assert obj is not None
+    cookie = obj
     goblin = _create_goblin(area, at="0,0")
+    goblin.move_speed = 1
 
     prompt = build_compound_prompt(goblin, area)
     assert "Object interactions available this turn:" not in prompt

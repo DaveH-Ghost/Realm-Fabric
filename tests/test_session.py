@@ -159,7 +159,7 @@ def test_web_handler_flow_create_then_turn():
     session = Session.from_default()
 
     create = session.run_command(
-        'create-object name "Cookie" pdesc "A cookie." at 4,4 '
+        'create-object name "Cookie" pdesc "A cookie." at 4,4 blocks-movement false '
         'action eat range 0 effect delete_self '
         'result "You ate it." passive "{actor} ate it."'
     )

@@ -3,6 +3,7 @@
  */
 
 import {
+  buildCompoundTurnPayload,
   buildCreateAgent,
   buildCreateObject,
   buildEditAgent,
@@ -442,6 +443,25 @@ function openModal(title, fields, onSubmit, { submitLabel = "Save" } = {}) {
   modalBackdrop.classList.remove("hidden");
 }
 
+function objectMovementFields({ blocksMovement, movementExceptions }) {
+  const blocking = blocksMovement !== false;
+  return [
+    {
+      name: "blocksMovement",
+      label: "Blocks movement",
+      type: "checkbox",
+      value: blocking,
+    },
+    {
+      name: "movementExceptions",
+      label: "Movement exceptions (entity ids, comma-separated)",
+      value: movementExceptions ?? "",
+      placeholder: "agent_01, obj_door_01",
+      showWhen: { field: "blocksMovement", values: ["true"] },
+    },
+  ];
+}
+
 function openCreateObjectModal(x, y) {
   openModal("Create object", [
     { name: "name", label: "Name", value: "New Object", required: true },
@@ -455,7 +475,7 @@ function openCreateObjectModal(x, y) {
     },
     { name: "x", label: "X", value: String(x), type: "number", required: true },
     { name: "y", label: "Y", value: String(y), type: "number", required: true },
-    { name: "withEat", label: "Add eat action (same tile)", type: "checkbox", value: false },
+    ...objectMovementFields({ blocksMovement: true, movementExceptions: "" }),
   ], async (data) => {
     const line = buildCreateObject({
       name: data.name,
@@ -464,7 +484,8 @@ function openCreateObjectModal(x, y) {
       appearance: data.appearance,
       x: data.x,
       y: data.y,
-      withEat: data.withEat,
+      blocksMovement: data.blocksMovement,
+      movementExceptions: data.movementExceptions,
     });
     const result = await postCommand(line);
     if (!result.ok) throw new Error(result.message);
@@ -532,6 +553,13 @@ function openCreateAgentModal(x, y) {
         placeholder: "blank = unlimited (teleport)",
         advanced: true,
       },
+      {
+        name: "isPlayer",
+        label: "Player (manual turns, no LLM)",
+        type: "checkbox",
+        value: false,
+        advanced: true,
+      },
     ];
 
     const memoryOptionFields = [];
@@ -568,6 +596,7 @@ function openCreateAgentModal(x, y) {
         moveSpeed: data.moveSpeed,
         memoryModule: data.memoryModule,
         memoryOptions,
+        isPlayer: data.isPlayer,
         x,
         y,
       });
@@ -628,6 +657,10 @@ function openEditObjectModal(entity, areaId) {
       required: true,
       location: true,
     },
+    ...objectMovementFields({
+      blocksMovement: entity.blocks_movement !== false,
+      movementExceptions: (entity.movement_exceptions || []).join(", "),
+    }),
   ], async (data) => {
     const line = buildEditObject({
       id: entity.id,
@@ -639,6 +672,8 @@ function openEditObjectModal(entity, areaId) {
       sourceAreaId: resolvedAreaId,
       x: data.x,
       y: data.y,
+      blocksMovement: data.blocksMovement,
+      movementExceptions: data.blocksMovement ? data.movementExceptions : "",
     });
     const result = await postCommand(line);
     if (!result.ok) throw new Error(result.message);
@@ -686,6 +721,12 @@ function openEditAgentModal(entity, areaId) {
       placeholder: "blank = unlimited (teleport)",
     },
     {
+      name: "isPlayer",
+      label: "Player (manual turns, no LLM)",
+      type: "checkbox",
+      value: Boolean(entity.is_player),
+    },
+    {
       name: "memoryModule",
       label: "Memory module (set at creation)",
       type: "readonly",
@@ -724,6 +765,7 @@ function openEditAgentModal(entity, areaId) {
       personality: data.personality || undefined,
       appearance: data.appearance,
       moveSpeed: data.moveSpeed,
+      isPlayer: data.isPlayer,
       areaId: data.areaId,
       sourceAreaId: resolvedAreaId,
       x: data.x,
@@ -734,10 +776,6 @@ function openEditAgentModal(entity, areaId) {
     showToast(result.message, false);
     await onStateChanged();
   });
-}
-
-export function bindEmitEventButton(buttonEl) {
-  buttonEl.addEventListener("click", () => openEmitEventModal());
 }
 
 function openEmitEventModal() {
@@ -760,6 +798,78 @@ function openEmitEventModal() {
       await onStateChanged(result.snapshot);
     },
     { submitLabel: "Emit" },
+  );
+}
+
+export function bindEmitEventButton(buttonEl) {
+  buttonEl.addEventListener("click", () => openEmitEventModal());
+}
+
+export function openPlayerTurnModal(agentName, onSubmit) {
+  openModal(
+    `Player turn — ${agentName}`,
+    [
+      {
+        name: "reasoning",
+        label: "Reasoning",
+        value: "Manual test turn.",
+        type: "textarea",
+        rows: 2,
+        required: true,
+      },
+      {
+        name: "move",
+        label: "Move (x,y, obj_*, agent_*, or blank)",
+        value: "",
+        placeholder: "4,4",
+      },
+      {
+        name: "look",
+        label: "Look target (entity id)",
+        value: "",
+        placeholder: "obj_ball_01",
+      },
+      {
+        name: "say",
+        label: "Say (dialogue)",
+        value: "",
+        type: "textarea",
+        rows: 2,
+      },
+      {
+        name: "action",
+        label: "Turn action",
+        type: "select",
+        value: "none",
+        options: [
+          { value: "none", label: "none" },
+          { value: "interact", label: "interact" },
+          { value: "emote", label: "emote" },
+        ],
+      },
+      {
+        name: "target",
+        label: "Target (interact / emote)",
+        value: "",
+        showWhen: { field: "action", values: ["interact", "emote"] },
+      },
+      {
+        name: "verb",
+        label: "Verb / action name",
+        value: "",
+        showWhen: { field: "action", values: ["interact", "emote"] },
+      },
+    ],
+    async (data) => {
+      if (
+        (data.action === "interact" || data.action === "emote")
+        && (!data.target?.trim() || !data.verb?.trim())
+      ) {
+        throw new Error("Interact and emote turns require target and verb.");
+      }
+      await onSubmit(buildCompoundTurnPayload(data));
+    },
+    { submitLabel: "Run turn" },
   );
 }
 
@@ -828,7 +938,8 @@ export function renderActiveAgentSelect(selectEl, snapshot) {
     const opt = document.createElement("option");
     opt.value = agent.id;
     const areaTag = agent.area_id ? ` [${agent.area_id}]` : "";
-    opt.textContent = `${agent.name} (${agent.id})${areaTag}`;
+    const playerTag = agent.is_player ? " (player)" : "";
+    opt.textContent = `${agent.name} (${agent.id})${playerTag}${areaTag}`;
     if (agent.id === snap.active_agent_id) opt.selected = true;
     selectEl.appendChild(opt);
   }
