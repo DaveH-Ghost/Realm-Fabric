@@ -25,9 +25,7 @@ from src.object import Object
 from src.area import Area
 from src.area_edit import (
     create_agent_from_args,
-    create_object_from_args,
     delete_agent_by_id,
-    delete_object_by_id,
     edit_agent_for_session,
     edit_agent_from_args,
     edit_object_for_session,
@@ -37,11 +35,23 @@ from src.area_edit import (
     format_objects_list,
 )
 from src.session_area_edit import (
+    AreaMutationResult,
     create_area_from_args,
+    create_area_in_session,
     delete_area_by_id,
     edit_area_from_args,
 )
 from src.snapshot import DEFAULT_AREA_ID
+from src.object_action import ObjectAction
+from src.world_edit_api import (
+    WorldMutationResult,
+    add_object_action_to_object,
+    create_agent_in_area,
+    create_object_in_area,
+    delete_object_in_session,
+    edit_object_with_fields,
+    find_object_in_session,
+)
 
 __all__ = [
     "CommandResult",
@@ -49,6 +59,7 @@ __all__ = [
     "Session",
     "SessionResult",
     "TurnResult",
+    "WorldMutationResult",
 ]
 
 
@@ -758,52 +769,129 @@ class Session:
             return None
         return area.agents[0]
 
+    def _resolve_edit_area(self, area_id: str | None) -> tuple[Area | None, str | None]:
+        resolved = area_id or self.active_area_id
+        area = self.areas.get(resolved)
+        if area is None:
+            return None, f"Unknown area {resolved!r}."
+        return area, None
+
     # ------------------------------------------------------------------
-    # Internal — command handlers
+    # Typed world-editing API (V0.7.0)
     # ------------------------------------------------------------------
 
-    def _cmd_create_object(self, arg: str) -> CommandResult:
-        _obj, message = create_object_from_args(self.area, arg)
-        ok = message.startswith("Created object")
-        return CommandResult(ok=ok, message=message)
+    def create_object(
+        self,
+        *,
+        name: str,
+        position: tuple[int, int],
+        area_id: str | None = None,
+        description: str = "",
+        passive_description: str = "",
+        appearance: str = "",
+        width: int = 1,
+        height: int = 1,
+        blocks_movement: bool | None = None,
+        movement_exceptions: list[str] | None = None,
+        hidden: bool | None = None,
+        actions: dict[str, ObjectAction] | None = None,
+    ) -> WorldMutationResult:
+        area, err = self._resolve_edit_area(area_id)
+        if area is None:
+            return WorldMutationResult(ok=False, message=err or "Unknown area.")
+        obj, message = create_object_in_area(
+            area,
+            name=name,
+            position=position,
+            description=description,
+            passive_description=passive_description,
+            appearance=appearance,
+            width=width,
+            height=height,
+            blocks_movement=blocks_movement,
+            movement_exceptions=movement_exceptions,
+            hidden=hidden,
+            actions=actions,
+        )
+        resolved_area = area_id or self.active_area_id
+        return WorldMutationResult(
+            ok=obj is not None,
+            message=message,
+            object=obj,
+            area_id=resolved_area,
+        )
 
-    def _cmd_edit_object(self, arg: str) -> CommandResult:
-        message = edit_object_for_session(self, arg)
-        ok = not message.startswith("Error") and not message.startswith("Unknown")
-        return CommandResult(ok=ok, message=message)
-
-    def _cmd_delete_object(self, arg: str) -> CommandResult:
-        message = delete_object_by_id(self.area, arg)
-        ok = message.startswith("Deleted object")
-        return CommandResult(ok=ok, message=message)
-
-    def _cmd_create_agent(self, arg: str) -> CommandResult:
-        agent, message = create_agent_from_args(self.area, arg)
+    def create_agent(
+        self,
+        *,
+        name: str,
+        position: tuple[int, int],
+        area_id: str | None = None,
+        personality: str = "",
+        passive_description: str = "",
+        description: str = "",
+        appearance: str = "",
+        move_speed: int | None = None,
+        memory_module: str | None = None,
+        memory_window: int | None = None,
+        memory_budget: int | None = None,
+        memory_summary_interval: int | None = None,
+        memory_summary_max: int | None = None,
+        memory_summary_tail: int | None = None,
+        blocks_movement: bool | None = None,
+        movement_exceptions: list[str] | None = None,
+        is_player: bool | None = None,
+    ) -> WorldMutationResult:
+        area, err = self._resolve_edit_area(area_id)
+        if area is None:
+            return WorldMutationResult(ok=False, message=err or "Unknown area.")
+        agent, message = create_agent_in_area(
+            area,
+            name=name,
+            position=position,
+            personality=personality,
+            passive_description=passive_description,
+            description=description,
+            appearance=appearance,
+            move_speed=move_speed,
+            memory_module=memory_module,
+            memory_window=memory_window,
+            memory_budget=memory_budget,
+            memory_summary_interval=memory_summary_interval,
+            memory_summary_max=memory_summary_max,
+            memory_summary_tail=memory_summary_tail,
+            blocks_movement=blocks_movement,
+            movement_exceptions=movement_exceptions,
+            is_player=is_player,
+        )
         if agent is not None:
-            self._register_agent(agent)
-        ok = agent is not None
-        return CommandResult(ok=ok, message=message)
+            self._register_agent(agent, area_id=area_id)
+        resolved_area = area_id or self.active_area_id
+        return WorldMutationResult(
+            ok=agent is not None,
+            message=message,
+            agent=agent,
+            area_id=resolved_area,
+        )
 
-    def _cmd_edit_agent(self, arg: str) -> CommandResult:
-        result = edit_agent_for_session(self, arg)
-        if result.ok and result.agent is not None and result.old_name_lower:
-            self._rename_agent_in_index(result.old_name_lower, result.agent)
-        return CommandResult(ok=result.ok, message=result.message)
+    def delete_object(self, object_id: str) -> WorldMutationResult:
+        ok, message = delete_object_in_session(self, object_id)
+        return WorldMutationResult(ok=ok, message=message)
 
-    def _cmd_delete_agent(self, arg: str) -> CommandResult:
-        result = delete_agent_by_id(self.area, arg.strip())
+    def delete_agent(self, agent_id: str) -> WorldMutationResult:
+        result = delete_agent_by_id(self.area, agent_id.strip())
         message = result.message
         if result.ok and result.deleted_agent is not None:
             self._unregister_agent(result.deleted_agent)
             if self.active_agent_id == result.deleted_agent.id:
                 fallback = self._first_agent_in_area(self.active_area_id)
                 if fallback is None:
-                    for area_id in self.areas:
-                        fallback = self._first_agent_in_area(area_id)
+                    for aid in self.areas:
+                        fallback = self._first_agent_in_area(aid)
                         if fallback is not None:
                             break
                 if fallback is None:
-                    return CommandResult(
+                    return WorldMutationResult(
                         ok=False,
                         message=f"{message}\nNo agents remain in the session.",
                     )
@@ -813,7 +901,221 @@ class Session:
                     f"{message}\n"
                     f"Active agent: {active.name} ({active.id}) at {active.position}"
                 )
-        return CommandResult(ok=result.ok, message=message)
+        return WorldMutationResult(
+            ok=result.ok,
+            message=message,
+            agent=result.deleted_agent,
+        )
+
+    def add_object_action(
+        self, object_id: str, action: ObjectAction
+    ) -> WorldMutationResult:
+        located = find_object_in_session(self, object_id.strip())
+        if located is None:
+            return WorldMutationResult(
+                ok=False,
+                message=f"Object '{object_id}' not found. Use 'objects' or 'list' to look up ids.",
+            )
+        area_id, _area, obj = located
+        if action.name in obj.actions:
+            return WorldMutationResult(
+                ok=False,
+                message=f"Object {obj.id} already has action '{action.name}'.",
+            )
+        err = add_object_action_to_object(obj, action)
+        if err:
+            return WorldMutationResult(ok=False, message=err)
+        return WorldMutationResult(
+            ok=True,
+            message=f"Added action '{action.name}' to {obj.id}.",
+            object=obj,
+            area_id=area_id,
+        )
+
+    def remove_object_action(
+        self, object_id: str, action_name: str
+    ) -> WorldMutationResult:
+        located = find_object_in_session(self, object_id.strip())
+        if located is None:
+            return WorldMutationResult(
+                ok=False,
+                message=f"Object '{object_id}' not found. Use 'objects' or 'list' to look up ids.",
+            )
+        area_id, _area, obj = located
+        if action_name not in obj.actions:
+            return WorldMutationResult(
+                ok=False,
+                message=f"Object {obj.id} has no action '{action_name}'.",
+            )
+        del obj.actions[action_name]
+        return WorldMutationResult(
+            ok=True,
+            message=f"Removed action '{action_name}' from {obj.id}.",
+            object=obj,
+            area_id=area_id,
+        )
+
+    def edit_object(
+        self,
+        object_id: str,
+        *,
+        name: str | None = None,
+        description: str | None = None,
+        passive_description: str | None = None,
+        appearance: str | None = None,
+        position: tuple[int, int] | None = None,
+        target_area_id: str | None = None,
+        width: int | None = None,
+        height: int | None = None,
+        blocks_movement: bool | None = None,
+        movement_exceptions: list[str] | None = None,
+        hidden: bool | None = None,
+    ) -> WorldMutationResult:
+        fields: dict[str, str] = {}
+        if name is not None:
+            fields["name"] = name
+        if description is not None:
+            fields["desc"] = description
+        if passive_description is not None:
+            fields["pdesc"] = passive_description
+        if appearance is not None:
+            fields["appearance"] = appearance
+        if position is not None:
+            fields["pos"] = f"{position[0]},{position[1]}"
+        if target_area_id is not None:
+            fields["area"] = target_area_id
+        if width is not None:
+            fields["width"] = str(width)
+        if height is not None:
+            fields["height"] = str(height)
+        if blocks_movement is not None:
+            fields["blocks-movement"] = "true" if blocks_movement else "false"
+        if movement_exceptions is not None:
+            fields["movement-exception"] = ",".join(movement_exceptions)
+        if hidden is not None:
+            fields["hidden"] = "true" if hidden else "false"
+        return edit_object_with_fields(self, object_id, fields)
+
+    def create_area(
+        self,
+        area_id: str,
+        *,
+        description: str = "",
+        width: int = 5,
+        height: int = 5,
+        min_x: int = 0,
+        min_y: int = 0,
+    ) -> WorldMutationResult:
+        result = create_area_in_session(
+            self,
+            area_id,
+            description=description,
+            width=width,
+            height=height,
+            min_x=min_x,
+            min_y=min_y,
+        )
+        return WorldMutationResult(
+            ok=result.ok,
+            message=result.message,
+            area_id=result.area_id,
+        )
+
+    def _create_object_from_cli_arg(self, arg: str) -> WorldMutationResult:
+        from src.area_edit import parse_field_tokens, tokenize_args
+
+        tokens, err = tokenize_args(arg)
+        if err:
+            return WorldMutationResult(ok=False, message=err)
+        if not tokens:
+            return WorldMutationResult(
+                ok=False,
+                message=(
+                    'Usage: create-object name "..." [pdesc "..."] [desc "..."] [appearance "..."] at x,y '
+                    '[width N] [height N] '
+                    '[action NAME range N [effect EFFECT] result "..." passive "..."]'
+                ),
+            )
+        fields, err = parse_field_tokens(
+            tokens,
+            {
+                "name",
+                "desc",
+                "pdesc",
+                "appearance",
+                "at",
+                "action",
+                "range",
+                "handler",
+                "effect",
+                "dest-area",
+                "dest-at",
+                "result",
+                "passive",
+                "blocks-movement",
+                "movement-exception",
+                "width",
+                "height",
+                "hidden",
+                "kind",
+                "halt-movement",
+                "delete-after-trigger",
+                "trigger-exception",
+            },
+        )
+        if err:
+            return WorldMutationResult(ok=False, message=err)
+        from src.world_edit_api import create_object_from_fields
+
+        obj, message = create_object_from_fields(self.area, fields)
+        return WorldMutationResult(
+            ok=obj is not None,
+            message=message,
+            object=obj,
+            area_id=self.active_area_id,
+        )
+
+    def _create_agent_from_cli_arg(self, arg: str) -> WorldMutationResult:
+        agent, message = create_agent_from_args(self.area, arg)
+        if agent is not None:
+            self._register_agent(agent)
+        return WorldMutationResult(
+            ok=agent is not None,
+            message=message,
+            agent=agent,
+            area_id=self.active_area_id,
+        )
+
+    # ------------------------------------------------------------------
+    # Internal — command handlers
+    # ------------------------------------------------------------------
+
+    def _cmd_create_object(self, arg: str) -> CommandResult:
+        result = self._create_object_from_cli_arg(arg)
+        return CommandResult(ok=result.ok, message=result.message)
+
+    def _cmd_edit_object(self, arg: str) -> CommandResult:
+        message = edit_object_for_session(self, arg)
+        ok = not message.startswith("Error") and not message.startswith("Unknown")
+        return CommandResult(ok=ok, message=message)
+
+    def _cmd_delete_object(self, arg: str) -> CommandResult:
+        result = self.delete_object(arg.strip())
+        return CommandResult(ok=result.ok, message=result.message)
+
+    def _cmd_create_agent(self, arg: str) -> CommandResult:
+        result = self._create_agent_from_cli_arg(arg)
+        return CommandResult(ok=result.ok, message=result.message)
+
+    def _cmd_edit_agent(self, arg: str) -> CommandResult:
+        result = edit_agent_for_session(self, arg)
+        if result.ok and result.agent is not None and result.old_name_lower:
+            self._rename_agent_in_index(result.old_name_lower, result.agent)
+        return CommandResult(ok=result.ok, message=result.message)
+
+    def _cmd_delete_agent(self, arg: str) -> CommandResult:
+        result = self.delete_agent(arg.strip())
+        return CommandResult(ok=result.ok, message=result.message)
 
     def _cmd_objects(self, _arg: str) -> CommandResult:
         return CommandResult(ok=True, message=format_objects_list(self.area))

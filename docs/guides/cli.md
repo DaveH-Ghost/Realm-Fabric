@@ -2,6 +2,10 @@
 
 Interactive tester: `uv run realm` (or `uv run python src/main.py`). Prompt: `(realm)`.
 
+**For application development**, use the [typed Session API](building-on-realm-fabric.md) instead of assembling CLI strings in code. This reference is for **debugging and GM tooling**.
+
+See [documentation hub](../README.md).
+
 Commands are **case-insensitive**. World-editing commands do **not** consume a turn.
 
 ## Session & agents

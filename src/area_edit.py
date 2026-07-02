@@ -455,63 +455,10 @@ def create_object_from_args(area: Area, arg: str) -> tuple[Optional[Object], str
     )
     if err:
         return None, err
-    if "name" not in fields:
-        return None, "Missing required field: name"
-    if "at" not in fields:
-        return None, "Missing required field: at"
 
-    position, err = parse_position(fields["at"])
-    if err:
-        return None, err
-    assert position is not None
+    from src.world_edit_api import create_object_from_fields
 
-    if not area.is_valid_position(position):
-        return None, f"Invalid position {position}. {area.format_grid_bounds_message()}"
-
-    width, height, dim_err = _parse_footprint_dims(fields)
-    if dim_err:
-        return None, dim_err
-
-    actions, err = parse_object_action_fields(fields)
-    if err:
-        return None, err
-    assert actions is not None
-
-    desc = fields.get("desc", "")
-    pdesc = fields.get("pdesc", "")
-    appearance = fields.get("appearance", "")
-    obj_id = generate_object_id(area, fields["name"])
-    obj = Object(
-        id=obj_id,
-        name=fields["name"],
-        description=desc,
-        position=position,
-        passive_description=pdesc,
-        actions=actions,
-        appearance=appearance,
-        width=width,
-        height=height,
-    )
-    movement_err = _apply_movement_fields(obj, fields, [])
-    if movement_err:
-        return None, movement_err
-    hidden_err = _apply_hidden_fields(obj, fields, [])
-    if hidden_err:
-        return None, hidden_err
-    footprint_err = _validate_object_footprint_in_area(area, obj)
-    if footprint_err:
-        return None, footprint_err
-    area.add_object(obj)
-    action_note = ""
-    if actions:
-        action_note = f" Action(s): {', '.join(sorted(actions))}."
-    size_note = ""
-    if width != 1 or height != 1:
-        size_note = f" footprint {width}x{height}."
-    return obj, (
-        f'Created object {obj_id} "{fields["name"]}" at {position}.{size_note}{action_note} '
-        f"Use 'objects' or 'list' to see all object ids."
-    )
+    return create_object_from_fields(area, fields)
 
 
 def _edit_object_add_action(obj: Object, tokens: list[str]) -> str:
@@ -936,67 +883,10 @@ def create_agent_from_args(area: Area, arg: str) -> tuple[Optional[Agent], str]:
     )
     if err:
         return None, err
-    if "name" not in fields:
-        return None, "Missing required field: name"
-    if "at" not in fields:
-        return None, "Missing required field: at"
 
-    if agent_name_conflicts_with_commands(fields["name"]):
-        return None, reserved_agent_name_message(fields["name"])
+    from src.world_edit_api import create_agent_from_fields
 
-    if agent_name_taken(area, fields["name"]):
-        return None, f"Agent name '{fields['name']}' is already in use."
-
-    position, err = parse_position(fields["at"])
-    if err:
-        return None, err
-    assert position is not None
-
-    if not area.is_valid_position(position):
-        return None, f"Invalid position {position}. {area.format_grid_bounds_message()}"
-
-    pdesc = fields.get("pdesc", "")
-    desc = fields.get("desc", "")
-    appearance = fields.get("appearance", "")
-    personality = fields.get("personality", "")
-    move_speed: Optional[int] = None
-    if "move-speed" in fields:
-        move_speed, speed_err = parse_move_speed(fields["move-speed"])
-        if speed_err:
-            return None, speed_err
-    memory, mem_err = _build_agent_memory(fields)
-    if mem_err:
-        return None, mem_err
-    assert memory is not None
-
-    agent_id = generate_agent_id(area, fields["name"])
-    agent = Agent(
-        id=agent_id,
-        name=fields["name"],
-        personality=personality,
-        position=position,
-        passive_description=pdesc,
-        description=desc,
-        appearance=appearance,
-        move_speed=move_speed,
-        memory=memory,
-        last_action=None,
-    )
-    movement_err = _apply_movement_fields(agent, fields, [])
-    if movement_err:
-        return None, movement_err
-    if "player" in fields:
-        is_player, player_err = parse_bool_field(fields["player"], field_name="player")
-        if player_err:
-            return None, player_err
-        assert is_player is not None
-        agent.is_player = is_player
-    area.add_agent(agent)
-    module_note = f" {format_memory_module_label(memory.module)}"
-    return agent, (
-        f'Created agent {agent_id} "{fields["name"]}" at {position}.{module_note}'
-        f" Use 'agents' or 'list' to see all agent ids."
-    )
+    return create_agent_from_fields(area, fields)
 
 
 def _apply_agent_content_fields(

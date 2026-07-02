@@ -1,22 +1,19 @@
 """
-AgentActionTurn Schema - V0.2 (Design Reference)
+AgentActionTurn — HISTORICAL (V0.2 two-phase turns)
 
-Authoritative runtime: `src/llm/schemas.py`
+!!! SUPERSEDED by AgentCompoundTurn (V0.2.5+) !!!
 
-This file mirrors the action-phase schema for planning review.
-See docs/v0.2-implementation-readiness-checklist.md (Sections 2–3).
+Authoritative current schema: [AgentCompoundTurn.py](AgentCompoundTurn.py) /
+`src/llm/schemas.py`.
 
-Action phase output — always the second LLM call per agent turn.
-Prompt uses post-move passive vision + available interact list.
+This file documented the **action phase** (look / speak / interact) of the
+two-call turn model. `turn_action: "speak"` and separate `content` field are
+obsolete — use `say` and `action: "interact" | "emote" | "none"` on
+`AgentCompoundTurn`.
 
-V0.2 rules:
-- At most one look_target per turn
-- turn_action: speak | interact | none (not both speak and interact)
-- speak: content required; max 5 sentences, 500 characters
-- interact: target (object id) + action_name required
-- look visibility and interact range validated at runtime, not in Pydantic
+See [schemas/README.md](README.md).
 
-Last synced: 2026-06-05 (v0.2 prep)
+Last synced: 2026-06-05 (historical)
 """
 
 from pydantic import BaseModel, Field

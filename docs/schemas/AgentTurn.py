@@ -1,29 +1,17 @@
 """
-AgentTurn Schema - V0 / V0.1 (Design Reference)
+AgentTurn Schema — HISTORICAL (V0 / V0.1)
 
-!!! IMPORTANT !!!
+!!! SUPERSEDED — DO NOT USE FOR NEW WORK !!!
 
-This file is NO LONGER the authoritative version for new work.
+Current schema: **AgentCompoundTurn** — see [README.md](README.md) and
+`src/llm/schemas.py` / `from realm_fabric import AgentCompoundTurn`.
 
-The real V0.1 implementation lives here:
-    src/llm/schemas.py
+This file snapshots the pre-V0.2 **one-action-per-call** model (move | look | speak).
+Removed from the runtime LLM path in V0.2; fully replaced by compound turns in V0.2.5.
 
-**V0.2** replaces single-action `AgentTurn` on the LLM path with
-`AgentNavigationTurn` + `AgentActionTurn` (implemented in `src/llm/schemas.py`;
-see docs/schemas/ and v0.2-implementation-readiness-checklist.md). This file
-remains a snapshot of the pre-V0.2 one-action-per-call model.
+Kept for archaeology and links from old readiness checklists.
 
-For current runtime imports (until v0.2.0 ships), use:
-    from src.llm.schemas import AgentTurn
-
-Current V0.1 Scope (superseded by V0.2 when shipped):
-- Only three actions: move, look, speak
-- Max 5 sentences + 280 character limit for speak content
-- Pure dialogue encouraged via prompt only (no runtime emote/action detection)
-- `reasoning` limited to 400 characters (supports prompt token budget)
-- move target uses full direction strings ("north", "east", etc.)
-
-Last synced: 2026-06-05 (V0.2 prep — marked pre-V0.2; runtime still V0.1)
+Last synced: 2026-06-05 (marked historical)
 """
 
 from pydantic import BaseModel, Field, field_validator

@@ -2,7 +2,7 @@
 
 Grid-based LLM agent simulation engine: multi-area worlds, compound turns (move → look → speak → interact/emote), pluggable memory modules, and a stable `realm_fabric` library API. The `realm` CLI and [realm-studio](examples/web/realm-studio) are reference clients — apps build on the engine with their own UI and scenarios.
 
-**Current version:** **V0.6.1** (`0.6.1` in `pyproject.toml`) — pluggable interaction handlers; interacts and triggers share one handler surface. Apps register world-change behavior at runtime (reference handlers ship with CLI and realm-studio only).
+**Current version:** **V0.7.0** (`0.7.0` in `pyproject.toml`) — stable `realm_fabric` exports, typed `Session` world API, [documentation](docs/README.md), and [minimal-server](examples/minimal-server/). **0.7.1** on this repo is for engine follow-ups from the external demo; the demo itself will version from **0.1.0** in its own repository.
 
 ## Quick start
 
@@ -33,17 +33,29 @@ Open [http://127.0.0.1:8765](http://127.0.0.1:8765). See [realm-studio README](e
 from realm_fabric import Session, load_profile, AgentCompoundTurn
 
 session = Session.from_profile(load_profile("default_compound"))
+session.create_agent(name="Scout", position=(0, 0), personality="...")
+session.create_object(name="Chest", position=(2, 1), passive_description="...")
 prompt = session.build_prompt()
 result = session.run_compound_turn(AgentCompoundTurn(...))
 save_doc = session.to_save_dict()
 restored = Session.from_snapshot(save_doc)
 ```
 
+See [documentation](docs/README.md) and [minimal-server](examples/minimal-server/).
+
 ## Environment
 
 Copy [`.env.example`](.env.example) to `.env` and set `OPENROUTER_API_KEY` for LLM turns. Optional `OPENROUTER_MODEL` (default `deepseek/deepseek-v4-flash`). Manual commands work without a key.
 
 realm-studio **Settings** (gear icon) can set API key and model **in memory for the current server process only** — nothing is written to disk.
+
+## V0.7.0 highlights
+
+- **Public API** — expanded `realm_fabric` exports (lorebooks, prompt blocks, `ObjectAction`, `WorldMutationResult`, memory registration)
+- **Typed world API** — `session.create_object()`, `create_agent()`, `edit_object()`, areas, actions — no CLI strings in app code
+- **minimal-server** — thin FastAPI reference at `examples/minimal-server/`
+- **Docs** — [docs/README.md](docs/README.md)
+- **V0.7.1** — engine follow-ups from external demo (demo app **0.1.0**+ in its own repo)
 
 ## V0.6.1 highlights
 
@@ -79,7 +91,7 @@ Load SillyTavern-style `.json` lorebooks into the session (CLI `load-lorebook` o
 
 ## CLI reference
 
-Full command list, world editing, blocking, hidden objects, triggers, and compound-turn examples: [docs/cli.md](docs/cli.md).
+Full command list, world editing, blocking, hidden objects, triggers, and compound-turn examples: [docs/guides/cli.md](docs/guides/cli.md).
 
 ## Tests
 
@@ -96,16 +108,15 @@ No API key or network required — LLM calls are mocked in tests.
 
 ## Documentation
 
+Start at **[docs/README.md](docs/README.md)** — guides, API overview, and changelog index.
+
 | Doc | Topic |
 |-----|--------|
-| [V0.6.1 changelog](docs/v0.6.1-changelog.md) | Pluggable interaction handlers, snapshot v4 |
-| [V0.6.0 changelog](docs/v0.6.0-changelog.md) | Grid simulation, triggers, snapshot v3 |
-| [V0.5.0 changelog](docs/v0.5.0-changelog.md) | Lorebooks, prompt slot, Lorebooks tab |
-| [V0.4.6 changelog](docs/v0.4.6-changelog.md) | Custom memory modules, settings |
-| [V0.4.5 changelog](docs/v0.4.5-changelog.md) | Session save/load |
-| [Roadmap](docs/ROADMAP.md) | Version plans (next: V0.7.0 platform SDK) |
-| [realm-studio](examples/web/realm-studio/README.md) | Web UI, API, settings |
+| [Building on Realm-Fabric](docs/guides/building-on-realm-fabric.md) | App integration (typed API, hosting) |
+| [CLI reference](docs/guides/cli.md) | `realm` stepper commands |
+| [V0.7.0 changelog](docs/changelog/v0.7.0-changelog.md) | Platform SDK, minimal-server |
+| [Roadmap](docs/ROADMAP.md) | Version plans |
+| [realm-studio](examples/web/realm-studio/README.md) | Full GM reference UI |
 | [Long-term goals](LONG_TERM_GOALS.md) | Aspirational features |
-| [CLI reference](docs/cli.md) | `realm` stepper commands |
 
-Older changelogs: [v0.4.4](docs/v0.4.4-changelog.md), [v0.4.3](docs/v0.4.3-changelog.md), [v0.4.2](docs/v0.4.2-changelog.md), [v0.4.1](docs/v0.4.1-changelog.md), [v0.4.0](docs/v0.4.0-changelog.md).
+Older version notes: [changelog index](docs/changelog/README.md).

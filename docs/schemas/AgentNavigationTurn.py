@@ -1,21 +1,17 @@
 """
-AgentNavigationTurn Schema - V0.2 (Design Reference)
+AgentNavigationTurn — HISTORICAL (V0.2 two-phase turns)
 
-Authoritative runtime: `src/llm/schemas.py`
+!!! SUPERSEDED by AgentCompoundTurn (V0.2.5+) !!!
 
-This file mirrors the navigation-phase schema for planning review.
-See docs/v0.2-implementation-readiness-checklist.md (Section 2).
+Authoritative current schema: [AgentCompoundTurn.py](AgentCompoundTurn.py) /
+`src/llm/schemas.py`.
 
-Navigation phase output — always the first LLM call per agent turn.
-Post-move action phase uses AgentActionTurn.
+This file documented the **navigation phase** of the short-lived two-call
+turn model (navigation LLM call, then action LLM call). Not used since V0.2.5.
 
-V0.2 rules:
-- move_target: canonical "x,y" (parser also accepts "(x,y)" silently)
-- null move_target = stay in place
-- reasoning max 400 chars
-- Cardinal directions are not valid
+See [schemas/README.md](README.md) and [v0.2.5 changelog](../changelog/v0.2.5-changelog.md).
 
-Last synced: 2026-06-05 (v0.2 prep)
+Last synced: 2026-06-05 (historical)
 """
 
 from pydantic import BaseModel, Field

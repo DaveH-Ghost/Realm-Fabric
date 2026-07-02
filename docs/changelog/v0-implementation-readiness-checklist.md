@@ -1,6 +1,6 @@
 # Version 0 Implementation Readiness Checklist
 
-> **Historical document.** V0 is shipped (tag `v0`). **V0.1** (tag `v0.1.0`) and **V0.2** (tag `v0.2.0`) supersede this for current runtime — see [v0.1-implementation-readiness-checklist.md](v0.1-implementation-readiness-checklist.md), [v0.2-implementation-readiness-checklist.md](v0.2-implementation-readiness-checklist.md), and [ROADMAP.md](ROADMAP.md).
+> **Historical document.** V0 is shipped (tag `v0`). **V0.1** (tag `v0.1.0`) and **V0.2** (tag `v0.2.0`) supersede this for current runtime — see [v0.1-implementation-readiness-checklist.md](v0.1-implementation-readiness-checklist.md), [v0.2-implementation-readiness-checklist.md](v0.2-implementation-readiness-checklist.md), and [ROADMAP.md](../ROADMAP.md).
 
 **Purpose:**  
 This checklist defines everything we must design, decide, and document *before* we wrote V0 code. It remains a design reference for the original single-agent foundation.

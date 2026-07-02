@@ -98,6 +98,52 @@ def _entities_outside_bounds(area: Area, bounds: GridBounds) -> Optional[str]:
     return None
 
 
+def create_area_in_session(
+    session: Session,
+    area_id: str,
+    *,
+    description: str = "",
+    width: int = 5,
+    height: int = 5,
+    min_x: int = 0,
+    min_y: int = 0,
+    bounds: GridBounds | None = None,
+) -> AreaMutationResult:
+    """Create a new area (same rules as ``create-area`` CLI)."""
+    id_err = validate_area_id(area_id)
+    if id_err:
+        return AreaMutationResult(ok=False, message=id_err)
+    if area_id in session.areas:
+        return AreaMutationResult(ok=False, message=f"Area {area_id!r} already exists.")
+
+    if bounds is None:
+        if width < 1 or height < 1:
+            return AreaMutationResult(ok=False, message="width and height must be at least 1.")
+        bounds = GridBounds(
+            min_x=min_x,
+            min_y=min_y,
+            max_x=min_x + width - 1,
+            max_y=min_y + height - 1,
+        )
+
+    session.areas[area_id] = create_area(
+        width=bounds.width,
+        height=bounds.height,
+        min_x=bounds.min_x,
+        min_y=bounds.min_y,
+        area_description=description,
+    )
+    session.active_area_id = area_id
+    return AreaMutationResult(
+        ok=True,
+        message=(
+            f"Created area {area_id!r} ({bounds.width}x{bounds.height} grid). "
+            f"Active area: {area_id}."
+        ),
+        area_id=area_id,
+    )
+
+
 def create_area_from_args(session: Session, arg: str) -> AreaMutationResult:
     """
     ``create-area id <area_id> [desc "..."] [width N] [height N]``
@@ -137,21 +183,11 @@ def create_area_from_args(session: Session, arg: str) -> AreaMutationResult:
     assert bounds is not None
 
     description = fields.get("desc", "")
-    session.areas[area_id] = create_area(
-        width=bounds.width,
-        height=bounds.height,
-        min_x=bounds.min_x,
-        min_y=bounds.min_y,
-        area_description=description,
-    )
-    session.active_area_id = area_id
-    return AreaMutationResult(
-        ok=True,
-        message=(
-            f"Created area {area_id!r} ({bounds.width}x{bounds.height} grid). "
-            f"Active area: {area_id}."
-        ),
-        area_id=area_id,
+    return create_area_in_session(
+        session,
+        area_id,
+        description=description,
+        bounds=bounds,
     )
 
 

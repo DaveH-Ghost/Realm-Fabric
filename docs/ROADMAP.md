@@ -8,7 +8,7 @@ These plans are subject to change as we learn and discuss.
 
 ## V0.1
 
-**Status:** ✅ **Implemented** — tag `v0.1.0`; see [v0.1-implementation-readiness-checklist.md](v0.1-implementation-readiness-checklist.md).
+**Status:** ✅ **Implemented** — tag `v0.1.0`; see [v0.1-implementation-readiness-checklist.md](changelog/v0.1-implementation-readiness-checklist.md).
 
 **Focus:** Make the world dynamic with general editing tools and improved perception for changes, then add multi-agent support. Everything remains fully manual (human decides which agent acts when by typing its name, using `run` for the active agent, or using `switch` to inspect another agent without a turn). The initial world still starts with a single "Explorer" agent, ball, and sign.
 
@@ -57,7 +57,7 @@ These changes improve experimentation while keeping the core "one structured act
 
 ## V0.2
 
-**Status:** ✅ **Implemented** — tag `**v0.2.0`**; see [v0.2-implementation-readiness-checklist.md](v0.2-implementation-readiness-checklist.md).
+**Status:** ✅ **Implemented** — tag `**v0.2.0`**; see [v0.2-implementation-readiness-checklist.md](changelog/v0.2-implementation-readiness-checklist.md).
 
 **Focus:** D&D-shaped compound turns (move anywhere, then look and take one action in the same round) and the first **declarative object interact** behaviors — without the full memory subsystem (deferred to V0.2.5). Builds on V0.1 multi-agent observation and manual control.
 
@@ -102,7 +102,7 @@ These changes improve experimentation while keeping the core "one structured act
 
 ## V0.2.5
 
-**Status:** ✅ **Release-ready** — all slices **0.2.5a–g** implemented (`pyproject.toml` → `0.2.5`); tag `**v0.2.5`** pending — see [v0.2.5-changelog.md](v0.2.5-changelog.md) (includes ship checklist).
+**Status:** ✅ **Release-ready** — all slices **0.2.5a–g** implemented (`pyproject.toml` → `0.2.5`); tag `**v0.2.5`** pending — see [v0.2.5-changelog.md](changelog/v0.2.5-changelog.md) (includes ship checklist).
 
 **Focus:** Memory as a first-class subsystem — required before V0.3. **Pluggable memory modules** per agent (`recent_turns`, `salient_turns`, … via `create-agent memory`) replace a separate “tiered policy” layer — e.g. a minion can use `salient_turns` with a low budget, a PC can use `recent_turns` or a richer module later.
 
@@ -172,7 +172,7 @@ V0.2 compound turns and object interact should log in a shape that V0.2.5 can in
 
 **Focus:** **V0.3.0** — engine refactor (Session API, snapshots, GameProfile, CLI on Session). **V0.3.1** — example web project built on the engine. **V0.3.2** — realm-studio polish (GM events, appearance). **Depends on V0.2.5** (`v0.2.5`).
 
-See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e). See [v0.3.1-changelog.md](v0.3.1-changelog.md) for realm-studio (0.3.1a–f). See [v0.3.2-changelog.md](v0.3.2-changelog.md) for 0.3.2 slices. See [v0.4.0-changelog.md](v0.4.0-changelog.md) for 0.4.0 slices. See [v0.4.1-changelog.md](v0.4.1-changelog.md) for 0.4.1 slices. See [v0.4.2-changelog.md](v0.4.2-changelog.md) for 0.4.2 slices. See [v0.4.3-changelog.md](v0.4.3-changelog.md) for 0.4.3 slices.
+See [v0.3.0-changelog.md](changelog/v0.3.0-changelog.md) for slice plan (0.3.0a–e). See [v0.3.1-changelog.md](changelog/v0.3.1-changelog.md) for realm-studio (0.3.1a–f). See [v0.3.2-changelog.md](changelog/v0.3.2-changelog.md) for 0.3.2 slices. See [v0.4.0-changelog.md](changelog/v0.4.0-changelog.md) for 0.4.0 slices. See [v0.4.1-changelog.md](changelog/v0.4.1-changelog.md) for 0.4.1 slices. See [v0.4.2-changelog.md](changelog/v0.4.2-changelog.md) for 0.4.2 slices. See [v0.4.3-changelog.md](changelog/v0.4.3-changelog.md) for 0.4.3 slices.
 
 ### V0.3.0 — Engine — ✅ Implemented (`0.3.0`; superseded by **`0.4.0`**)
 
@@ -186,7 +186,7 @@ See [v0.3.0-changelog.md](v0.3.0-changelog.md) for slice plan (0.3.0a–e). See 
 
 ### V0.3.1 — Example web project — ✅ Implemented (tag **`v0.3.1`**)
 
-See [v0.3.1-changelog.md](v0.3.1-changelog.md). App path: **`examples/web/realm-studio`**.
+See [v0.3.1-changelog.md](changelog/v0.3.1-changelog.md). App path: **`examples/web/realm-studio`**.
 
 - FastAPI wraps `Session`; depends on `realm-fabric>=0.4.3` (path dep in dev)
 - Local web UI: **grid** with agents/objects; **right-click** create/edit/delete; passive vision + turn log; **Run turn**
@@ -194,7 +194,7 @@ See [v0.3.1-changelog.md](v0.3.1-changelog.md). App path: **`examples/web/realm-
 
 ### V0.3.2 — realm-studio polish (events + appearance) — ✅ Implemented (tag **`v0.3.2`**)
 
-See [v0.3.2-changelog.md](v0.3.2-changelog.md).
+See [v0.3.2-changelog.md](changelog/v0.3.2-changelog.md).
 
 - **Area-wide GM events** — `Session.emit_area_event`; memory for all agents; realm-studio **Emit event…** + **Recent events** sidebar
 - **Pannable grid viewport** — white map on black canvas (0.3.2c1)
@@ -208,7 +208,7 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 
 **Focus:** **Tactical movement** + **multi-area sessions** + **area-transfer object effects**. Builds on V0.3.2 engine + realm-studio.
 
-**Status:** ✅ **Complete** — see [v0.4.0-changelog.md](v0.4.0-changelog.md) for slices **0.4.0a–e**. Tag **`v0.4.0`** when ready.
+**Status:** ✅ **Complete** — see [v0.4.0-changelog.md](changelog/v0.4.0-changelog.md) for slices **0.4.0a–e**. Tag **`v0.4.0`** when ready.
 
 ### V0.4.0 — movement, multi-area, portals — ✅ Complete
 
@@ -251,7 +251,7 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 
 **Focus:** **LLM turn reliability** + **GM prompt layout** in realm-studio. Builds on V0.4.0.
 
-**Status:** ✅ **Complete** — see [v0.4.1-changelog.md](v0.4.1-changelog.md) for slices **0.4.1a–d** (+ **0.4.1c+**). Tag **`v0.4.1`** when ready.
+**Status:** ✅ **Complete** — see [v0.4.1-changelog.md](changelog/v0.4.1-changelog.md) for slices **0.4.1a–d** (+ **0.4.1c+**). Tag **`v0.4.1`** when ready.
 
 ### V0.4.1 — truncation + prompt blocks — ✅ Complete
 
@@ -274,7 +274,7 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 
 **Focus:** **Clearer spatial prompts** and **richer compound turns**. Builds on V0.4.1.
 
-**Status:** ✅ **Complete** — see [v0.4.2-changelog.md](v0.4.2-changelog.md) for slices **0.4.2a–e**. Tag **`v0.4.2`** when ready.
+**Status:** ✅ **Complete** — see [v0.4.2-changelog.md](changelog/v0.4.2-changelog.md) for slices **0.4.2a–e**. Tag **`v0.4.2`** when ready.
 
 ### V0.4.2 — emote + speak step + debug — ✅ Complete
 
@@ -297,7 +297,7 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 
 **Focus:** **realm-studio create-agent** + edit location UX + witness broadcast fixes. Builds on V0.4.2.
 
-**Status:** ✅ **Complete** — see [v0.4.3-changelog.md](v0.4.3-changelog.md) for slices **0.4.3a–c**. Tag **`v0.4.3`** when ready.
+**Status:** ✅ **Complete** — see [v0.4.3-changelog.md](changelog/v0.4.3-changelog.md) for slices **0.4.3a–c**. Tag **`v0.4.3`** when ready.
 
 | Slice | Theme | Status |
 |-------|--------|--------|
@@ -316,7 +316,7 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 
 **Focus:** **Prompt and schema token reduction** — shrink default compound-turn input (~966 est. tokens pre-release) before future lorebook and richer memory. Builds on V0.4.3.
 
-**Status:** ✅ **Complete** — see [v0.4.4-changelog.md](v0.4.4-changelog.md) for slices **0.4.4a–d**. Tag **`v0.4.4`** when ready.
+**Status:** ✅ **Complete** — see [v0.4.4-changelog.md](changelog/v0.4.4-changelog.md) for slices **0.4.4a–d**. Tag **`v0.4.4`** when ready.
 
 | Slice | Theme | Status |
 |-------|--------|--------|
@@ -342,7 +342,7 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 - CLI: `export-session`, `import-session`
 - realm-studio: `GET /api/session/export`, `POST /api/session/import`, header save/load icon buttons
 
-See [v0.4.5-changelog.md](v0.4.5-changelog.md).
+See [v0.4.5-changelog.md](changelog/v0.4.5-changelog.md).
 
 ---
 
@@ -358,7 +358,7 @@ See [v0.4.5-changelog.md](v0.4.5-changelog.md).
 - realm-studio: settings modal (LLM key/model in-memory, module upload); loaded-only create-agent catalog
 - Per-request `OPENROUTER_MODEL`; fresh root README + [cli.md](cli.md)
 
-See [v0.4.6-changelog.md](v0.4.6-changelog.md).
+See [v0.4.6-changelog.md](changelog/v0.4.6-changelog.md).
 
 ---
 
@@ -374,7 +374,7 @@ See [v0.4.6-changelog.md](v0.4.6-changelog.md).
 - realm-studio: Main | Lorebooks tabs; load/edit entries; prompt layout book picker
 - CLI: `load-lorebook`, `lorebooks`
 
-See [v0.5.0-changelog.md](v0.5.0-changelog.md).
+See [v0.5.0-changelog.md](changelog/v0.5.0-changelog.md).
 
 ---
 
@@ -402,7 +402,7 @@ See [v0.5.0-changelog.md](v0.5.0-changelog.md).
 - **`private_data`** on agents/objects for custom apps (not CLI / LLM)
 - realm-studio: footprint overlay, hidden-trigger wizard, grouped modals, player agents
 
-See [v0.6.0-changelog.md](v0.6.0-changelog.md).
+See [v0.6.0-changelog.md](changelog/v0.6.0-changelog.md).
 
 ### Historical slice notes (0.6.0a–e)
 
@@ -464,7 +464,7 @@ See [v0.6.0-changelog.md](v0.6.0-changelog.md).
 
 **Focus:** **Pluggable interaction handlers** — remove hardcoded effect registry from the engine; apps register world-change behavior at runtime (same sustainability goal as custom memory modules).
 
-**Status:** ✅ **Shipped** — tag **`v0.6.1`**. See [v0.6.1-changelog.md](v0.6.1-changelog.md).
+**Status:** ✅ **Shipped** — tag **`v0.6.1`**. See [v0.6.1-changelog.md](changelog/v0.6.1-changelog.md).
 
 ### Engine
 
@@ -489,55 +489,111 @@ See [v0.6.0-changelog.md](v0.6.0-changelog.md).
 - Default profile / demo world registers reference handlers
 - `move_area` becomes a **reference handler**, not special-cased engine code
 
-See [v0.6.1-changelog.md](v0.6.1-changelog.md).
+See [v0.6.1-changelog.md](changelog/v0.6.1-changelog.md).
 
 ---
 
 ## V0.7.0
 
-**Focus:** **Platform / app SDK** — make Realm Fabric a good base for new web apps, games, and roleplay projects **without** forking realm-studio. Builds on stabilized 0.6.x simulation + handler contracts.
+**Focus:** **Platform / app SDK** — stable `realm_fabric` API, typed programmatic world editing, thin HTTP reference (`minimal-server`), and app-developer documentation. Builds on **V0.6.1** handler contracts.
 
-**Status:** 📋 **Planned**
+**Status:** ✅ **Implemented** — `pyproject.toml` **`0.7.0`**; tag **`v0.7.0`** pending. See [v0.7.0-changelog.md](changelog/v0.7.0-changelog.md).
+
+**Ships the runway for apps.** Integration gaps found while building the external demo ship in **0.7.1+** on this repo; the demo itself versions independently (**0.1.0**+).
+
+| Slice | Theme | Status |
+|-------|--------|--------|
+| **0.7.0a** | Expand `realm_fabric` exports + `test_public_api_surface.py` | ✅ Done |
+| **0.7.0b** | Typed `Session` world API (`create_object`, `create_agent`, areas, …) | ✅ Done |
+| **0.7.0c** | `run_command` delegates to typed API; CLI/debug contract | ✅ Done |
+| **0.7.0d** | `guides/building-on-realm-fabric.md` + session hosting patterns | ✅ Done |
+| **0.7.0e** | `examples/minimal-server/` — JSON HTTP, no grid UI | ✅ Done |
+| **0.7.0f** | Semver policy, install story, release prep | ✅ Done |
 
 ### Public API (`realm_fabric`)
 
-- Export stable types: lorebooks, prompt blocks, `LorebookScanConfig`, interaction handler registration, memory module protocol
-- **`tests/test_public_api_surface.py`** — fail if documented exports drift
-- Semver policy: what breaks in `realm_fabric` vs unstable `src.*`
+- Expanded exports: lorebooks, prompt blocks, `LorebookScanConfig`, `ObjectAction`, `WorldMutationResult`, interaction handlers, `register_memory_module_from_path`, `MemoryModule`
+- **`tests/test_public_api_surface.py`** — CI fails if documented exports drift
+- Semver policy documented in [building-on-realm-fabric.md](guides/building-on-realm-fabric.md)
+
+### Typed world editing
+
+- **`Session.create_object`**, **`create_agent`**, **`edit_object`**, **`delete_object`**, **`delete_agent`**, **`add_object_action`**, **`remove_object_action`**, **`create_area`**
+- Same validation as CLI; apps use structured arguments, not `run_command` strings
+- **`tests/test_session_world_api.py`**
+- `edit_agent` / `edit_area` typed methods — CLI only for now (optional follow-up)
 
 ### Documentation
 
-- **`docs/building-on-realm-fabric.md`** — session lifecycle, snapshot vs save dict, turns vs GM commands, mocking LLM in tests, engine vs client-only fields (`appearance`)
-- Document **0.6.x** pathing, interact-path, and interaction handlers for app authors
+- **[building-on-realm-fabric.md](guides/building-on-realm-fabric.md)** — install, session lifecycle, typed API, anti-patterns, hosting, semver
+- **0.6.x** pathing, interact-path, and interaction handlers covered for app authors
 
 ### Examples
 
-- **`examples/minimal-server/`** (or `http-kit`) — thin FastAPI: snapshot, command, turn, export/import; **no grid UI**
-- realm-studio remains the **full GM reference app**, not the template every project clones
+- **`examples/minimal-server/`** — thin FastAPI on port 8770: health, state, turn, manual turn, export/import, optional debug `/api/command`
+- Bootstrap uses **typed API only** (no CLI strings)
+- [realm-studio](../examples/web/realm-studio) remains the **full GM reference app**, not the template every project clones
 
 ### Session hosting
 
-- Document patterns for per-room / per-user / per-campaign sessions (studio today = one global in-memory session)
-- Where custom memory modules and interaction handlers are loaded (process vs session scope)
-- Persistence beyond download/upload JSON (files, DB — patterns only unless scoped)
-
-### CLI / programmatic parity
-
-- Lorebooks, prompt layout, handler registration without realm-studio — via `Session` + CLI where practical
-- Headless bots and server-only apps are first-class
+- Documented in `guides/building-on-realm-fabric.md`: per-match sessions, handler/module process scope, persistence patterns
+- realm-studio = singleton in-memory session (reference only)
 
 ### Distribution
 
-- Publish **`realm-fabric` on PyPI** (or document install story)
-- Changelog section: **App developer impact** per release
+- Install via path/git dep today; **PyPI publish** optional follow-up (packaging ready in `pyproject.toml`)
+- Changelog: **App developer impact** per release in version changelogs
 
-See `docs/v0.7.0-changelog.md` (create when implementation starts).
+### Deferred / optional
+
+- realm-studio migration off `run_command` — not required for apps; optional follow-up
+- realm-studio as separate repo — see discussion in project planning; still under `examples/web/realm-studio` today
+
+See [v0.7.0-changelog.md](changelog/v0.7.0-changelog.md).
+
+---
+
+## V0.7.1
+
+**Focus:** **Engine/SDK follow-up** while building the product-shaped demo in a **separate repository**. Tag **`v0.7.1`** on **this repo** for `realm_fabric` / `Session` fixes and small API additions discovered during demo integration — **not** for shipping the demo itself.
+
+**Status:** 📋 **Planned** — after **0.7.0** tag. See [v0.7.1-changelog.md](changelog/v0.7.1-changelog.md).
+
+### Versioning model
+
+| Artifact | Repo | Tags |
+|----------|------|------|
+| Realm-Fabric engine | This monorepo | `v0.7.0`, **`v0.7.1`**, … |
+| Product-shaped demo | Separate repo (TBD) | **`v0.1.0`**, `v0.2.0`, … |
+
+The demo depends on `realm-fabric>=0.7.0` and bumps its requirement when engine releases ship.
+
+### In scope for V0.7.1 (this repo)
+
+- Missing typed APIs, exports, or docs exposed by demo development
+- Bug fixes and `minimal-server` clarifications that help app authors
+- No requirement to complete the demo before tagging **`v0.7.1`** — tag when engine slices are ready
+
+### Sample demo (external — not V0.7.1)
+
+- **Separate repository** — name TBD (e.g. `realm-fabric-sample`); link in README when it exists
+- **`realm-fabric>=0.7.0`** via its own `pyproject.toml` (path/git/PyPI during co-development)
+- Typed `Session` API only; own handlers and small UI/CLI
+- First demo release: **`v0.1.0`** on the **demo repo**, not on Realm-Fabric
+
+Details: [v0.7.1-changelog.md](changelog/v0.7.1-changelog.md).
+
+### Out of scope
+
+- Shipping the full demo from this monorepo (`examples/` keeps `minimal-server` only)
+- realm-studio migration off `run_command` (optional)
+- Multiplayer netcode
 
 ---
 
 **Notes**
 
-- Prefer adding sections to the [V0.2.5 changelog](v0.2.5-changelog.md) or [V0.3.0 changelog](v0.3.0-changelog.md) over a readiness checklist for new versions.
+- Prefer adding sections to the [V0.2.5 changelog](changelog/v0.2.5-changelog.md) or [V0.3.0 changelog](changelog/v0.3.0-changelog.md) over a readiness checklist for new versions.
 - When a version is **implemented**, move relevant items to "Achieved" in LONG_TERM_GOALS.md and update this roadmap.
 - This document is meant to be living — edit it as plans evolve.
 

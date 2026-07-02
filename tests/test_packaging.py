@@ -15,7 +15,7 @@ def _load_pyproject() -> dict:
 
 def test_pyproject_version_is_semver():
     version = _load_pyproject()["project"]["version"]
-    assert version == "0.6.1"
+    assert version == "0.7.0"
     assert re.fullmatch(r"\d+\.\d+\.\d+", version), version
 
 
@@ -49,7 +49,9 @@ def test_realm_fabric_public_imports():
     assert rf.build_session_snapshot is not None
     assert rf.DEFAULT_AREA_ID == "room"
     assert "Session" in rf.__all__
-    assert "load_profile" in rf.__all__
+    assert rf.WorldMutationResult is not None
+    assert rf.ObjectAction is not None
+    assert "WorldMutationResult" in rf.__all__
 
 
 def test_load_profile_builtin():

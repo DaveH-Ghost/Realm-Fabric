@@ -102,7 +102,7 @@ See [examples/custom_memory/README.md](../../../examples/custom_memory/README.md
 | `POST` | `/api/command` | CLI-style command; returns **snapshot** on success |
 | `PUT` | `/api/entity-private-data` | Set `private_data` on agent/object (not CLI) |
 
-Full route list and older features: [v0.6.0-changelog](../../../docs/v0.6.0-changelog.md), [v0.4.5-changelog](../../../docs/v0.4.5-changelog.md).
+Full route list and older features: [v0.6.0-changelog](../../../docs/changelog/v0.6.0-changelog.md), [v0.4.5-changelog](../../../docs/changelog/v0.4.5-changelog.md).
 
 ## Tests
 
