@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from realm_fabric.actions.move import move as do_move
-from realm_fabric.area import Area, GridBounds
-from realm_fabric.area_edit import create_object_from_args
-from realm_fabric.llm.schemas import AgentCompoundTurn
-from realm_fabric.object import Object
-from realm_fabric.object_action import ObjectAction
-from realm_fabric.session import Session
+from campaign_rpg_engine.actions.move import move as do_move
+from campaign_rpg_engine.area import Area, GridBounds
+from campaign_rpg_engine.area_edit import create_object_from_args
+from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
+from campaign_rpg_engine.object import Object
+from campaign_rpg_engine.object_action import ObjectAction
+from campaign_rpg_engine.session import Session
 
 
 def _session_with_trap_at(position: tuple[int, int], *, halt: bool = True) -> Session:
@@ -128,7 +128,7 @@ def test_create_object_with_trigger_action_via_cli():
 
 def _area_with_walker(*, move_speed: int | None = 4) -> tuple[Area, Agent, Session]:
     area = Area(bounds=GridBounds.square(6))
-    from realm_fabric.area_edit import create_agent_from_args
+    from campaign_rpg_engine.area_edit import create_agent_from_args
 
     speed_clause = f"move-speed {move_speed}" if move_speed is not None else ""
     create_agent_from_args(

@@ -5,22 +5,22 @@ from pathlib import Path
 
 import pytest
 
-from realm_fabric.agent import Agent
-from realm_fabric.area import Area
-from realm_fabric.memory import Memory
-from realm_fabric.memory_modules.base import MemoryObserveContext, MemoryRecordContext, MemoryRenderContext, WitnessedEvent
-from realm_fabric.memory_modules.registry import export_module_state, restore_module_state
-from realm_fabric.memory_modules.rolling_summary import RollingSummaryModule
-from realm_fabric.memory_modules.salient_turns import SalientTurnsModule
-from realm_fabric.prompt_blocks import PromptBlock
-from realm_fabric.session import Session
-from realm_fabric.session_persistence import (
+from campaign_rpg_engine.agent import Agent
+from campaign_rpg_engine.area import Area
+from campaign_rpg_engine.memory import Memory
+from campaign_rpg_engine.memory_modules.base import MemoryObserveContext, MemoryRecordContext, MemoryRenderContext, WitnessedEvent
+from campaign_rpg_engine.memory_modules.registry import export_module_state, restore_module_state
+from campaign_rpg_engine.memory_modules.rolling_summary import RollingSummaryModule
+from campaign_rpg_engine.memory_modules.salient_turns import SalientTurnsModule
+from campaign_rpg_engine.prompt_blocks import PromptBlock
+from campaign_rpg_engine.session import Session
+from campaign_rpg_engine.session_persistence import (
     SNAPSHOT_VERSION,
     build_save_snapshot,
     load_session_from_snapshot,
 )
-from realm_fabric.snapshot import DEFAULT_AREA_ID
-from realm_fabric.turn_record import TurnRecord, TurnStep
+from campaign_rpg_engine.snapshot import DEFAULT_AREA_ID
+from campaign_rpg_engine.turn_record import TurnRecord, TurnStep
 
 
 def _speak_turn(turn_number: int, *, content: str = "Hi.") -> TurnRecord:
@@ -217,7 +217,7 @@ def test_unknown_profile_raises():
 
 
 def test_import_fails_when_custom_module_not_loaded():
-    from realm_fabric.memory_modules.registry import register_memory_module_from_path
+    from campaign_rpg_engine.memory_modules.registry import register_memory_module_from_path
 
     example = (
         Path(__file__).resolve().parent
@@ -235,7 +235,7 @@ def test_import_fails_when_custom_module_not_loaded():
     )
     data = build_save_snapshot(session)
 
-    from realm_fabric.memory_modules import registry
+    from campaign_rpg_engine.memory_modules import registry
 
     registry._CUSTOM_REGISTRY.clear()
     registry._CUSTOM_METADATA.clear()
@@ -249,7 +249,7 @@ def test_import_fails_when_custom_module_not_loaded():
 
 
 def test_validate_snapshot_modules_helper():
-    from realm_fabric.session_persistence import validate_snapshot_modules
+    from campaign_rpg_engine.session_persistence import validate_snapshot_modules
 
     with pytest.raises(ValueError, match="not found"):
         validate_snapshot_modules(
@@ -271,7 +271,7 @@ def test_v1_snapshot_import_has_empty_lorebooks():
 
 
 def test_lorebook_round_trip_in_v2_snapshot():
-    from realm_fabric.lorebook import load_lorebook_from_dict
+    from campaign_rpg_engine.lorebook import load_lorebook_from_dict
 
     session = Session.from_default()
     book = load_lorebook_from_dict(

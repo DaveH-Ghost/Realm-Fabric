@@ -4,10 +4,10 @@ test_simulation.py
 Compound turn simulation tests.
 """
 
-from realm_fabric.llm.prompt import build_compound_prompt
-from realm_fabric.llm.schemas import AgentCompoundTurn
-from realm_fabric.simulation import next_turn_number_for_agent, run_compound_turn
-from realm_fabric.area import create_initial_area
+from campaign_rpg_engine.llm.prompt import build_compound_prompt
+from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
+from campaign_rpg_engine.simulation import next_turn_number_for_agent, run_compound_turn
+from campaign_rpg_engine.area import create_initial_area
 
 
 def compound(**kwargs) -> AgentCompoundTurn:

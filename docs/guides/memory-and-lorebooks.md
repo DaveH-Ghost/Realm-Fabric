@@ -29,13 +29,13 @@ session.create_agent(
 ### Custom modules
 
 ```python
-from realm_fabric import register_memory_module_from_path
+from campaign_rpg_engine import register_memory_module_from_path
 
 register_memory_module_from_path("path/to/my_module.py")
 ```
 
 Module must expose `create_module(**config) -> MemoryModule`.  
-Example: [Realm-Studio fixtures/custom_memory](https://github.com/DaveH-Ghost/Realm-Studio/tree/main/fixtures/custom_memory) (upload via Settings in the GM app).
+Example: [CampAIgn-RPG-Studio fixtures/custom_memory](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio/tree/main/fixtures/custom_memory) (upload via Settings in the GM app).
 
 Saves store **`module_id` + state** — not source code. Import fails if the module is not registered.
 
@@ -48,7 +48,7 @@ See [v0.4.6 changelog](../changelog/v0.4.6-changelog.md).
 SillyTavern-style keyword / constant world-info entries loaded into the session.
 
 ```python
-from realm_fabric import load_lorebook_from_path
+from campaign_rpg_engine import load_lorebook_from_path
 
 session.load_lorebook_from_path("world.lorebook.json")
 ```
@@ -64,16 +64,16 @@ See [v0.5.0 changelog](../changelog/v0.5.0-changelog.md) and [examples/lorebook]
 Sessions render prompts from an ordered list of blocks (slots + editable sections) instead of a single template file.
 
 ```python
-from realm_fabric import default_prompt_blocks, validate_prompt_blocks
+from campaign_rpg_engine import default_prompt_blocks, validate_prompt_blocks
 
 blocks = default_prompt_blocks()
 err = session.set_prompt_blocks(blocks)
 prompt = session.build_prompt()
 ```
 
-Slot catalog and preview helpers: `prompt_block_catalog()`, `PromptBlock` type in `realm_fabric`.
+Slot catalog and preview helpers: `prompt_block_catalog()`, `PromptBlock` type in `campaign_rpg_engine`.
 
-GM editing UI lives in realm-studio; apps can set blocks programmatically or ship defaults in profiles.
+GM editing UI lives in campaign-rpg-studio; apps can set blocks programmatically or ship defaults in profiles.
 
 See [v0.4.1 changelog](../changelog/v0.4.1-changelog.md).
 

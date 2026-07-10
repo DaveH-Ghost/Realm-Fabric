@@ -1,6 +1,6 @@
 """Tests for empty lorebook creation (V0.5.0)."""
 
-from realm_fabric.lorebook.factory import allocate_lorebook_id, create_empty_lorebook
+from campaign_rpg_engine.lorebook.factory import allocate_lorebook_id, create_empty_lorebook
 
 
 def test_allocate_lorebook_id_unique():

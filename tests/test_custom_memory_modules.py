@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from realm_fabric.memory_modules.registry import (
+from campaign_rpg_engine.memory_modules.registry import (
     create_module,
     export_module_state,
     is_module_loaded,
@@ -23,7 +23,7 @@ _EXAMPLE = (
 
 @pytest.fixture(autouse=True)
 def _clear_custom_registry():
-    from realm_fabric.memory_modules import registry
+    from campaign_rpg_engine.memory_modules import registry
 
     registry._CUSTOM_REGISTRY.clear()
     registry._CUSTOM_METADATA.clear()
@@ -67,8 +67,8 @@ def test_custom_module_create_and_export_round_trip():
 
 
 def test_create_agent_memory_with_custom_module():
-    from realm_fabric.area import Area
-    from realm_fabric.area_edit import create_agent_from_args
+    from campaign_rpg_engine.area import Area
+    from campaign_rpg_engine.area_edit import create_agent_from_args
 
     register_memory_module_from_path(_EXAMPLE)
     area = Area()
@@ -81,8 +81,8 @@ def test_create_agent_memory_with_custom_module():
 
 
 def test_create_agent_rejects_unloaded_custom_module():
-    from realm_fabric.area import Area
-    from realm_fabric.area_edit import create_agent_from_args
+    from campaign_rpg_engine.area import Area
+    from campaign_rpg_engine.area_edit import create_agent_from_args
 
     area = Area()
     agent, msg = create_agent_from_args(

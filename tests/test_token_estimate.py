@@ -1,6 +1,6 @@
 """Tests for prompt token estimates (V0.4.2)."""
 
-from realm_fabric.llm.token_estimate import estimate_prompt_tokens
+from campaign_rpg_engine.llm.token_estimate import estimate_prompt_tokens
 
 
 def test_estimate_prompt_tokens_empty():

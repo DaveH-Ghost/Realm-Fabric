@@ -4,7 +4,7 @@ AgentTurn Schema — HISTORICAL (V0 / V0.1)
 !!! SUPERSEDED — DO NOT USE FOR NEW WORK !!!
 
 Current schema: **AgentCompoundTurn** — see [README.md](README.md) and
-`src/llm/schemas.py` / `from realm_fabric import AgentCompoundTurn`.
+`src/llm/schemas.py` / `from campaign_rpg_engine import AgentCompoundTurn`.
 
 This file snapshots the pre-V0.2 **one-action-per-call** model (move | look | speak).
 Removed from the runtime LLM path in V0.2; fully replaced by compound turns in V0.2.5.

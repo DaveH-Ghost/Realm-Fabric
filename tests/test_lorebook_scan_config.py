@@ -1,10 +1,10 @@
 """Lorebook scan source configuration (V0.5.0)."""
 
-from realm_fabric.agent import Agent
-from realm_fabric.area import Area
-from realm_fabric.lorebook.matcher import build_scan_corpus
-from realm_fabric.lorebook.scan_config import LorebookScanConfig, describe_scan_sources
-from realm_fabric.session import Session
+from campaign_rpg_engine.agent import Agent
+from campaign_rpg_engine.area import Area
+from campaign_rpg_engine.lorebook.matcher import build_scan_corpus
+from campaign_rpg_engine.lorebook.scan_config import LorebookScanConfig, describe_scan_sources
+from campaign_rpg_engine.session import Session
 
 
 def test_passive_vision_included_in_corpus_by_default():
@@ -62,7 +62,7 @@ def test_scan_config_round_trip_in_snapshot():
         passive_vision=True,
         memory=False,
     )
-    from realm_fabric.session_persistence import build_save_snapshot, load_session_from_snapshot
+    from campaign_rpg_engine.session_persistence import build_save_snapshot, load_session_from_snapshot
 
     snapshot = build_save_snapshot(session)
     loaded = load_session_from_snapshot(snapshot)

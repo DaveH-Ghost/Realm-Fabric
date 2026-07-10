@@ -26,10 +26,10 @@ def test_pyproject_has_no_console_scripts():
     assert "hatchling" in data["build-system"]["requires"]
 
 
-def test_hatch_builds_single_realm_fabric_package():
+def test_hatch_builds_single_campaign_rpg_engine_package():
     data = _load_pyproject()
     hatch = data["tool"]["hatch"]["build"]
-    assert hatch["packages"] == ["realm_fabric"]
+    assert hatch["packages"] == ["campaign_rpg_engine"]
     wheel = hatch["targets"]["wheel"]
     assert wheel["force-include"]["profiles"] == "profiles"
 
@@ -39,21 +39,21 @@ def test_built_wheel_contains_engine_code(tmp_path):
     import zipfile
 
     dist = ROOT / "dist"
-    wheels = sorted(dist.glob("realm_fabric-*.whl"))
+    wheels = sorted(dist.glob("campaign_rpg_engine-*.whl"))
     if not wheels:
         subprocess.run(["uv", "build"], cwd=ROOT, check=True)
-        wheels = sorted(dist.glob("realm_fabric-*.whl"))
+        wheels = sorted(dist.glob("campaign_rpg_engine-*.whl"))
     assert wheels, "expected a built wheel in dist/"
     with zipfile.ZipFile(wheels[-1]) as zf:
         names = zf.namelist()
-    assert any(n.startswith("realm_fabric/") and n.endswith(".py") for n in names)
+    assert any(n.startswith("campaign_rpg_engine/") and n.endswith(".py") for n in names)
     assert not any(n.startswith("src/") for n in names)
     assert not any(".env" in n for n in names)
 
 
-def test_realm_fabric_public_imports():
+def test_campaign_rpg_engine_public_imports():
     expected_version = _load_pyproject()["project"]["version"]
-    rf = importlib.import_module("realm_fabric")
+    rf = importlib.import_module("campaign_rpg_engine")
     assert rf.__version__ == expected_version
     assert rf.Session is not None
     assert rf.GameProfile is not None
@@ -78,7 +78,7 @@ def test_pyproject_pypi_metadata():
     assert data["authors"][0]["name"] == "DaveH-Ghost"
     assert data["authors"][0]["email"] == "davidhall.a27@gmail.com"
     assert "Homepage" in data["urls"]
-    assert "Realm-Fabric" in data["urls"]["Repository"]
+    assert "CampAIgn-RPG-Engine" in data["urls"]["Repository"]
     classifiers = data["classifiers"]
     assert any("MIT License" in c for c in classifiers)
 
@@ -92,17 +92,17 @@ def test_license_file_exists():
 
 
 def test_load_profile_builtin():
-    from realm_fabric import load_profile
+    from campaign_rpg_engine import load_profile
 
     profile = load_profile("default_compound")
     assert profile.profile_id == "default_compound"
     assert profile.schema_id == "AgentCompoundTurn"
 
 
-def test_realm_fabric_modules_have_future_annotations():
+def test_campaign_rpg_engine_modules_have_future_annotations():
     """Regression: PyPI installs on Python 3.12 need deferred annotation evaluation."""
     future = "from __future__ import annotations"
-    pkg_root = ROOT / "realm_fabric"
+    pkg_root = ROOT / "campaign_rpg_engine"
     missing = [
         path.relative_to(ROOT).as_posix()
         for path in sorted(pkg_root.rglob("*.py"))
@@ -111,14 +111,14 @@ def test_realm_fabric_modules_have_future_annotations():
     assert not missing, f"missing {future!r}: {missing}"
 
 
-def test_realm_fabric_imports_from_built_wheel(tmp_path):
+def test_campaign_rpg_engine_imports_from_built_wheel(tmp_path):
     """Smoke-test the wheel the way PyPI users install it."""
     import subprocess
     import sys
 
     expected_version = _load_pyproject()["project"]["version"]
     subprocess.run(["uv", "build"], cwd=ROOT, check=True)
-    wheels = sorted((ROOT / "dist").glob(f"realm_fabric-{expected_version}-*.whl"))
+    wheels = sorted((ROOT / "dist").glob(f"campaign_rpg_engine-{expected_version}-*.whl"))
     assert wheels, f"expected wheel for {expected_version}"
     wheel = wheels[-1]
 
@@ -137,7 +137,7 @@ def test_realm_fabric_imports_from_built_wheel(tmp_path):
         [
             str(venv_python),
             "-c",
-            "from realm_fabric import Session, __version__; "
+            "from campaign_rpg_engine import Session, __version__; "
             "assert Session is not None; print(__version__)",
         ],
         cwd=ROOT,

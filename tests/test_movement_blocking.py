@@ -1,12 +1,12 @@
 """Movement blocking and BFS pathfinding (V0.6.0a)."""
 
-from realm_fabric.actions.move import move as do_move
-from realm_fabric.area import Area, GridBounds, create_initial_area
-from realm_fabric.area_edit import create_object_from_args
-from realm_fabric.object import Object
-from realm_fabric.occupancy import is_tile_enterable, resolve_standable_goal
-from realm_fabric.pathfinding import find_path, walk_with_pathfinding
-from realm_fabric.session import Session
+from campaign_rpg_engine.actions.move import move as do_move
+from campaign_rpg_engine.area import Area, GridBounds, create_initial_area
+from campaign_rpg_engine.area_edit import create_object_from_args
+from campaign_rpg_engine.object import Object
+from campaign_rpg_engine.occupancy import is_tile_enterable, resolve_standable_goal
+from campaign_rpg_engine.pathfinding import find_path, walk_with_pathfinding
+from campaign_rpg_engine.session import Session
 
 
 def test_objects_block_by_default_agents_do_not():
@@ -32,8 +32,8 @@ def test_teleport_targets_standable_tile_not_blocking_object_center():
 
 def test_pathfinds_around_blocking_wall_object():
     area = Area(bounds=GridBounds.square(5))
-    from realm_fabric.agent import Agent
-    from realm_fabric.memory import Memory
+    from campaign_rpg_engine.agent import Agent
+    from campaign_rpg_engine.memory import Memory
 
     mover = Agent(
         id="agent_test_01",
@@ -79,7 +79,7 @@ def test_move_to_entity_stops_adjacent_to_blocking_object():
 def test_agents_can_share_tile_by_default():
     area = create_initial_area()
     agent = area.get_agent()
-    from realm_fabric.area_edit import create_agent_from_args
+    from campaign_rpg_engine.area_edit import create_agent_from_args
 
     other, _ = create_agent_from_args(
         area,

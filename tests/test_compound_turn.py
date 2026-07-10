@@ -4,18 +4,18 @@ test_compound_turn.py
 V0.2.5: compound agent turns (single LLM call schema, sequential execution).
 """
 
-from realm_fabric.compound_arg_parse import parse_compound_step_arg
-from realm_fabric.llm.prompt import build_compound_prompt
-from realm_fabric.llm.schemas import AgentCompoundTurn
-from realm_fabric.perception import build_passive_vision
-from realm_fabric.simulation import (
+from campaign_rpg_engine.compound_arg_parse import parse_compound_step_arg
+from campaign_rpg_engine.llm.prompt import build_compound_prompt
+from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
+from campaign_rpg_engine.perception import build_passive_vision
+from campaign_rpg_engine.simulation import (
     execute_action_phase,
     execute_nav_phase,
     next_turn_number_for_agent,
     run_compound_turn,
 )
-from realm_fabric.area import create_initial_area
-from realm_fabric.area_edit import create_agent_from_args
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.area_edit import create_agent_from_args
 
 
 def compound(

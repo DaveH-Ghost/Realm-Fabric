@@ -37,7 +37,7 @@ Legacy compact keys (`move`, `look`, `say`, etc.) are normalized on import. **`s
 ## NPC turn (LLM)
 
 ```python
-from realm_fabric import Session, load_profile
+from campaign_rpg_engine import Session, load_profile
 
 session = Session.from_profile(load_profile("default_compound"))
 
@@ -50,7 +50,7 @@ if not gate.ok:
 prompt = session.build_prompt(agent_id)
 
 # 3. Parse response into AgentCompoundTurn, then run
-from realm_fabric import AgentCompoundTurn
+from campaign_rpg_engine import AgentCompoundTurn
 
 compound_turn = AgentCompoundTurn.model_validate(llm_json)
 result = session.run_compound_turn(compound_turn, agent_id=agent_id)
@@ -60,7 +60,7 @@ if result.ok:
 
 **Environment:** set `OPENROUTER_API_KEY` (and optional `OPENROUTER_MODEL`) for reference LLM clients. See root [`.env.example`](../../.env.example).
 
-**Reference implementation:** [Realm-Studio `backend/turn_runner.py`](https://github.com/DaveH-Ghost/Realm-Studio/blob/main/backend/turn_runner.py).
+**Reference implementation:** [CampAIgn-RPG-Studio `backend/turn_runner.py`](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio/blob/main/backend/turn_runner.py).
 
 ---
 
@@ -92,7 +92,7 @@ compound_turn = AgentCompoundTurn(
 result = session.run_compound_turn(compound_turn, agent_id=player.id)
 ```
 
-`POST /api/turn/manual` on [Realm-Studio](https://github.com/DaveH-Ghost/Realm-Studio) accepts the same JSON under `"turn"`.
+`POST /api/turn/manual` on [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) accepts the same JSON under `"turn"`.
 
 ---
 

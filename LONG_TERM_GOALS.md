@@ -13,7 +13,7 @@ Treat this file like a trophy case. Checking something off here should feel like
 
 Concrete improvements we expect to build — not current-version scope, but not distant dreams either.
 
-- [ ] **Multiplayer / shared sessions** — Server-authoritative `Session`, rooms, auth, and multiple clients on one world (WebSocket or equivalent). V0.3.1 realm-studio stays single-player demo; V0.4 multi-area may inform snapshot shape but netcode is not current scope. See [ROADMAP.md](docs/ROADMAP.md) V0.4 for multi-area (separate from multiplayer).
+- [ ] **Multiplayer / shared sessions** — Server-authoritative `Session`, rooms, auth, and multiple clients on one world (WebSocket or equivalent). V0.3.1 campaign-rpg-studio stays single-player demo; V0.4 multi-area may inform snapshot shape but netcode is not current scope. See [ROADMAP.md](docs/ROADMAP.md) V0.4 for multi-area (separate from multiplayer).
 
 ---
 
@@ -25,15 +25,15 @@ These are still distant or unspecified. They are not committed roadmap items.
 
 ---
 
-## Out of scope (for Realm-Fabric / realm-studio)
+## Out of scope (for CampAIgn-RPG-Engine / campaign-rpg-studio)
 
-Realm-Fabric is a **simulation engine** and **library API**. [Realm-Studio](https://github.com/DaveH-Ghost/Realm-Studio) is a **reference demo** for authoring and testing — not a full game or VTT product. The following experiences are intentionally **not** built into the core project or reference studio. **Apps** built on Realm-Fabric can implement them using pluggable memory modules, interaction handlers (V0.6.1+), lorebooks, and their own UI.
+CampAIgn-RPG-Engine is a **simulation engine** and **library API**. [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) is a **reference demo** for authoring and testing — not a full game or VTT product. The following experiences are intentionally **not** built into the core project or reference studio. **Apps** built on CampAIgn-RPG-Engine can implement them using pluggable memory modules, interaction handlers (V0.6.1+), lorebooks, and their own UI.
 
 - **Multi-agent social simulation** — agents that observe each other, start targeted conversations, form relationships, and influence one another over time.  
   V0.1 shipped shared-grid multi-agent with passive vision, `look` at other agents, and observable speech/movement via `passive_result`. That is engine support only. Rich social dynamics belong in **downstream apps** with custom memory modules and app-specific prompts/rules.
 
 - **Roll20-style VTT UI** — grid with tokens, chat bubbles, full tabletop UX.  
-  realm-studio provides a minimal authoring grid and turn runner, not a player-facing VTT. Product UIs are **app scope**.
+  campaign-rpg-studio provides a minimal authoring grid and turn runner, not a player-facing VTT. Product UIs are **app scope**.
 
 - **Roll20 plugin / live game bridge** — Mod/API Scripts, chat bridge, token control in real Roll20 games.  
   Same as above: integrate via a **separate app** that talks to Roll20 and uses `Session` (or snapshots) on the side.
@@ -42,7 +42,7 @@ Realm-Fabric is a **simulation engine** and **library API**. [Realm-Studio](http
   V0.6.1 **interaction handlers** give apps a hook to run world changes from interacts and triggers; the engine does not ship agent-driven authoring or a built-in validation policy. Apps decide what agents may change.
 
 - **Rich agent cognition** — beliefs, relationships, long-term goals, emotional state, pursuing objectives over many turns instead of only reacting to the current situation.  
-  V0.2.5 shipped **pluggable memory modules** (`recent_turns`, `salient_turns`, `rolling_summary`, custom modules). Beliefs, goals, and personality depth are **app-owned**: implement in custom modules and prompts, not in the core engine or realm-studio.
+  V0.2.5 shipped **pluggable memory modules** (`recent_turns`, `salient_turns`, `rolling_summary`, custom modules). Beliefs, goals, and personality depth are **app-owned**: implement in custom modules and prompts, not in the core engine or campaign-rpg-studio.
 
 ---
 
@@ -69,10 +69,10 @@ This section is for goals that have actually been completed. When something move
   Two-phase LLM per turn (navigation then action): optional coordinate move, optional look, optional speak or object interact. `step-compound` manual parity; structured `TurnRecord.steps` for future memory ingestion. See [v0.2-implementation-readiness-checklist.md](docs/changelog/v0.2-implementation-readiness-checklist.md).
 
 - [x] **Session save/load (V0.4.5, `0.4.5`)**  
-  Full snapshot round-trip: multi-area world, objects, agents, look knowledge, all memory modules (`export_state` / `restore_state`), prompt block overrides, vision settings. CLI `export-session` / `import-session`; realm-studio save/load buttons and API. See [v0.4.5-changelog.md](docs/changelog/v0.4.5-changelog.md).
+  Full snapshot round-trip: multi-area world, objects, agents, look knowledge, all memory modules (`export_state` / `restore_state`), prompt block overrides, vision settings. CLI `export-session` / `import-session`; campaign-rpg-studio save/load buttons and API. See [v0.4.5-changelog.md](docs/changelog/v0.4.5-changelog.md).
 
 - [x] **Lorebook / world-info injection (V0.5.0, `0.5.0`)**  
-  SillyTavern JSON import, session-level lorebooks, keyword/constant matching, optional per-book `lorebook` prompt slot, realm-studio Lorebooks tab. See [v0.5.0-changelog.md](docs/changelog/v0.5.0-changelog.md).
+  SillyTavern JSON import, session-level lorebooks, keyword/constant matching, optional per-book `lorebook` prompt slot, campaign-rpg-studio Lorebooks tab. See [v0.5.0-changelog.md](docs/changelog/v0.5.0-changelog.md).
 
 - [x] **Tactical grid simulation (V0.6.0, `0.6.0`)**  
   Movement blocking, BFS pathfinding, interact pathing, merged passive-vision prompts, multi-tile footprints, hidden objects, path-step triggers, `snapshot_version: 3`. See [v0.6.0-changelog.md](docs/changelog/v0.6.0-changelog.md).

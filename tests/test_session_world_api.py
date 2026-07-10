@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from realm_fabric import ObjectAction, Session, WorldMutationResult, load_profile
+from campaign_rpg_engine import ObjectAction, Session, WorldMutationResult, load_profile
 
 
 @pytest.fixture

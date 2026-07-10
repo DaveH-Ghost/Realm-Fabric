@@ -1,15 +1,15 @@
 # Migration: 0.7.x → 1.0.0
 
-Realm-Fabric **1.0.0** is a **library-first** release. The engine ships as a single `realm_fabric` package on PyPI. The bundled `realm` CLI and `Session.run_command()` string layer are removed.
+CampAIgn-RPG-Engine **1.0.0** is a **library-first** release. The engine ships as a single `campaign_rpg_engine` package on PyPI. The bundled `realm` CLI and `Session.run_command()` string layer are removed.
 
-**Realm-Studio** (GM web app) lives in a [separate GitHub repository](https://github.com/DaveH-Ghost/Realm-Studio) and is not published to PyPI.
+**CampAIgn-RPG-Studio** (GM web app) lives in a [separate GitHub repository](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) and is not published to PyPI.
 
 ---
 
 ## Install
 
 ```powershell
-uv add "realm-fabric>=1.0.0"
+uv add "campaign-rpg-engine>=1.0.0"
 ```
 
 Pre-1.0 archive: branch `archive/0.7.x` on GitHub (tag `v0.7.2`).
@@ -22,15 +22,15 @@ Pre-1.0 archive: branch `archive/0.7.x` on GitHub (tag `v0.7.2`).
 
 | 0.7.x | 1.0.0 |
 |-------|-------|
-| `src/` tree + thin `realm_fabric` facade | Single `realm_fabric/` package at repo root |
-| `from src.session import Session` (tests/CLI) | `from realm_fabric import Session` |
-| `import realm_fabric` re-exported from `src/` | Import only `realm_fabric` in apps |
+| `src/` tree + thin `campaign_rpg_engine` facade | Single `campaign_rpg_engine/` package at repo root |
+| `from src.session import Session` (tests/CLI) | `from campaign_rpg_engine import Session` |
+| `import campaign_rpg_engine` re-exported from `src/` | Import only `campaign_rpg_engine` in apps |
 
 ### CLI removed
 
 | 0.7.x | 1.0.0 |
 |-------|-------|
-| `uv run realm` stepper | **Removed** — use Realm-Studio or your own UI |
+| `uv run realm` stepper | **Removed** — use CampAIgn-RPG-Studio or your own UI |
 | `docs/guides/cli.md` | **Removed** — see [API reference](guides/api-reference.md) |
 | `[project.scripts] realm = ...` | **Removed** from `pyproject.toml` |
 
@@ -45,41 +45,41 @@ Pre-1.0 archive: branch `archive/0.7.x` on GitHub (tag `v0.7.2`).
 | `session.run_command("list")` | `session.snapshot()` |
 | `CommandResult` | **Removed** — use `WorldMutationResult`, `SessionResult`, `TurnResult` |
 
-See [Building on Realm-Fabric](guides/building-on-realm-fabric.md) for the full typed API table.
+See [Building on CampAIgn-RPG-Engine](guides/building-on-campaign-rpg-engine.md) for the full typed API table.
 
 ### Public exports trimmed
 
-Removed from `realm_fabric.__all__` (import submodules if you own GM string dispatch):
+Removed from `campaign_rpg_engine.__all__` (import submodules if you own GM string dispatch):
 
 - `CommandResult`
-- `create_area_from_args`, `edit_area_from_args` (moved to `realm_fabric.area_edit`)
+- `create_area_from_args`, `edit_area_from_args` (moved to `campaign_rpg_engine.area_edit`)
 - `edit_agent_for_session`, `edit_object_for_session`
-- `parse_area_event_arg` (use `session.emit_area_event` or `realm_fabric.area_event`)
+- `parse_area_event_arg` (use `session.emit_area_event` or `campaign_rpg_engine.area_event`)
 
-### Realm-Studio location
+### CampAIgn-RPG-Studio location
 
 | 0.7.x | 1.0.0 |
 |-------|-------|
-| `examples/web/realm-studio/` in monorepo | [github.com/DaveH-Ghost/Realm-Studio](https://github.com/DaveH-Ghost/Realm-Studio) |
+| `examples/web/campaign-rpg-studio/` in monorepo | [github.com/DaveH-Ghost/CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) |
 
-Studio depends on `realm-fabric` from PyPI (or local editable during co-dev). It keeps stepper-style GM commands in **`backend/command_dispatch.py`**, which imports `realm_fabric.area_edit` helpers — not `Session.run_command()`.
+Studio depends on `campaign-rpg-engine` from PyPI (or local editable during co-dev). It keeps stepper-style GM commands in **`backend/command_dispatch.py`**, which imports `campaign_rpg_engine.area_edit` helpers — not `Session.run_command()`.
 
 ### Examples removed in 1.0
 
 | 0.7.x | 1.0.0 |
 |-------|-------|
-| `examples/minimal-server/` | **Removed** — use [Realm-Studio](https://github.com/DaveH-Ghost/Realm-Studio) `backend/` as HTTP reference |
-| `examples/reference_handlers/` | **Removed** — canonical copy in [Realm-Studio/reference_handlers](https://github.com/DaveH-Ghost/Realm-Studio/tree/main/reference_handlers) |
-| `examples/custom_memory/` | **Removed** — sample + upload UI in [Realm-Studio/fixtures/custom_memory](https://github.com/DaveH-Ghost/Realm-Studio/tree/main/fixtures/custom_memory) |
+| `examples/minimal-server/` | **Removed** — use [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) `backend/` as HTTP reference |
+| `examples/reference_handlers/` | **Removed** — canonical copy in [CampAIgn-RPG-Studio/reference_handlers](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio/tree/main/reference_handlers) |
+| `examples/custom_memory/` | **Removed** — sample + upload UI in [CampAIgn-RPG-Studio/fixtures/custom_memory](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio/tree/main/fixtures/custom_memory) |
 
-Use typed `Session` methods in your HTTP handlers. See [Building on Realm-Fabric](guides/building-on-realm-fabric.md).
+Use typed `Session` methods in your HTTP handlers. See [Building on CampAIgn-RPG-Engine](guides/building-on-campaign-rpg-engine.md).
 
 ---
 
 ## Migration checklist
 
-1. **Bump dependency:** `realm-fabric>=1.0.0`
-2. **Fix imports:** replace all `src.*` with `realm_fabric`
+1. **Bump dependency:** `campaign-rpg-engine>=1.0.0`
+2. **Fix imports:** replace all `src.*` with `campaign_rpg_engine`
 3. **Replace `run_command`:** map each command to typed `Session` methods (table above)
 4. **Remove CLI assumptions:** no `uv run realm` in docs or CI
 5. **Re-test saves:** `snapshot_version` 4 unchanged; `Session.from_snapshot()` API stable
@@ -100,5 +100,5 @@ Use typed `Session` methods in your HTTP handlers. See [Building on Realm-Fabric
 ## Related
 
 - [API reference](guides/api-reference.md)
-- [Building on Realm-Fabric](guides/building-on-realm-fabric.md)
+- [Building on CampAIgn-RPG-Engine](guides/building-on-campaign-rpg-engine.md)
 - [Changelog index](changelog/README.md)

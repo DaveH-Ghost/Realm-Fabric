@@ -1,10 +1,10 @@
 """Multi-area Session (V0.4.0c1)."""
 
-from realm_fabric.agent import Agent
-from realm_fabric.area import Area
-from realm_fabric.llm.schemas import AgentCompoundTurn
-from realm_fabric.session import Session
-from realm_fabric.snapshot import DEFAULT_AREA_ID, build_session_snapshot
+from campaign_rpg_engine.agent import Agent
+from campaign_rpg_engine.area import Area
+from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
+from campaign_rpg_engine.session import Session
+from campaign_rpg_engine.snapshot import DEFAULT_AREA_ID, build_session_snapshot
 
 
 def _two_area_session() -> Session:
@@ -168,7 +168,7 @@ def test_set_active_area_via_api():
 
 
 def test_edit_object_moves_between_areas():
-    from realm_fabric.area_edit import create_object_from_args, edit_object_for_session
+    from campaign_rpg_engine.area_edit import create_object_from_args, edit_object_for_session
 
     session = _two_area_session()
     obj, _ = create_object_from_args(
@@ -190,7 +190,7 @@ def test_edit_object_moves_between_areas():
 
 
 def test_edit_object_area_rejected_when_out_of_bounds():
-    from realm_fabric.area_edit import create_object_from_args, edit_object_for_session
+    from campaign_rpg_engine.area_edit import create_object_from_args, edit_object_for_session
 
     session = _two_area_session()
     obj, _ = create_object_from_args(
@@ -205,7 +205,7 @@ def test_edit_object_area_rejected_when_out_of_bounds():
 
 
 def test_edit_agent_moves_between_areas():
-    from realm_fabric.area_edit import edit_agent_for_session
+    from campaign_rpg_engine.area_edit import edit_agent_for_session
 
     session = _two_area_session()
 
@@ -220,7 +220,7 @@ def test_edit_agent_moves_between_areas():
 
 
 def test_edit_agent_area_rejected_when_out_of_bounds():
-    from realm_fabric.area_edit import edit_agent_for_session
+    from campaign_rpg_engine.area_edit import edit_agent_for_session
 
     session = _two_area_session()
 

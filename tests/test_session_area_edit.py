@@ -1,6 +1,6 @@
 """Session-level area CRUD (typed API)."""
 
-from realm_fabric.session import Session
+from campaign_rpg_engine.session import Session
 
 
 def test_create_area_command():

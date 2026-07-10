@@ -1,10 +1,10 @@
 """Area-wide GM/narrator events (V0.3.2a)."""
 
-from realm_fabric.area import create_initial_area
-from realm_fabric.area_event import DEFAULT_MAX_RECENT_AREA_EVENTS
-from realm_fabric.perception import build_passive_vision
-from realm_fabric.session import Session
-from realm_fabric.snapshot import DEFAULT_AREA_ID
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.area_event import DEFAULT_MAX_RECENT_AREA_EVENTS
+from campaign_rpg_engine.perception import build_passive_vision
+from campaign_rpg_engine.session import Session
+from campaign_rpg_engine.snapshot import DEFAULT_AREA_ID
 
 
 def test_emit_area_event_not_in_passive_vision():

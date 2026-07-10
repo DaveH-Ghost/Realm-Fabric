@@ -27,7 +27,7 @@ Handlers are **process-wide**. Register at startup before loading saves that ref
 ## Register a handler
 
 ```python
-from realm_fabric import register_interaction_handler, Session
+from campaign_rpg_engine import register_interaction_handler, Session
 
 def eat_food(session: Session, agent, obj, action) -> str | None:
     area = session.get_area_for_agent(agent)
@@ -39,14 +39,14 @@ register_interaction_handler("eat_food", eat_food, label="Consume object")
 
 Return **`None`** on success, or an **error message string** to abort the action.
 
-Reference handlers: [Realm-Studio/reference_handlers](https://github.com/DaveH-Ghost/Realm-Studio/tree/main/reference_handlers) (`delete_self`, `random_move_self`, `move_area`).
+Reference handlers: [CampAIgn-RPG-Studio/reference_handlers](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio/tree/main/reference_handlers) (`delete_self`, `random_move_self`, `move_area`).
 
 ---
 
 ## Attach actions (typed API)
 
 ```python
-from realm_fabric import ObjectAction
+from campaign_rpg_engine import ObjectAction
 
 session.create_object(name="Door", position=(2, 1), passive_description="A closed door.")
 session.add_object_action(
@@ -85,6 +85,6 @@ Triggers can emit area events, run handlers, and optionally delete the object af
 
 ## Related
 
-- [Building on Realm-Fabric](building-on-realm-fabric.md)
+- [Building on CampAIgn-RPG-Engine](building-on-campaign-rpg-engine.md)
 - [Overview](overview.md) — compound turn action phase
 - [API reference](api-reference.md) — `list_registered_handlers()`

@@ -1,8 +1,8 @@
 """Hidden objects (V0.6.0e)."""
 
-from realm_fabric.area import create_initial_area
-from realm_fabric.area_edit import create_object_from_args, edit_object_from_args
-from realm_fabric.perception import (
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.area_edit import create_object_from_args, edit_object_from_args
+from campaign_rpg_engine.perception import (
     build_passive_vision,
     get_visible_object_ids,
     perform_look,

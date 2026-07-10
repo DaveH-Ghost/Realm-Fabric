@@ -1,7 +1,7 @@
 """Sentence-aware truncation (V0.4.1a)."""
 
-from realm_fabric.llm.schemas import AgentCompoundTurn
-from realm_fabric.llm.text_truncation import (
+from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
+from campaign_rpg_engine.llm.text_truncation import (
     REASONING_MAX_CHARS,
     SPEAK_MAX_CHARS,
     count_sentences,

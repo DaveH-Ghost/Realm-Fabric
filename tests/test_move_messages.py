@@ -1,16 +1,16 @@
 """Move result messaging (V0.6.0a follow-up)."""
 
-from realm_fabric.actions.move import move as do_move
-from realm_fabric.agent import Agent
-from realm_fabric.area import Area, GridBounds
-from realm_fabric.memory import Memory
-from realm_fabric.move_target import (
+from campaign_rpg_engine.actions.move import move as do_move
+from campaign_rpg_engine.agent import Agent
+from campaign_rpg_engine.area import Area, GridBounds
+from campaign_rpg_engine.memory import Memory
+from campaign_rpg_engine.move_target import (
     ResolvedMoveTarget,
     format_move_towards_message,
     format_unreachable_message,
 )
-from realm_fabric.object import Object
-from realm_fabric.occupancy import resolve_standable_goal
+from campaign_rpg_engine.object import Object
+from campaign_rpg_engine.occupancy import resolve_standable_goal
 
 def test_partial_move_to_entity_reports_steps_away_without_coordinates():
     area = Area(bounds=GridBounds.square(5))
@@ -87,7 +87,7 @@ def test_unreachable_entity_behind_wall_partition_reports_blocker():
     assert standable is not None
     assert standable[0] > 2
 
-    from realm_fabric.pathfinding import find_path
+    from campaign_rpg_engine.pathfinding import find_path
 
     assert not find_path(mover.position, standable, area, mover.id)
 

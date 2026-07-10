@@ -3,18 +3,18 @@
 import pytest
 from pydantic import ValidationError
 
-from realm_fabric.actions.move import move as do_move
-from realm_fabric.area import create_initial_area
-from realm_fabric.area_edit import create_agent_from_args
-from realm_fabric.llm.prompt import build_compound_prompt
-from realm_fabric.llm.schemas import AgentCompoundTurn
-from realm_fabric.coordinates import CoordinateParseError
-from realm_fabric.move_target import (
+from campaign_rpg_engine.actions.move import move as do_move
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.area_edit import create_agent_from_args
+from campaign_rpg_engine.llm.prompt import build_compound_prompt
+from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
+from campaign_rpg_engine.coordinates import CoordinateParseError
+from campaign_rpg_engine.move_target import (
     MoveTargetError,
     resolve_move_target,
     validate_move_target_syntax,
 )
-from realm_fabric.simulation import execute_nav_phase
+from campaign_rpg_engine.simulation import execute_nav_phase
 
 
 def test_validate_move_target_syntax_accepts_entity_ids():

@@ -1,4 +1,4 @@
-# Realm-Fabric Roadmap
+# CampAIgn-RPG-Engine Roadmap
 
 This document outlines concrete plans for versions after V0.
 
@@ -170,9 +170,9 @@ V0.2 compound turns and object interact should log in a shape that V0.2.5 can in
 
 ## V0.3
 
-**Focus:** **V0.3.0** — engine refactor (Session API, snapshots, GameProfile, CLI on Session). **V0.3.1** — example web project built on the engine. **V0.3.2** — realm-studio polish (GM events, appearance). **Depends on V0.2.5** (`v0.2.5`).
+**Focus:** **V0.3.0** — engine refactor (Session API, snapshots, GameProfile, CLI on Session). **V0.3.1** — example web project built on the engine. **V0.3.2** — campaign-rpg-studio polish (GM events, appearance). **Depends on V0.2.5** (`v0.2.5`).
 
-See [v0.3.0-changelog.md](changelog/v0.3.0-changelog.md) for slice plan (0.3.0a–e). See [v0.3.1-changelog.md](changelog/v0.3.1-changelog.md) for realm-studio (0.3.1a–f). See [v0.3.2-changelog.md](changelog/v0.3.2-changelog.md) for 0.3.2 slices. See [v0.4.0-changelog.md](changelog/v0.4.0-changelog.md) for 0.4.0 slices. See [v0.4.1-changelog.md](changelog/v0.4.1-changelog.md) for 0.4.1 slices. See [v0.4.2-changelog.md](changelog/v0.4.2-changelog.md) for 0.4.2 slices. See [v0.4.3-changelog.md](changelog/v0.4.3-changelog.md) for 0.4.3 slices.
+See [v0.3.0-changelog.md](changelog/v0.3.0-changelog.md) for slice plan (0.3.0a–e). See [v0.3.1-changelog.md](changelog/v0.3.1-changelog.md) for campaign-rpg-studio (0.3.1a–f). See [v0.3.2-changelog.md](changelog/v0.3.2-changelog.md) for 0.3.2 slices. See [v0.4.0-changelog.md](changelog/v0.4.0-changelog.md) for 0.4.0 slices. See [v0.4.1-changelog.md](changelog/v0.4.1-changelog.md) for 0.4.1 slices. See [v0.4.2-changelog.md](changelog/v0.4.2-changelog.md) for 0.4.2 slices. See [v0.4.3-changelog.md](changelog/v0.4.3-changelog.md) for 0.4.3 slices.
 
 ### V0.3.0 — Engine — ✅ Implemented (`0.3.0`; superseded by **`0.4.0`**)
 
@@ -180,33 +180,33 @@ See [v0.3.0-changelog.md](changelog/v0.3.0-changelog.md) for slice plan (0.3.0a�
 - **JSON snapshot** — web-ready area state
 - **`GameProfile`** — prompt templates + default area factory; swappable schemas → **V0.4**
 - **CLI refactor** — `ManualStepper` delegates to `Session`
-- **`realm_fabric` package** — public imports for downstream projects
+- **`campaign_rpg_engine` package** — public imports for downstream projects
 - **`Area`** — configurable `GridBounds` + `area_description`
 - **Tests** — session, snapshot, profile, packaging, CLI parity (274 tests)
 
 ### V0.3.1 — Example web project — ✅ Implemented (tag **`v0.3.1`**)
 
-See [v0.3.1-changelog.md](changelog/v0.3.1-changelog.md). App path: **`examples/web/realm-studio`**.
+See [v0.3.1-changelog.md](changelog/v0.3.1-changelog.md). App path: **`examples/web/campaign-rpg-studio`**.
 
-- FastAPI wraps `Session`; depends on `realm-fabric>=0.4.3` (path dep in dev)
+- FastAPI wraps `Session`; depends on `campaign-rpg-engine>=0.4.3` (path dep in dev)
 - Local web UI: **grid** with agents/objects; **right-click** create/edit/delete; passive vision + turn log; **Run turn**
 - **19** FastAPI `TestClient` smoke/integration tests (V0.3.2); engine coverage stays in root pytest
 
-### V0.3.2 — realm-studio polish (events + appearance) — ✅ Implemented (tag **`v0.3.2`**)
+### V0.3.2 — campaign-rpg-studio polish (events + appearance) — ✅ Implemented (tag **`v0.3.2`**)
 
 See [v0.3.2-changelog.md](changelog/v0.3.2-changelog.md).
 
-- **Area-wide GM events** — `Session.emit_area_event`; memory for all agents; realm-studio **Emit event…** + **Recent events** sidebar
+- **Area-wide GM events** — `Session.emit_area_event`; memory for all agents; campaign-rpg-studio **Emit event…** + **Recent events** sidebar
 - **Pannable grid viewport** — white map on black canvas (0.3.2c1)
 - **`appearance`** — client-only image path on `Agent` / `Object`; token images on grid (0.3.2c2–d)
-- **Tests** — root **348** pytest; realm-studio **36** API tests
+- **Tests** — root **348** pytest; campaign-rpg-studio **36** API tests
 - **Not in 0.3.2:** multiplayer (moved to [LONG_TERM_GOALS.md](../LONG_TERM_GOALS.md))
 
 Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) remain in [LONG_TERM_GOALS.md](../LONG_TERM_GOALS.md).
 
 ## V0.4
 
-**Focus:** **Tactical movement** + **multi-area sessions** + **area-transfer object effects**. Builds on V0.3.2 engine + realm-studio.
+**Focus:** **Tactical movement** + **multi-area sessions** + **area-transfer object effects**. Builds on V0.3.2 engine + campaign-rpg-studio.
 
 **Status:** ✅ **Complete** — see [v0.4.0-changelog.md](changelog/v0.4.0-changelog.md) for slices **0.4.0a–e**. Tag **`v0.4.0`** when ready.
 
@@ -217,15 +217,15 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 | **0.4.0a** | `move_target` accepts entity id | ✅ |
 | **0.4.0b** | `move_speed` + Chebyshev pathing | ✅ |
 | **0.4.0c1** | Multi-area `Session` + snapshot | ✅ |
-| **0.4.0c2** | realm-studio area dropdown | ✅ |
+| **0.4.0c2** | campaign-rpg-studio area dropdown | ✅ |
 | **0.4.0d** | `move_area` effect + object actions UI + interact templates | ✅ |
 | **0.4.0e** | Release polish, tag **`v0.4.0`** | ✅ |
 
 - **Movement** — id or coordinate targets; `move_speed=None` preserves teleport parity
-- **Multi-area** — `Session.areas`, agent `area_id`, full snapshot v1; GM **active area** in realm-studio
-- **Connectors** — `move_area` on object actions (doors, ladders) via parameterized effects; **Manage actions…** in realm-studio
+- **Multi-area** — `Session.areas`, agent `area_id`, full snapshot v1; GM **active area** in campaign-rpg-studio
+- **Connectors** — `move_area` on object actions (doors, ladders) via parameterized effects; **Manage actions…** in campaign-rpg-studio
 - **Interact templates** — `{object_start}`, `{actor_end_area}`, etc.; **?** help in action editor
-- **Tests** — root **348** pytest; realm-studio **36** API tests
+- **Tests** — root **348** pytest; campaign-rpg-studio **36** API tests
 - **Deferred:** swappable turn schemas → **V0.5+**; multiplayer → [LONG_TERM_GOALS.md](../LONG_TERM_GOALS.md)
 
 <details>
@@ -249,7 +249,7 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 
 ## V0.4.1
 
-**Focus:** **LLM turn reliability** + **GM prompt layout** in realm-studio. Builds on V0.4.0.
+**Focus:** **LLM turn reliability** + **GM prompt layout** in campaign-rpg-studio. Builds on V0.4.0.
 
 **Status:** ✅ **Complete** — see [v0.4.1-changelog.md](changelog/v0.4.1-changelog.md) for slices **0.4.1a–d** (+ **0.4.1c+**). Tag **`v0.4.1`** when ready.
 
@@ -259,7 +259,7 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 |-------|--------|--------|
 | **0.4.1a** | Sentence-aware truncation (`reasoning` 400, speak 500); drop 5-sentence cap | ✅ |
 | **0.4.1b** | Prompt block model + session override + API | ✅ |
-| **0.4.1c** | realm-studio block-list prompt editor | ✅ |
+| **0.4.1c** | campaign-rpg-studio block-list prompt editor | ✅ |
 | **0.4.1c+** | Slot ⚙ settings, vision units, bearing, move-instruction polish | ✅ |
 | **0.4.1d** | Release polish, tag **`v0.4.1`** | ✅ |
 
@@ -288,20 +288,20 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 
 - **Compound pipeline** — move → look → speak → turn action (`interact` | `emote` | `none`)
 - **Emote** — past-tense gestures at entities or free-text targets; per-observer witness phrasing
-- **realm-studio** — input-token hover hint; **Last prompt** + **Last response** debug panels
+- **campaign-rpg-studio** — input-token hover hint; **Last prompt** + **Last response** debug panels
 - **Breaking:** `"turn_action": "speak"` and `confidence` / `emotion` fields removed from compound JSON
 
 ---
 
 ## V0.4.3
 
-**Focus:** **realm-studio create-agent** + edit location UX + witness broadcast fixes. Builds on V0.4.2.
+**Focus:** **campaign-rpg-studio create-agent** + edit location UX + witness broadcast fixes. Builds on V0.4.2.
 
 **Status:** ✅ **Complete** — see [v0.4.3-changelog.md](changelog/v0.4.3-changelog.md) for slices **0.4.3a–c**. Tag **`v0.4.3`** when ready.
 
 | Slice | Theme | Status |
 |-------|--------|--------|
-| **0.4.3a** | Memory module + options on create-agent in realm-studio | ✅ |
+| **0.4.3a** | Memory module + options on create-agent in campaign-rpg-studio | ✅ |
 | **0.4.3b** | Edit object/agent Location panel (area + position) | ✅ |
 | **0.4.3c** | Multi-step witness broadcast (speak + emote, etc.) | ✅ |
 
@@ -325,7 +325,7 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 | **0.4.4c** | Compact JSON keys (`move`, `look`, `say`, `action`, `verb`) | ✅ |
 | **0.4.4d** | Release polish, tag **`v0.4.4`** | ✅ |
 
-- **Prompt** — terse default `compound_rules`; dynamic slots unchanged; verbose rules still editable in realm-studio Prompt layout
+- **Prompt** — terse default `compound_rules`; dynamic slots unchanged; verbose rules still editable in campaign-rpg-studio Prompt layout
 - **Schema** — shorter LLM JSON keys; legacy 0.4.3 keys accepted via normalization shim
 - **Deferred:** lorebook, richer memory beyond current modules → post–V0.4.4; swappable schemas → **V0.5+**
 
@@ -333,14 +333,14 @@ Larger items (Roll20 integration, full strategy turn models, lorebooks, etc.) re
 
 ## V0.4.5
 
-**Focus:** **Session save/load** — full snapshot round-trip (world + memory + prompt blocks) + realm-studio export/import.
+**Focus:** **Session save/load** — full snapshot round-trip (world + memory + prompt blocks) + campaign-rpg-studio export/import.
 
 **Status:** ✅ **Done** — tag **`v0.4.5`** when ready.
 
 - `Session.from_snapshot()` / `Session.to_save_dict()` / `build_save_snapshot` with `snapshot_version: 1`
 - Memory modules: `export_state` / `restore_state` on all built-in modules
 - CLI: `export-session`, `import-session`
-- realm-studio: `GET /api/session/export`, `POST /api/session/import`, header save/load icon buttons
+- campaign-rpg-studio: `GET /api/session/export`, `POST /api/session/import`, header save/load icon buttons
 
 See [v0.4.5-changelog.md](changelog/v0.4.5-changelog.md).
 
@@ -348,14 +348,14 @@ See [v0.4.5-changelog.md](changelog/v0.4.5-changelog.md).
 
 ## V0.4.6
 
-**Focus:** **Custom memory modules** — runtime registration, save/load validation, realm-studio settings gear.
+**Focus:** **Custom memory modules** — runtime registration, save/load validation, campaign-rpg-studio settings gear.
 
 **Status:** ✅ **Done** — tag **`v0.4.6`** when ready.
 
 - Split built-in / custom registries; `loader.py`; CLI `add-memory-module`
 - Example `rolling_summary_custom`; contract in `examples/custom_memory/`
 - `validate_snapshot_modules` — import fails if save references unloaded `module_id`
-- realm-studio: settings modal (LLM key/model in-memory, module upload); loaded-only create-agent catalog
+- campaign-rpg-studio: settings modal (LLM key/model in-memory, module upload); loaded-only create-agent catalog
 - Per-request `OPENROUTER_MODEL`; fresh root README + [cli.md](cli.md)
 
 See [v0.4.6-changelog.md](changelog/v0.4.6-changelog.md).
@@ -364,14 +364,14 @@ See [v0.4.6-changelog.md](changelog/v0.4.6-changelog.md).
 
 ## V0.5.0
 
-**Focus:** **Lorebooks** — SillyTavern JSON import, optional `lorebook` prompt slot, realm-studio Lorebooks tab.
+**Focus:** **Lorebooks** — SillyTavern JSON import, optional `lorebook` prompt slot, campaign-rpg-studio Lorebooks tab.
 
 **Status:** ✅ **Shipped** — tag **`v0.5.0`**.
 
 - `src/lorebook/` — ST import, keyword matcher, char budget
 - Session lorebook CRUD; `lorebook` slot (one book per block; not in default layout)
 - `snapshot_version: 2` with `lorebooks` array (v1 import supported)
-- realm-studio: Main | Lorebooks tabs; load/edit entries; prompt layout book picker
+- campaign-rpg-studio: Main | Lorebooks tabs; load/edit entries; prompt layout book picker
 - CLI: `load-lorebook`, `lorebooks`
 
 See [v0.5.0-changelog.md](changelog/v0.5.0-changelog.md).
@@ -400,7 +400,7 @@ See [v0.5.0-changelog.md](changelog/v0.5.0-changelog.md).
 - Multi-tile footprints; hidden objects; `trigger` actions on path steps
 - **`snapshot_version: 3`** (v1–v2 import supported)
 - **`private_data`** on agents/objects for custom apps (not CLI / LLM)
-- realm-studio: footprint overlay, hidden-trigger wizard, grouped modals, player agents
+- campaign-rpg-studio: footprint overlay, hidden-trigger wizard, grouped modals, player agents
 
 See [v0.6.0-changelog.md](changelog/v0.6.0-changelog.md).
 
@@ -443,12 +443,12 @@ See [v0.6.0-changelog.md](changelog/v0.6.0-changelog.md).
 ### 0.6.0e — Hidden objects + triggers
 
 - **`hidden`** on objects — excluded from passive vision and look lists; still in world state, snapshots, GM tooling
-- **`reveal` / `hide`** — `edit-object` (and realm-studio) toggles; optional handler-driven reveal on look/interact (hooks align with 0.6.1)
+- **`reveal` / `hide`** — `edit-object` (and campaign-rpg-studio) toggles; optional handler-driven reveal on look/interact (hooks align with 0.6.1)
 - New action kind **`trigger`** — engine-fired (not LLM `interact`); fires when an agent **enters or passes through** trigger range (Chebyshev to **nearest footprint tile**, same as interact range)
 - **Multi-tile zones** — hidden objects with `width` / `height` (tripwires, doorway cutscene triggers); does not block movement when `blocks_movement` is false
 - Evaluate triggers on **each step** along resolved paths (move, interact-path), not only endpoint; define dedupe (e.g. once per turn per trigger)
 - Story outcomes via **`Session.emit_area_event`** from `passive_result` (handler/effect hooks deferred to **0.6.1**)
-- realm-studio: GM visibility for hidden objects (ghost/list) so designers can place traps and zones
+- campaign-rpg-studio: GM visibility for hidden objects (ghost/list) so designers can place traps and zones
 
 ### Cross-cutting (0.6.0)
 
@@ -476,12 +476,12 @@ See [v0.6.0-changelog.md](changelog/v0.6.0-changelog.md).
 - **Trigger effects** — world-change behavior on trigger fire (today: area event text + optional `delete_after_trigger` only; full handler parity in 0.6.1, not the legacy `effect` CLI)
 - Snapshots store handler id + params; validate on import that handlers are registered
 
-### realm-studio (reference, not a library)
+### campaign-rpg-studio (reference, not a library)
 
 - Register **reference handlers** at startup: `delete_self`, `random_move_self`, `move_area` (demo ball kick, doors)
 - **Manage actions…** UI maps to handler id + params — for **interact** and **trigger** kinds (not engine-specific effect names)
 - **Trigger actions** — handler picker + params (replacing interact-only effect UI); cutscenes, teleports, item spawns via registered handlers
-- Other apps copy this pattern; they do **not** import behavior from realm-studio
+- Other apps copy this pattern; they do **not** import behavior from campaign-rpg-studio
 
 ### Migration
 
@@ -495,7 +495,7 @@ See [v0.6.1-changelog.md](changelog/v0.6.1-changelog.md).
 
 ## V0.7.0
 
-**Focus:** **Platform / app SDK** — stable `realm_fabric` API, typed programmatic world editing, thin HTTP reference (`minimal-server`), and app-developer documentation. Builds on **V0.6.1** handler contracts.
+**Focus:** **Platform / app SDK** — stable `campaign_rpg_engine` API, typed programmatic world editing, thin HTTP reference (`minimal-server`), and app-developer documentation. Builds on **V0.6.1** handler contracts.
 
 **Status:** ✅ **Implemented** — `pyproject.toml` **`0.7.0`**; tag **`v0.7.0`** pending. See [v0.7.0-changelog.md](changelog/v0.7.0-changelog.md).
 
@@ -503,18 +503,18 @@ See [v0.6.1-changelog.md](changelog/v0.6.1-changelog.md).
 
 | Slice | Theme | Status |
 |-------|--------|--------|
-| **0.7.0a** | Expand `realm_fabric` exports + `test_public_api_surface.py` | ✅ Done |
+| **0.7.0a** | Expand `campaign_rpg_engine` exports + `test_public_api_surface.py` | ✅ Done |
 | **0.7.0b** | Typed `Session` world API (`create_object`, `create_agent`, areas, …) | ✅ Done |
 | **0.7.0c** | `run_command` delegates to typed API; CLI/debug contract | ✅ Done |
-| **0.7.0d** | `guides/building-on-realm-fabric.md` + session hosting patterns | ✅ Done |
+| **0.7.0d** | `guides/building-on-campaign-rpg-engine.md` + session hosting patterns | ✅ Done |
 | **0.7.0e** | `examples/minimal-server/` — JSON HTTP, no grid UI | ✅ Done |
 | **0.7.0f** | Semver policy, install story, release prep | ✅ Done |
 
-### Public API (`realm_fabric`)
+### Public API (`campaign_rpg_engine`)
 
 - Expanded exports: lorebooks, prompt blocks, `LorebookScanConfig`, `ObjectAction`, `WorldMutationResult`, interaction handlers, `register_memory_module_from_path`, `MemoryModule`
 - **`tests/test_public_api_surface.py`** — CI fails if documented exports drift
-- Semver policy documented in [building-on-realm-fabric.md](guides/building-on-realm-fabric.md)
+- Semver policy documented in [building-on-campaign-rpg-engine.md](guides/building-on-campaign-rpg-engine.md)
 
 ### Typed world editing
 
@@ -525,19 +525,19 @@ See [v0.6.1-changelog.md](changelog/v0.6.1-changelog.md).
 
 ### Documentation
 
-- **[building-on-realm-fabric.md](guides/building-on-realm-fabric.md)** — install, session lifecycle, typed API, anti-patterns, hosting, semver
+- **[building-on-campaign-rpg-engine.md](guides/building-on-campaign-rpg-engine.md)** — install, session lifecycle, typed API, anti-patterns, hosting, semver
 - **0.6.x** pathing, interact-path, and interaction handlers covered for app authors
 
 ### Examples
 
 - **`examples/minimal-server/`** — thin FastAPI on port 8770: health, state, turn, manual turn, export/import, optional debug `/api/command`
 - Bootstrap uses **typed API only** (no CLI strings)
-- [Realm-Studio](https://github.com/DaveH-Ghost/Realm-Studio) remains the **full GM reference app**, not the template every project clones
+- [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) remains the **full GM reference app**, not the template every project clones
 
 ### Session hosting
 
-- Documented in `guides/building-on-realm-fabric.md`: per-match sessions, handler/module process scope, persistence patterns
-- realm-studio = singleton in-memory session (reference only)
+- Documented in `guides/building-on-campaign-rpg-engine.md`: per-match sessions, handler/module process scope, persistence patterns
+- campaign-rpg-studio = singleton in-memory session (reference only)
 
 ### Distribution
 
@@ -546,8 +546,8 @@ See [v0.6.1-changelog.md](changelog/v0.6.1-changelog.md).
 
 ### Deferred / optional
 
-- realm-studio migration off `run_command` — done in external Realm-Studio repo
-- ~~realm-studio as separate repo~~ — **Realm-Studio** lives at [github.com/DaveH-Ghost/Realm-Studio](https://github.com/DaveH-Ghost/Realm-Studio); removed from `examples/web/` in this repo
+- campaign-rpg-studio migration off `run_command` — done in external CampAIgn-RPG-Studio repo
+- ~~campaign-rpg-studio as separate repo~~ — **CampAIgn-RPG-Studio** lives at [github.com/DaveH-Ghost/CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio); removed from `examples/web/` in this repo
 
 See [v0.7.0-changelog.md](changelog/v0.7.0-changelog.md).
 
@@ -555,7 +555,7 @@ See [v0.7.0-changelog.md](changelog/v0.7.0-changelog.md).
 
 ## V0.7.1
 
-**Focus:** **Engine/SDK follow-up** while building the product-shaped demo in a **separate repository**. Tag **`v0.7.1`** on **this repo** for `realm_fabric` / `Session` fixes and small API additions discovered during demo integration — **not** for shipping the demo itself.
+**Focus:** **Engine/SDK follow-up** while building the product-shaped demo in a **separate repository**. Tag **`v0.7.1`** on **this repo** for `campaign_rpg_engine` / `Session` fixes and small API additions discovered during demo integration — **not** for shipping the demo itself.
 
 **Status:** 📋 **Planned** — after **0.7.0** tag. See [v0.7.1-changelog.md](changelog/v0.7.1-changelog.md).
 
@@ -563,10 +563,10 @@ See [v0.7.0-changelog.md](changelog/v0.7.0-changelog.md).
 
 | Artifact | Repo | Tags |
 |----------|------|------|
-| Realm-Fabric engine | This monorepo | `v0.7.0`, **`v0.7.1`**, … |
+| CampAIgn-RPG-Engine engine | This monorepo | `v0.7.0`, **`v0.7.1`**, … |
 | Product-shaped demo | Separate repo (TBD) | **`v0.1.0`**, `v0.2.0`, … |
 
-The demo depends on `realm-fabric>=0.7.0` and bumps its requirement when engine releases ship.
+The demo depends on `campaign-rpg-engine>=0.7.0` and bumps its requirement when engine releases ship.
 
 ### In scope for V0.7.1 (this repo)
 
@@ -576,17 +576,17 @@ The demo depends on `realm-fabric>=0.7.0` and bumps its requirement when engine 
 
 ### Sample demo (external — not V0.7.1)
 
-- **Separate repository** — name TBD (e.g. `realm-fabric-sample`); link in README when it exists
-- **`realm-fabric>=0.7.0`** via its own `pyproject.toml` (path/git/PyPI during co-development)
+- **Separate repository** — name TBD (e.g. `campaign-rpg-engine-sample`); link in README when it exists
+- **`campaign-rpg-engine>=0.7.0`** via its own `pyproject.toml` (path/git/PyPI during co-development)
 - Typed `Session` API only; own handlers and small UI/CLI
-- First demo release: **`v0.1.0`** on the **demo repo**, not on Realm-Fabric
+- First demo release: **`v0.1.0`** on the **demo repo**, not on CampAIgn-RPG-Engine
 
 Details: [v0.7.1-changelog.md](changelog/v0.7.1-changelog.md).
 
 ### Out of scope
 
 - Shipping the full demo from this monorepo (`examples/` keeps `minimal-server` only)
-- realm-studio migration off `run_command` (optional)
+- campaign-rpg-studio migration off `run_command` (optional)
 - Multiplayer netcode
 
 ---

@@ -4,10 +4,10 @@ test_world_edit.py
 Tests for V0.1 area editing commands (Section 2).
 """
 
-from realm_fabric.object import Object
-from realm_fabric.perception import build_passive_vision, perform_look
-from realm_fabric.area import create_initial_area
-from realm_fabric.area_edit import (
+from campaign_rpg_engine.object import Object
+from campaign_rpg_engine.perception import build_passive_vision, perform_look
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.area_edit import (
     create_agent_from_args,
     create_object_from_args,
     delete_agent_by_id,
@@ -243,7 +243,7 @@ def test_delete_agent_rejects_last_agent():
 
 
 def test_session_edit_agent_rename_updates_lookup():
-    from realm_fabric import Session, load_profile
+    from campaign_rpg_engine import Session, load_profile
 
     session = Session.from_profile(load_profile("default_compound"))
     result = session.edit_agent("agent_01", name="Scout")
@@ -255,7 +255,7 @@ def test_session_edit_agent_rename_updates_lookup():
 
 
 def test_session_delete_active_agent_reassigns():
-    from realm_fabric import Session, load_profile
+    from campaign_rpg_engine import Session, load_profile
 
     session = Session.from_profile(load_profile("default_compound"))
     session.create_agent(name="Goblin", position=(0, 0), personality="x")

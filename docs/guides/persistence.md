@@ -29,7 +29,7 @@ restored = Session.from_snapshot(save_doc)
 
 **Before import**, register the same **interaction handlers** and **memory modules** referenced in the save.
 
-HTTP: `GET /api/session/export`, `POST /api/session/import` on [Realm-Studio](https://github.com/DaveH-Ghost/Realm-Studio).
+HTTP: `GET /api/session/export`, `POST /api/session/import` on [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio).
 
 ---
 
@@ -66,5 +66,5 @@ Moving entities across areas: `edit_object(..., target_area_id="hall", position=
 
 ## Related
 
-- [Building on Realm-Fabric](building-on-realm-fabric.md) — hosting patterns
+- [Building on CampAIgn-RPG-Engine](building-on-campaign-rpg-engine.md) — hosting patterns
 - [v0.4.5 changelog](../changelog/v0.4.5-changelog.md) — save format details

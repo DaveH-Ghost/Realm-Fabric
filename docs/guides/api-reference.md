@@ -1,10 +1,10 @@
 # API reference
 
-Stable **`realm_fabric`** surface (**1.0.0**). Import from this package in application code.
+Stable **`campaign_rpg_engine`** surface (**1.0.0**). Import from this package in application code.
 
 ```python
-import realm_fabric
-assert "Session" in realm_fabric.__all__
+import campaign_rpg_engine
+assert "Session" in campaign_rpg_engine.__all__
 ```
 
 CI enforces export drift via `tests/test_public_api_surface.py`.
@@ -113,11 +113,11 @@ All return **`WorldMutationResult`** or **`AreaMutationResult`** with `ok` and `
 
 | Module | Use |
 |--------|-----|
-| `realm_fabric.area_edit` | String parsers for tests and GM command dispatch |
-| `realm_fabric.area_edit_parse` | `tokenize_args` / `parse_field_tokens` |
-| `realm_fabric.session_area_edit` | Typed area CRUD helpers used by `Session` |
+| `campaign_rpg_engine.area_edit` | String parsers for tests and GM command dispatch |
+| `campaign_rpg_engine.area_edit_parse` | `tokenize_args` / `parse_field_tokens` |
+| `campaign_rpg_engine.session_area_edit` | Typed area CRUD helpers used by `Session` |
 
-Realm-Studio owns stepper-style command strings in `backend/command_dispatch.py`. Product apps should call typed `Session` methods instead.
+CampAIgn-RPG-Studio owns stepper-style command strings in `backend/command_dispatch.py`. Product apps should call typed `Session` methods instead.
 
 **Removed in 1.0:** `Session.run_command()`, `CommandResult`, `realm` console script. See [Migration 0.7 → 1.0](../MIGRATION-0.7-to-1.0.md).
 
@@ -125,6 +125,6 @@ Realm-Studio owns stepper-style command strings in `backend/command_dispatch.py`
 
 ## Related
 
-- [Building on Realm-Fabric](building-on-realm-fabric.md)
+- [Building on CampAIgn-RPG-Engine](building-on-campaign-rpg-engine.md)
 - [Overview](overview.md)
 - [Changelog index](../changelog/README.md)

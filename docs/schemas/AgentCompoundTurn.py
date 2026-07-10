@@ -5,7 +5,7 @@ AUTHORITATIVE RUNTIME:
     src/llm/schemas.py
 
 APP IMPORT:
-    from realm_fabric import AgentCompoundTurn
+    from campaign_rpg_engine import AgentCompoundTurn
 
 This file is a readable design reference for documentation and review.
 Validators here are simplified; runtime adds move-target parsing, truncation,

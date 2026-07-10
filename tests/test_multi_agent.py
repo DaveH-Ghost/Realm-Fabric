@@ -4,11 +4,11 @@ test_multi_agent.py
 Tests for V0.1 Section 3 multi-agent support (updated for V0.2 compound turns).
 """
 
-from realm_fabric.llm.schemas import AgentCompoundTurn
-from realm_fabric.perception import build_passive_vision, perform_look
-from realm_fabric.simulation import next_turn_number_for_agent, run_compound_turn
-from realm_fabric.area import create_initial_area
-from realm_fabric.area_edit import create_agent_from_args, edit_object_from_args
+from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
+from campaign_rpg_engine.perception import build_passive_vision, perform_look
+from campaign_rpg_engine.simulation import next_turn_number_for_agent, run_compound_turn
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.area_edit import create_agent_from_args, edit_object_from_args
 
 
 def _compound(**kwargs) -> AgentCompoundTurn:
@@ -154,7 +154,7 @@ def test_failed_move_does_not_update_passive_result():
 
 
 def test_edit_agent_personality_does_not_invalidate():
-    from realm_fabric.area_edit import edit_agent_from_args
+    from campaign_rpg_engine.area_edit import edit_agent_from_args
 
     area = create_initial_area()
     explorer = area.get_agent()
@@ -185,7 +185,7 @@ def test_cross_agent_invalidation_per_agent():
 
 
 def test_set_active_agent_changes_vision():
-    from realm_fabric import Session, load_profile
+    from campaign_rpg_engine import Session, load_profile
 
     session = Session.from_profile(load_profile("default_compound"))
     session.create_agent(
@@ -201,7 +201,7 @@ def test_set_active_agent_changes_vision():
 
 
 def test_set_active_agent_unknown_fails():
-    from realm_fabric import Session, load_profile
+    from campaign_rpg_engine import Session, load_profile
 
     session = Session.from_profile(load_profile("default_compound"))
     result = session.set_active_agent("Nobody")
@@ -210,7 +210,7 @@ def test_set_active_agent_unknown_fails():
 
 
 def test_set_active_agent_does_not_increment_session_turn():
-    from realm_fabric import Session, load_profile
+    from campaign_rpg_engine import Session, load_profile
 
     session = Session.from_profile(load_profile("default_compound"))
     session.create_agent(name="Goblin", position=(0, 0), personality="x")
@@ -221,8 +221,8 @@ def test_set_active_agent_does_not_increment_session_turn():
 
 
 def test_manual_compound_uses_per_agent_turn_number():
-    from realm_fabric import Session, load_profile
-    from realm_fabric.compound_arg_parse import parse_compound_step_arg
+    from campaign_rpg_engine import Session, load_profile
+    from campaign_rpg_engine.compound_arg_parse import parse_compound_step_arg
 
     session = Session.from_profile(load_profile("default_compound"))
     explorer = session.get_active_agent()
@@ -255,7 +255,7 @@ def test_create_agent_reserved_hyphen_command_rejected():
 
 
 def test_edit_agent_rename_to_reserved_name_rejected():
-    from realm_fabric.area_edit import edit_agent_from_args
+    from campaign_rpg_engine.area_edit import edit_agent_from_args
 
     area = create_initial_area()
     result = edit_agent_from_args(area, 'agent_01 name "switch"')
@@ -264,8 +264,8 @@ def test_edit_agent_rename_to_reserved_name_rejected():
 
 
 def test_llm_turn_flow_uses_active_agent(monkeypatch):
-    from realm_fabric import Session, load_profile, get_compound_turn
-    from realm_fabric.llm.types import LLMResponse
+    from campaign_rpg_engine import Session, load_profile, get_compound_turn
+    from campaign_rpg_engine.llm.types import LLMResponse
 
     session = Session.from_profile(load_profile("default_compound"))
     active = session.get_active_agent()
@@ -276,7 +276,7 @@ def test_llm_turn_flow_uses_active_agent(monkeypatch):
             raw_response="{}",
         )
 
-    monkeypatch.setattr("realm_fabric.llm.client.get_compound_turn", fake_compound)
+    monkeypatch.setattr("campaign_rpg_engine.llm.client.get_compound_turn", fake_compound)
     response = get_compound_turn(session.build_prompt())
     result = session.run_compound_turn(response.parsed)
     assert result.ok
@@ -284,8 +284,8 @@ def test_llm_turn_flow_uses_active_agent(monkeypatch):
 
 
 def test_llm_turn_after_switch_uses_switched_agent(monkeypatch):
-    from realm_fabric import Session, load_profile, get_compound_turn
-    from realm_fabric.llm.types import LLMResponse
+    from campaign_rpg_engine import Session, load_profile, get_compound_turn
+    from campaign_rpg_engine.llm.types import LLMResponse
 
     session = Session.from_profile(load_profile("default_compound"))
     session.create_agent(name="Goblin", position=(0, 0), personality="x")
@@ -298,7 +298,7 @@ def test_llm_turn_after_switch_uses_switched_agent(monkeypatch):
             raw_response="{}",
         )
 
-    monkeypatch.setattr("realm_fabric.llm.client.get_compound_turn", fake_compound)
+    monkeypatch.setattr("campaign_rpg_engine.llm.client.get_compound_turn", fake_compound)
     response = get_compound_turn(session.build_prompt())
     result = session.run_compound_turn(response.parsed)
     assert result.ok
@@ -306,7 +306,7 @@ def test_llm_turn_after_switch_uses_switched_agent(monkeypatch):
 
 
 def test_reserved_command_names_include_run_and_hyphenated():
-    from realm_fabric.reserved_names import get_reserved_command_names
+    from campaign_rpg_engine.reserved_names import get_reserved_command_names
 
     cached = get_reserved_command_names()
     assert "run" in cached
@@ -317,7 +317,7 @@ def test_reserved_command_names_include_run_and_hyphenated():
 
 
 def test_llm_failure_does_not_increment_session_turn(monkeypatch):
-    from realm_fabric import Session, load_profile, get_compound_turn
+    from campaign_rpg_engine import Session, load_profile, get_compound_turn
 
     session = Session.from_profile(load_profile("default_compound"))
     agent = session.get_active_agent()
@@ -327,7 +327,7 @@ def test_llm_failure_does_not_increment_session_turn(monkeypatch):
     def fail_llm(_prompt):
         raise RuntimeError("LLM unavailable")
 
-    monkeypatch.setattr("realm_fabric.llm.client.get_compound_turn", fail_llm)
+    monkeypatch.setattr("campaign_rpg_engine.llm.client.get_compound_turn", fail_llm)
     try:
         get_compound_turn(session.build_prompt())
     except RuntimeError:
@@ -338,8 +338,8 @@ def test_llm_failure_does_not_increment_session_turn(monkeypatch):
 
 
 def test_compound_turn_increments_session_turn_once():
-    from realm_fabric import Session, load_profile
-    from realm_fabric.compound_arg_parse import parse_compound_step_arg
+    from campaign_rpg_engine import Session, load_profile
+    from campaign_rpg_engine.compound_arg_parse import parse_compound_step_arg
 
     session = Session.from_profile(load_profile("default_compound"))
     before = session.session_turn
@@ -348,7 +348,7 @@ def test_compound_turn_increments_session_turn_once():
 
 
 def test_set_active_agent_by_name():
-    from realm_fabric import Session, load_profile
+    from campaign_rpg_engine import Session, load_profile
 
     session = Session.from_profile(load_profile("default_compound"))
     session.create_agent(name="Goblin", position=(0, 0), personality="x")
@@ -377,7 +377,7 @@ def test_look_at_agent_reveals_description_not_personality():
 
 
 def test_edit_agent_desc_invalidates_other_agents():
-    from realm_fabric.area_edit import edit_agent_from_args
+    from campaign_rpg_engine.area_edit import edit_agent_from_args
 
     area = create_initial_area()
     explorer = area.get_agent()

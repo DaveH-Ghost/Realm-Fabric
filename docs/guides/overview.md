@@ -1,6 +1,6 @@
 # Overview
 
-How Realm-Fabric models a playable grid world and LLM-driven agents.
+How CampAIgn-RPG-Engine models a playable grid world and LLM-driven agents.
 
 ---
 
@@ -54,7 +54,7 @@ Your UI can read `session.snapshot()` — it includes `passive_vision` for the a
 
 Apps bootstrap and mutate worlds with the **typed Session API** (`create_object`, `create_agent`, …). Object **interacts** and path **triggers** call **registered interaction handlers** — game logic lives in your app, not the engine core.
 
-See [Building on Realm-Fabric](building-on-realm-fabric.md) and [Interaction handlers](handlers.md).
+See [Building on CampAIgn-RPG-Engine](building-on-campaign-rpg-engine.md) and [Interaction handlers](handlers.md).
 
 ---
 
@@ -62,13 +62,13 @@ See [Building on Realm-Fabric](building-on-realm-fabric.md) and [Interaction han
 
 | You are building… | Start with |
 |-------------------|------------|
-| HTTP / web game | [Realm-Studio](https://github.com/DaveH-Ghost/Realm-Studio) + [Building on Realm-Fabric](building-on-realm-fabric.md) |
-| GM authoring tool | [Realm-Studio](https://github.com/DaveH-Ghost/Realm-Studio) (reference; fork or replace) |
+| HTTP / web game | [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) + [Building on CampAIgn-RPG-Engine](building-on-campaign-rpg-engine.md) |
+| GM authoring tool | [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) (reference; fork or replace) |
 | Headless / tests | `Session` + manual `AgentCompoundTurn` |
 
 ---
 
 ## Next
 
-- [Building on Realm-Fabric](building-on-realm-fabric.md) — install and integration patterns
+- [Building on CampAIgn-RPG-Engine](building-on-campaign-rpg-engine.md) — install and integration patterns
 - [API reference](api-reference.md) — exports and Session methods

@@ -1,9 +1,9 @@
 """Session API (V0.3.0a) — engine entry point for turns and commands."""
 
-from realm_fabric import ObjectAction
-from realm_fabric.llm.schemas import AgentCompoundTurn
-from realm_fabric.session import Session
-from realm_fabric.area import create_initial_area
+from campaign_rpg_engine import ObjectAction
+from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
+from campaign_rpg_engine.session import Session
+from campaign_rpg_engine.area import create_initial_area
 
 
 def test_from_default_matches_initial_world():

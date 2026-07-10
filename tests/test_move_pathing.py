@@ -1,11 +1,11 @@
 """D&D 5e pathing and move_speed (V0.4.0b)."""
 
-from realm_fabric.actions.move import move as do_move
-from realm_fabric.area import create_initial_area
-from realm_fabric.area_edit import create_agent_from_args, edit_agent_from_args
-from realm_fabric.llm.prompt import build_compound_prompt
-from realm_fabric.pathing import chebyshev_distance, path_step_towards, walk_towards
-from realm_fabric.session import Session
+from campaign_rpg_engine.actions.move import move as do_move
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.area_edit import create_agent_from_args, edit_agent_from_args
+from campaign_rpg_engine.llm.prompt import build_compound_prompt
+from campaign_rpg_engine.pathing import chebyshev_distance, path_step_towards, walk_towards
+from campaign_rpg_engine.session import Session
 
 
 def test_path_step_diagonal_first():
@@ -132,7 +132,7 @@ def test_prompt_mentions_move_speed_when_limited():
 
 
 def test_move_speed_line_uses_session_units():
-    from realm_fabric.move_target import format_move_speed_line
+    from campaign_rpg_engine.move_target import format_move_speed_line
 
     assert (
         format_move_speed_line(2, vision_units="ft", units_per_tile=5)
@@ -146,12 +146,12 @@ def test_move_speed_line_uses_session_units():
 
 def test_move_speed_straight_horizontal_stays_on_row():
     """Regression: collinear horizontal moves must not drift diagonally (V0.7.1)."""
-    from realm_fabric.area import create_area
-    from realm_fabric.pathfinding import find_path, walk_with_pathfinding
+    from campaign_rpg_engine.area import create_area
+    from campaign_rpg_engine.pathfinding import find_path, walk_with_pathfinding
 
     area = create_area(width=5, height=5)
     area.agents.clear()
-    from realm_fabric.agent import Agent
+    from campaign_rpg_engine.agent import Agent
 
     mover = Agent(id="walker", name="Walker", position=(0, 2), personality="x")
     area.agents.append(mover)
@@ -175,9 +175,9 @@ def test_move_speed_straight_horizontal_stays_on_row():
 
 def test_move_speed_straight_vertical_stays_on_column():
     """Regression: collinear vertical moves must not drift diagonally (V0.7.1)."""
-    from realm_fabric.area import create_area
-    from realm_fabric.agent import Agent
-    from realm_fabric.pathfinding import find_path, walk_with_pathfinding
+    from campaign_rpg_engine.area import create_area
+    from campaign_rpg_engine.agent import Agent
+    from campaign_rpg_engine.pathfinding import find_path, walk_with_pathfinding
 
     area = create_area(width=5, height=5)
     area.agents.clear()

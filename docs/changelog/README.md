@@ -1,6 +1,6 @@
 # Changelog & version history
 
-Release notes and historical implementation checklists for Realm-Fabric.
+Release notes and historical implementation checklists for CampAIgn-RPG-Engine.
 
 **Current:** [v1.0.0-changelog.md](v1.0.0-changelog.md) — library-first 1.0; CLI and `run_command` removed.
 
@@ -10,7 +10,7 @@ Release notes and historical implementation checklists for Realm-Fabric.
 
 | Version | Summary |
 |---------|---------|
-| [1.0.0](v1.0.0-changelog.md) | Single `realm_fabric` package; no CLI; typed API only; Studio external |
+| [1.0.0](v1.0.0-changelog.md) | Single `campaign_rpg_engine` package; no CLI; typed API only; Studio external |
 | [0.7.2](v0.7.2-changelog.md) | `from __future__ import annotations` across engine for Python 3.12 |
 | [0.7.1](v0.7.1-changelog.md) | Straight-line movement fix, targeted `emit_area_event`, PyPI version read |
 | [0.7.0](v0.7.0-changelog.md) | Public API, typed `Session` world editing, app docs, minimal-server |

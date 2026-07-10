@@ -1,7 +1,7 @@
 """
 Test fixture custom memory module — port of built-in rolling_summary.
 
-Canonical interactive example: Realm-Studio ``fixtures/custom_memory/`` and
+Canonical interactive example: CampAIgn-RPG-Studio ``fixtures/custom_memory/`` and
 Settings → Memory modules upload.
 """
 
@@ -9,8 +9,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from realm_fabric.memory_modules.base import MemoryModule
-from realm_fabric.memory_modules.rolling_summary import (
+from campaign_rpg_engine.memory_modules.base import MemoryModule
+from campaign_rpg_engine.memory_modules.rolling_summary import (
     DEFAULT_MAX_SUMMARY_CHARS,
     DEFAULT_SUMMARY_INTERVAL,
     DEFAULT_SUMMARY_TAIL,

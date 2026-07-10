@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from realm_fabric.area_edit import create_object_from_args
-from realm_fabric.area_edit import create_object_from_args
-from realm_fabric.agent import Agent
-from realm_fabric.area import Area
-from realm_fabric.interaction_handlers.registry import (
+from campaign_rpg_engine.area_edit import create_object_from_args
+from campaign_rpg_engine.area_edit import create_object_from_args
+from campaign_rpg_engine.agent import Agent
+from campaign_rpg_engine.area import Area
+from campaign_rpg_engine.interaction_handlers.registry import (
     clear_handlers_for_tests,
     format_handlers_list,
     is_handler_registered,
@@ -17,10 +17,10 @@ from realm_fabric.interaction_handlers.registry import (
     run_interaction_handler,
     validate_handler_params,
 )
-from realm_fabric.object import Object
-from realm_fabric.object_action import ObjectAction, migrate_legacy_effects_to_handler
-from realm_fabric.session import Session
-from realm_fabric.session_persistence import (
+from campaign_rpg_engine.object import Object
+from campaign_rpg_engine.object_action import ObjectAction, migrate_legacy_effects_to_handler
+from campaign_rpg_engine.session import Session
+from campaign_rpg_engine.session_persistence import (
     SNAPSHOT_VERSION,
     build_save_snapshot,
     load_session_from_snapshot,

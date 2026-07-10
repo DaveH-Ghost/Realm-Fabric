@@ -4,14 +4,14 @@ test_object_actions.py
 V0.2 Section 3: declarative object interactions.
 """
 
-from realm_fabric.actions.interact import interact
-from realm_fabric.llm.prompt import build_compound_prompt
-from realm_fabric.llm.schemas import AgentCompoundTurn
-from realm_fabric.interaction_handlers.registry import format_handlers_list
-from realm_fabric.perception import build_passive_vision, PASSIVE_VISION_LOOK_RULE, perform_look
-from realm_fabric.simulation import next_turn_number_for_agent, run_compound_turn
-from realm_fabric.area import create_initial_area
-from realm_fabric.area_edit import (
+from campaign_rpg_engine.actions.interact import interact
+from campaign_rpg_engine.llm.prompt import build_compound_prompt
+from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
+from campaign_rpg_engine.interaction_handlers.registry import format_handlers_list
+from campaign_rpg_engine.perception import build_passive_vision, PASSIVE_VISION_LOOK_RULE, perform_look
+from campaign_rpg_engine.simulation import next_turn_number_for_agent, run_compound_turn
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.area_edit import (
     create_agent_from_args,
     create_object_from_args,
     delete_object_by_id,
@@ -60,7 +60,7 @@ def test_handlers_command_lists_registered_handlers():
 
 
 def test_handler_registry_descriptions_match_registration():
-    from realm_fabric.interaction_handlers.registry import get_handler_registration, list_registered_handlers
+    from campaign_rpg_engine.interaction_handlers.registry import get_handler_registration, list_registered_handlers
 
     for handler_id in list_registered_handlers():
         reg = get_handler_registration(handler_id)
@@ -231,8 +231,8 @@ def test_goblin_interact_eat_deletes_cookie():
 
 
 def test_step_compound_move_adjacent_and_eat():
-    from realm_fabric import ObjectAction, Session, load_profile
-    from realm_fabric.compound_arg_parse import parse_compound_step_arg
+    from campaign_rpg_engine import ObjectAction, Session, load_profile
+    from campaign_rpg_engine.compound_arg_parse import parse_compound_step_arg
 
     session = Session.from_profile(load_profile("default_compound"))
     session.create_object(
@@ -284,7 +284,7 @@ def test_not_visible_interact_fails(monkeypatch):
     goblin = _create_goblin(area, at="2,3")
 
     monkeypatch.setattr(
-        "realm_fabric.actions.interact.is_object_in_passive_vision",
+        "campaign_rpg_engine.actions.interact.is_object_in_passive_vision",
         lambda _agent, _world, object_id: object_id != cookie.id,
     )
 
@@ -474,8 +474,8 @@ def test_random_move_self_excludes_current_tile(monkeypatch):
 
 
 def test_step_compound_kick_ball_moves(monkeypatch):
-    from realm_fabric import Session, load_profile
-    from realm_fabric.compound_arg_parse import parse_compound_step_arg
+    from campaign_rpg_engine import Session, load_profile
+    from campaign_rpg_engine.compound_arg_parse import parse_compound_step_arg
 
     session = Session.from_profile(load_profile("default_compound"))
     session.get_active_agent().position = (2, 3)

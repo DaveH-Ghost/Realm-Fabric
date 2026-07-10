@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from realm_fabric.lorebook import derive_lorebook_id_from_filename, load_lorebook_from_dict
+from campaign_rpg_engine.lorebook import derive_lorebook_id_from_filename, load_lorebook_from_dict
 
 MINIMAL_ST = {
     "entries": {
@@ -106,7 +106,7 @@ def test_load_real_sample_if_present():
     sample = Path(r"e:\Tavern\Midway\tri-system-universe.lorebook.json")
     if not sample.is_file():
         pytest.skip("sample lorebook not on this machine")
-    from realm_fabric.lorebook import load_lorebook_from_path
+    from campaign_rpg_engine.lorebook import load_lorebook_from_path
 
     book = load_lorebook_from_path(sample)
     assert book.id == "tri-system-universe"

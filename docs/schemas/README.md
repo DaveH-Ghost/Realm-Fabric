@@ -8,7 +8,7 @@ Structured JSON the LLM (or a player client) returns for one agent turn.
 
 | Schema | Runtime | App import |
 |--------|---------|------------|
-| **`AgentCompoundTurn`** | [`src/llm/schemas.py`](../../src/llm/schemas.py) | `from realm_fabric import AgentCompoundTurn` |
+| **`AgentCompoundTurn`** | [`src/llm/schemas.py`](../../src/llm/schemas.py) | `from campaign_rpg_engine import AgentCompoundTurn` |
 
 **Since V0.2.5:** one LLM call per turn — move → look → say → action in a single object.
 

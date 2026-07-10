@@ -1,4 +1,4 @@
-"""Pytest fixtures for Realm-Fabric tests."""
+"""Pytest fixtures for CampAIgn-RPG-Engine tests."""
 
 from __future__ import annotations
 

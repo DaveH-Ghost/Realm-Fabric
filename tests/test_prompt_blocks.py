@@ -1,17 +1,17 @@
 """Prompt block model and rendering (V0.4.1b)."""
 
-from realm_fabric.game_profile import default_compound_profile
-from realm_fabric.area import create_initial_area
-from realm_fabric.llm.prompt_context import build_prompt_context
-from realm_fabric.prompt_blocks import (
+from campaign_rpg_engine.game_profile import default_compound_profile
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.llm.prompt_context import build_prompt_context
+from campaign_rpg_engine.prompt_blocks import (
     PromptBlock,
     default_prompt_blocks,
     prompt_block_catalog,
     prompt_blocks_from_dicts,
     render_prompt_blocks,
 )
-from realm_fabric.prompt_template import PromptTemplate
-from realm_fabric.session import Session
+from campaign_rpg_engine.prompt_template import PromptTemplate
+from campaign_rpg_engine.session import Session
 
 
 def test_default_blocks_match_template_render():
@@ -293,8 +293,8 @@ def test_lorebook_prompt_slot_requires_id():
 
 
 def test_lorebook_prompt_slot_renders_with_session_book():
-    from realm_fabric.lorebook import load_lorebook_from_dict
-    from realm_fabric.prompt_blocks import validate_prompt_blocks
+    from campaign_rpg_engine.lorebook import load_lorebook_from_dict
+    from campaign_rpg_engine.prompt_blocks import validate_prompt_blocks
 
     session = Session.from_default()
     book = load_lorebook_from_dict(

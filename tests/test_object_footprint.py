@@ -1,24 +1,24 @@
 """Multi-tile object footprints (V0.6.0d)."""
 
-from realm_fabric.actions.interact import interact
-from realm_fabric.actions.move import move as do_move
-from realm_fabric.agent import Agent
-from realm_fabric.area import Area, GridBounds
-from realm_fabric.area_edit import create_object_from_args
-from realm_fabric.memory import Memory
-from realm_fabric.move_target import ResolvedMoveTarget, format_move_towards_message
-from realm_fabric.object import (
+from campaign_rpg_engine.actions.interact import interact
+from campaign_rpg_engine.actions.move import move as do_move
+from campaign_rpg_engine.agent import Agent
+from campaign_rpg_engine.area import Area, GridBounds
+from campaign_rpg_engine.area_edit import create_object_from_args
+from campaign_rpg_engine.memory import Memory
+from campaign_rpg_engine.move_target import ResolvedMoveTarget, format_move_towards_message
+from campaign_rpg_engine.object import (
     Object,
     chebyshev_distance_to_object,
     nearest_footprint_tile_to,
     object_footprint_tiles,
     object_occupies_tile,
 )
-from realm_fabric.object_action import ObjectAction
-from realm_fabric.occupancy import is_tile_enterable, objects_at
-from realm_fabric.pathfinding import find_path
-from realm_fabric.perception import build_passive_vision
-from realm_fabric.snapshot import serialize_object
+from campaign_rpg_engine.object_action import ObjectAction
+from campaign_rpg_engine.occupancy import is_tile_enterable, objects_at
+from campaign_rpg_engine.pathfinding import find_path
+from campaign_rpg_engine.perception import build_passive_vision
+from campaign_rpg_engine.snapshot import serialize_object
 
 
 def _agent_at(pos: tuple[int, int], *, move_speed: int | None = None) -> Agent:

@@ -1,8 +1,8 @@
-"""Test fixtures: reference interaction handlers (canonical copy: Realm-Studio)."""
+"""Test fixtures: reference interaction handlers (canonical copy: CampAIgn-RPG-Studio)."""
 
 from __future__ import annotations
 
-from realm_fabric.interaction_handlers.registry import register_interaction_handler
+from campaign_rpg_engine.interaction_handlers.registry import register_interaction_handler
 
 from .handlers.delete_self import delete_self
 from .handlers.move_area import move_area, validate_move_area_params

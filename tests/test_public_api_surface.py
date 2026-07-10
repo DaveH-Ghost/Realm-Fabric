@@ -1,14 +1,14 @@
-"""Tests for the stable ``realm_fabric`` public export surface (1.0.0)."""
+"""Tests for the stable ``campaign_rpg_engine`` public export surface (1.0.0)."""
 
 from __future__ import annotations
 
-import realm_fabric
+import campaign_rpg_engine
 
 
 def test_public_api_exports_match_all():
-    """Every name in ``realm_fabric.__all__`` must be importable."""
-    for name in realm_fabric.__all__:
-        assert hasattr(realm_fabric, name), f"missing export: {name}"
+    """Every name in ``campaign_rpg_engine.__all__`` must be importable."""
+    for name in campaign_rpg_engine.__all__:
+        assert hasattr(campaign_rpg_engine, name), f"missing export: {name}"
 
 
 def test_documented_public_surface_is_subset_of_all():
@@ -51,7 +51,7 @@ def test_documented_public_surface_is_subset_of_all():
         "register_memory_module_from_path",
         "run_compound_turn",
     }
-    missing = documented - set(realm_fabric.__all__)
+    missing = documented - set(campaign_rpg_engine.__all__)
     assert not missing, f"documented exports missing from __all__: {sorted(missing)}"
 
 
@@ -66,9 +66,9 @@ def test_removed_cli_exports_stay_private():
         "parse_area_event_arg",
     }
     for name in removed:
-        assert name not in realm_fabric.__all__
-        assert not hasattr(realm_fabric, name), f"{name} should not be a top-level export"
+        assert name not in campaign_rpg_engine.__all__
+        assert not hasattr(campaign_rpg_engine, name), f"{name} should not be a top-level export"
 
 
 def test_session_has_no_run_command():
-    assert not hasattr(realm_fabric.Session, "run_command")
+    assert not hasattr(campaign_rpg_engine.Session, "run_command")

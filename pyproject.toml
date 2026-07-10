@@ -1,7 +1,7 @@
 [project]
-name = "realm-fabric"
+name = "campaign-rpg-engine"
 version = "1.0.0"
-description = "Grid-based LLM agent simulation engine — Session API, multi-area worlds, tactical movement, compound turns, pluggable memory"
+description = "CampAIgn — map-based LLM RPG simulation engine (Session API, multi-area worlds, compound turns)"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
@@ -14,6 +14,8 @@ keywords = [
     "simulation",
     "game-engine",
     "grid",
+    "campaign",
+    "rpg",
     "roleplay",
 ]
 classifiers = [
@@ -36,11 +38,11 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/DaveH-Ghost/Realm-Fabric"
-Documentation = "https://github.com/DaveH-Ghost/Realm-Fabric/blob/main/docs/README.md"
-Repository = "https://github.com/DaveH-Ghost/Realm-Fabric"
-Issues = "https://github.com/DaveH-Ghost/Realm-Fabric/issues"
-Changelog = "https://github.com/DaveH-Ghost/Realm-Fabric/blob/main/docs/changelog/README.md"
+Homepage = "https://github.com/DaveH-Ghost/CampAIgn-RPG-Engine"
+Documentation = "https://github.com/DaveH-Ghost/CampAIgn-RPG-Engine/blob/main/docs/README.md"
+Repository = "https://github.com/DaveH-Ghost/CampAIgn-RPG-Engine"
+Issues = "https://github.com/DaveH-Ghost/CampAIgn-RPG-Engine/issues"
+Changelog = "https://github.com/DaveH-Ghost/CampAIgn-RPG-Engine/blob/main/docs/changelog/README.md"
 
 [dependency-groups]
 dev = [
@@ -57,7 +59,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build]
-packages = ["realm_fabric"]
+packages = ["campaign_rpg_engine"]
 
 [tool.hatch.build.targets.wheel]
 force-include = { "profiles" = "profiles" }
