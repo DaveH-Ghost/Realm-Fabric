@@ -250,6 +250,7 @@ def build_save_snapshot(session: object) -> dict[str, Any]:
         "active_area_id": session.active_area_id,
         "vision_units": session.vision_units,
         "vision_units_per_tile": session.vision_units_per_tile,
+        "coordinate_mode": session.coordinate_mode,
         "lorebook_char_budget": session.lorebook_char_budget,
         "lorebook_scan_config": session.lorebook_scan_config.to_dict(),
         "lorebooks": [book.to_dict() for book in session.list_lorebooks()],
@@ -326,6 +327,9 @@ def load_session_from_snapshot(data: dict[str, Any]):
     session.vision_units = str(data.get("vision_units", ""))
     per_tile = data.get("vision_units_per_tile")
     session.vision_units_per_tile = int(per_tile) if per_tile is not None else None
+    from campaign_rpg_engine.coordinate_mode import normalize_coordinate_mode
+
+    session.coordinate_mode = normalize_coordinate_mode(data.get("coordinate_mode"))
     session.lorebook_char_budget = int(
         data.get("lorebook_char_budget", session.lorebook_char_budget)
     )

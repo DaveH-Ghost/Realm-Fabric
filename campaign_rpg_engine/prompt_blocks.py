@@ -14,10 +14,17 @@ from campaign_rpg_engine.llm.prompt_context import (
     PromptContext,
     _compound_turn_rules,
     compound_output_format,
+    compound_output_format_relative,
+    compound_turn_rules_relative,
     render_character_slot,
+    render_grid_description_slot,
     render_look_and_interact_slot,
     render_move_instructions_slot,
     render_passive_vision_slot,
+)
+from campaign_rpg_engine.coordinate_mode import (
+    COORDINATE_MODE_RELATIVE,
+    normalize_coordinate_mode,
 )
 from campaign_rpg_engine.agent import Agent
 from campaign_rpg_engine.area import Area
@@ -251,6 +258,16 @@ def prompt_blocks_from_dicts(items: list[dict[str, Any]]) -> tuple[list[PromptBl
     return blocks, None
 
 
+def render_section_block(block: PromptBlock, coordinate_mode: str = "full") -> str:
+    """Render a section block, applying relative-mode overrides for known sections."""
+    if normalize_coordinate_mode(coordinate_mode) == COORDINATE_MODE_RELATIVE:
+        if block.name == "compound_rules" or block.name == "rules":
+            return compound_turn_rules_relative()
+        if block.name == "output_format":
+            return compound_output_format_relative()
+    return block.content or ""
+
+
 def render_slot_block(
     block: PromptBlock,
     ctx: PromptContext,
@@ -259,6 +276,7 @@ def render_slot_block(
     area: Area | None = None,
     vision_units: str = "",
     units_per_tile: int | None = None,
+    coordinate_mode: str = "full",
     lorebooks: dict[str, Lorebook] | None = None,
     lorebook_char_budget: int = DEFAULT_LOREBOOK_CHAR_BUDGET,
     lorebook_scan_config: LorebookScanConfig | None = None,
@@ -292,6 +310,7 @@ def render_slot_block(
             area=area,
             vision_units=vision_units,
             units_per_tile=units_per_tile,
+            coordinate_mode=coordinate_mode,
         )
     if block.name == "move_instructions":
         return render_move_instructions_slot(
@@ -299,6 +318,15 @@ def render_slot_block(
             block.options,
             agent=agent,
             area=area,
+            vision_units=vision_units,
+            units_per_tile=units_per_tile,
+            coordinate_mode=coordinate_mode,
+        )
+    if block.name == "grid_description":
+        return render_grid_description_slot(
+            ctx,
+            area=area,
+            coordinate_mode=coordinate_mode,
             vision_units=vision_units,
             units_per_tile=units_per_tile,
         )
@@ -321,6 +349,7 @@ def render_prompt_blocks(
     area: Area | None = None,
     vision_units: str = "",
     units_per_tile: int | None = None,
+    coordinate_mode: str = "full",
     lorebooks: dict[str, Lorebook] | None = None,
     lorebook_char_budget: int = DEFAULT_LOREBOOK_CHAR_BUDGET,
     lorebook_scan_config: LorebookScanConfig | None = None,
@@ -341,6 +370,7 @@ def render_prompt_blocks(
                     area=area,
                     vision_units=vision_units,
                     units_per_tile=units_per_tile,
+                    coordinate_mode=coordinate_mode,
                     lorebooks=lorebooks,
                     lorebook_char_budget=lorebook_char_budget,
                     lorebook_scan_config=lorebook_scan_config,
@@ -349,7 +379,7 @@ def render_prompt_blocks(
             )
         elif block.type == "section":
             assert block.name is not None
-            parts.append(block.content or "")
+            parts.append(render_section_block(block, coordinate_mode))
     return "".join(parts).strip()
 
 
@@ -361,6 +391,7 @@ def enrich_blocks_with_previews(
     area: Area | None = None,
     vision_units: str = "",
     units_per_tile: int | None = None,
+    coordinate_mode: str = "full",
     lorebooks: dict[str, Lorebook] | None = None,
     lorebook_char_budget: int = DEFAULT_LOREBOOK_CHAR_BUDGET,
     lorebook_scan_config: LorebookScanConfig | None = None,
@@ -379,11 +410,14 @@ def enrich_blocks_with_previews(
                 area=area,
                 vision_units=vision_units,
                 units_per_tile=units_per_tile,
+                coordinate_mode=coordinate_mode,
                 lorebooks=lorebooks,
                 lorebook_char_budget=lorebook_char_budget,
                 lorebook_scan_config=lorebook_scan_config,
                 passive_vision=vision_text,
             )
+        elif block.type == "section":
+            data["preview"] = render_section_block(block, coordinate_mode)
         enriched.append(data)
     return enriched
 

@@ -133,6 +133,9 @@ class Session:
         self._prompt_blocks: list | None = None
         self.vision_units: str = ""
         self.vision_units_per_tile: int | None = None
+        from campaign_rpg_engine.coordinate_mode import COORDINATE_MODE_FULL
+
+        self.coordinate_mode: str = COORDINATE_MODE_FULL
         from campaign_rpg_engine.lorebook.models import DEFAULT_LOREBOOK_CHAR_BUDGET, Lorebook
 
         self._lorebooks: dict[str, Lorebook] = {}
@@ -466,6 +469,7 @@ class Session:
             area=area,
             vision_units=self.vision_units,
             units_per_tile=self.vision_units_per_tile,
+            coordinate_mode=self.coordinate_mode,
             lorebooks=self._lorebooks,
             lorebook_char_budget=self.lorebook_char_budget,
             lorebook_scan_config=self.lorebook_scan_config,
@@ -543,6 +547,20 @@ class Session:
             return "Units per tile must be a positive number."
         self.vision_units = cleaned
         self.vision_units_per_tile = units_per_tile
+        return None
+
+    def set_coordinate_mode(self, mode: str) -> str | None:
+        """Set how coordinates appear in LLM prompts (``full`` or ``relative``)."""
+        from campaign_rpg_engine.coordinate_mode import (
+            SUPPORTED_COORDINATE_MODES,
+            normalize_coordinate_mode,
+        )
+
+        cleaned = (mode or "").strip().lower()
+        if cleaned and cleaned not in SUPPORTED_COORDINATE_MODES:
+            supported = ", ".join(sorted(SUPPORTED_COORDINATE_MODES))
+            return f"coordinate_mode must be one of: {supported}."
+        self.coordinate_mode = normalize_coordinate_mode(cleaned or None)
         return None
 
     def build_prompt_context_for_agent(self, name_or_id: Optional[str] = None):

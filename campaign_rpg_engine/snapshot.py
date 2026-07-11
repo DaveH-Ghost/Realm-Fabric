@@ -142,6 +142,7 @@ def build_session_snapshot(
         "active_area_id": session.active_area_id,
         "vision_units": session.vision_units,
         "vision_units_per_tile": session.vision_units_per_tile,
+        "coordinate_mode": session.coordinate_mode,
         "areas": {
             area_id: serialize_area_block(area, include_private=include_private)
             for area_id, area in session.areas.items()

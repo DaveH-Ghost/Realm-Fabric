@@ -139,8 +139,26 @@ class Area:
             f"y is an integer from {self.min_y} to {self.max_y}."
         )
 
-    def format_grid_description(self) -> str:
-        """Opening line describing grid size and coordinate system."""
+    def format_grid_description(
+        self,
+        *,
+        coordinate_mode: str = "full",
+        vision_units: str = "",
+        units_per_tile: int | None = None,
+    ) -> str:
+        """Describe the grid for LLM prompts (full coordinates or relative mode)."""
+        from campaign_rpg_engine.coordinate_mode import (
+            COORDINATE_MODE_RELATIVE,
+            normalize_coordinate_mode,
+        )
+
+        if normalize_coordinate_mode(coordinate_mode) == COORDINATE_MODE_RELATIVE:
+            lines = ["You exist in a grid-based world."]
+            units = vision_units.strip()
+            if units and units_per_tile is not None and units_per_tile > 0:
+                lines.append(f"Each tile is {units_per_tile} {units}.")
+            return " ".join(lines)
+
         w, h = self.WIDTH, self.HEIGHT
         return (
             f"You exist inside a controlled {w}x{h} grid. "

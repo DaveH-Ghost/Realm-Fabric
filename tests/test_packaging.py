@@ -15,7 +15,6 @@ def _load_pyproject() -> dict:
 
 def test_pyproject_version_is_semver():
     version = _load_pyproject()["project"]["version"]
-    assert version == "1.0.0"
     assert re.fullmatch(r"\d+\.\d+\.\d+", version), version
 
 

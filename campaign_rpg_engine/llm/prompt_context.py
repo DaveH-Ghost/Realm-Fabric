@@ -136,9 +136,16 @@ def render_passive_vision_slot(
     area: Area | None = None,
     vision_units: str = "",
     units_per_tile: int | None = None,
+    coordinate_mode: str = "full",
 ) -> str:
     """Render passive vision with optional you-are-at / coordinate toggles."""
-    opts = normalize_passive_vision_options(options)
+    from campaign_rpg_engine.coordinate_mode import apply_passive_vision_mode
+
+    opts = apply_passive_vision_mode(
+        options,
+        coordinate_mode,
+        normalize=normalize_passive_vision_options,
+    )
     if agent is not None and area is not None:
         return build_passive_vision(
             agent,
@@ -160,9 +167,16 @@ def render_move_instructions_slot(
     area: Area | None = None,
     vision_units: str = "",
     units_per_tile: int | None = None,
+    coordinate_mode: str = "full",
 ) -> str:
     """Render move instructions with optional coordinate-move toggle."""
-    opts = normalize_move_instructions_options(options)
+    from campaign_rpg_engine.coordinate_mode import apply_move_instructions_mode
+
+    opts = apply_move_instructions_mode(
+        options,
+        coordinate_mode,
+        normalize=normalize_move_instructions_options,
+    )
     if agent is not None and area is not None:
         return format_move_instructions(
             agent,
@@ -184,6 +198,23 @@ def _compound_turn_rules() -> str:
 Rules:
 - Plan from current position and vision; move runs first, then look, speak, and action.
 - move: "x,y", entity id (obj_* / agent_*), or null to stay; stay in grid bounds.
+- look: entity id with [?] in passive vision for hidden detail, or null.
+- Hidden detail: [?]; stale examined: [?] [changed].
+- Other agents show their latest observable action on their vision line.
+- speak: set say to dialogue or null.
+- interact: action "interact" + target + verb.
+- emote: action "emote" + target (id or text) + verb (past tense, e.g. pointed).
+- action "none": skip interact/emote after optional move/look/speak.
+
+Reply with a single valid JSON object only."""
+
+
+def compound_turn_rules_relative() -> str:
+    return """Compound turn order: move → look → speak → action.
+
+Rules:
+- Plan from current position and vision; move runs first, then look, speak, and action.
+- move: entity id (obj_* / agent_*), or null to stay.
 - look: entity id with [?] in passive vision for hidden detail, or null.
 - Hidden detail: [?]; stale examined: [?] [changed].
 - Other agents show their latest observable action on their vision line.
@@ -237,6 +268,38 @@ def compound_output_format() -> str:
         '  "verb": "eat | pointed | null"\n'
         "}"
     )
+
+
+def compound_output_format_relative() -> str:
+    return (
+        "JSON only (no markdown):\n"
+        "{\n"
+        '  "reasoning": "private thoughts (~400 chars max)",\n'
+        '  "move": "obj_ball_01" | null,\n'
+        '  "look": "obj_ball_01" | null,\n'
+        '  "say": "dialogue (~500 chars max) or null",\n'
+        '  "action": "interact" | "emote" | "none",\n'
+        '  "target": "obj_* | agent_* | text or null",\n'
+        '  "verb": "eat | pointed | null"\n'
+        "}"
+    )
+
+
+def render_grid_description_slot(
+    ctx: PromptContext,
+    *,
+    area: Area | None = None,
+    coordinate_mode: str = "full",
+    vision_units: str = "",
+    units_per_tile: int | None = None,
+) -> str:
+    if area is not None:
+        return area.format_grid_description(
+            coordinate_mode=coordinate_mode,
+            vision_units=vision_units,
+            units_per_tile=units_per_tile,
+        )
+    return ctx.grid_description
 
 
 def build_prompt_context(agent: Agent, area: Area) -> PromptContext:
