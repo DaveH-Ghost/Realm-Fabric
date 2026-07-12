@@ -1,6 +1,6 @@
 # API reference
 
-Stable **`campaign_rpg_engine`** surface (**1.2.0**). Import from this package in application code.
+Stable **`campaign_rpg_engine`** surface (**1.3.0**). Import from this package in application code.
 
 ```python
 import campaign_rpg_engine
@@ -55,8 +55,12 @@ CI enforces export drift via `tests/test_public_api_surface.py`.
 | `create_area(area_id, *, description, width, height)` | New area |
 | `edit_area(area_id, *, description, width, height, ...)` | Update area bounds / description |
 | `delete_area(area_id)` | Remove empty area |
+| `create_decoration(kind, image, *, area_id=None, ...)` | Add background or sprite decoration |
+| `update_decoration(decoration_id, *, ...)` | Update decoration fields |
+| `delete_decoration(decoration_id)` | Remove decoration |
+| `reorder_decoration(decoration_id, direction)` | Move decoration in z-order (`"up"` / `"down"`) |
 
-All return **`WorldMutationResult`** or **`AreaMutationResult`** with `ok` and `message`.
+World/area edits return **`WorldMutationResult`** or **`AreaMutationResult`**; decoration edits return **`DecorationMutationResult`** — all with `ok` and `message`.
 
 ---
 

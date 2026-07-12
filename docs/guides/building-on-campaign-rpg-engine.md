@@ -38,7 +38,7 @@ Python **3.11+** required.
 
 ```
 my-realm-game/
-  pyproject.toml          # depends on campaign-rpg-engine>=1.2.0
+  pyproject.toml          # depends on campaign-rpg-engine>=1.3.0
   my_game/
     handlers/             # your interaction handlers
     server.py             # FastAPI / your HTTP layer

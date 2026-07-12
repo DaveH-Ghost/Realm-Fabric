@@ -2,7 +2,7 @@
 
 **CampAIgn-RPG-Engine** is a grid-based LLM agent simulation engine with a stable **`campaign_rpg_engine`** library API. The reference GM app is **[CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio)** (GitHub only).
 
-**Current release:** **1.2.0** — plugin primitives for apps and Studio. See [plugins.md](guides/plugins.md). Library-first since 1.0; [Migration 0.7 → 1.0](MIGRATION-0.7-to-1.0.md) still applies for older upgrades.
+**Current release:** **1.3.0** — scene decorations (visual-only map layers per area). See [changelog index](changelog/README.md). Library-first since 1.0; [Migration 0.7 → 1.0](MIGRATION-0.7-to-1.0.md) still applies for older upgrades.
 
 ---
 
@@ -56,4 +56,4 @@ Engine tests use [`tests/fixtures/`](../tests/fixtures/) (not published in the P
 
 - Import from **`campaign_rpg_engine`** in application code (`campaign_rpg_engine.__all__` is semver-guaranteed).
 - Submodules such as `campaign_rpg_engine.area_edit` are for tests and app-owned command dispatch — not top-level exports.
-- Save format version: **`snapshot_version`** in save JSON (currently **4**).
+- Save format version: **`snapshot_version`** in save JSON (currently **5**).

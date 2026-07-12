@@ -12,6 +12,11 @@ from typing import Any
 from campaign_rpg_engine.agent import Agent
 from campaign_rpg_engine.area import Area, GridBounds
 from campaign_rpg_engine.area_event import AreaEventRecord
+from campaign_rpg_engine.decoration import (
+    DECORATION_KIND_BACKGROUND,
+    DECORATION_KIND_SPRITE,
+    Decoration,
+)
 from campaign_rpg_engine.game_profile import load_profile
 from campaign_rpg_engine.interaction_handlers.registry import is_handler_registered
 from campaign_rpg_engine.memory import Memory
@@ -26,8 +31,8 @@ from campaign_rpg_engine.lorebook.models import Lorebook
 from campaign_rpg_engine.prompt_blocks import prompt_blocks_from_dicts
 from campaign_rpg_engine.snapshot import serialize_area_block, serialize_object
 
-SNAPSHOT_VERSION = 4
-SUPPORTED_SNAPSHOT_VERSIONS = frozenset({1, 2, 3, 4})
+SNAPSHOT_VERSION = 5
+SUPPORTED_SNAPSHOT_VERSIONS = frozenset({1, 2, 3, 4, 5})
 
 __all__ = [
     "SNAPSHOT_VERSION",
@@ -139,6 +144,30 @@ def deserialize_object(data: dict[str, Any]) -> Object:
     )
 
 
+def deserialize_decoration(data: dict[str, Any]) -> Decoration:
+    kind = str(data.get("kind", DECORATION_KIND_SPRITE)).strip().lower()
+    if kind == DECORATION_KIND_BACKGROUND:
+        return Decoration(
+            id=data["id"],
+            kind=kind,
+            image=data.get("image", ""),
+            width=int(data.get("width", 0)),
+            height=int(data.get("height", 0)),
+            z_index=int(data.get("z_index", -1000)),
+            repeat=str(data.get("repeat", "repeat")),
+        )
+    return Decoration(
+        id=data["id"],
+        kind=kind,
+        image=data.get("image", ""),
+        x=int(data.get("x", 0)),
+        y=int(data.get("y", 0)),
+        width=int(data.get("width", 0)),
+        height=int(data.get("height", 0)),
+        z_index=int(data.get("z_index", 0)),
+    )
+
+
 def deserialize_area(area_id: str, data: dict[str, Any]) -> Area:
     del area_id  # key is authoritative on load
     grid = data["grid"]
@@ -153,6 +182,8 @@ def deserialize_area(area_id: str, data: dict[str, Any]) -> Area:
     )
     for obj_data in data.get("objects", []):
         area.add_object(deserialize_object(obj_data))
+    for decor_data in data.get("decorations", []):
+        area.decorations.append(deserialize_decoration(decor_data))
     area._recent_events = [
         AreaEventRecord(session_turn=int(ev["session_turn"]), text=ev["text"])
         for ev in data.get("recent_events", [])

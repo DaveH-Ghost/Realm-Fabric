@@ -5,6 +5,7 @@ from typing import Optional
 
 from campaign_rpg_engine.agent import Agent
 from campaign_rpg_engine.memory import Memory
+from campaign_rpg_engine.decoration import Decoration
 from campaign_rpg_engine.object import Object
 from campaign_rpg_engine.object_action import ObjectAction
 from campaign_rpg_engine.area_event import (
@@ -79,6 +80,7 @@ class Area:
         self.area_description = area_description
         self.agents: list[Agent] = []
         self.objects: list[Object] = []
+        self.decorations: list[Decoration] = []
         self._recent_events: list[AreaEventRecord] = []
         self._max_recent_events = DEFAULT_MAX_RECENT_AREA_EVENTS
 
@@ -246,6 +248,20 @@ class Area:
     def get_objects(self) -> list[Object]:
         """Return all objects currently in the area."""
         return self.objects
+
+    def get_decoration_by_id(self, decoration_id: str) -> Optional[Decoration]:
+        """Return the decoration with the given ID, if it exists in the area."""
+        for decoration in self.decorations:
+            if decoration.id == decoration_id:
+                return decoration
+        return None
+
+    def remove_decoration_by_id(self, decoration_id: str) -> Optional[Decoration]:
+        """Remove and return a decoration by id, or None if not found."""
+        for index, decoration in enumerate(self.decorations):
+            if decoration.id == decoration_id:
+                return self.decorations.pop(index)
+        return None
 
     def is_valid_position(self, position: tuple[int, int]) -> bool:
         """Check whether a position is inside the playable grid."""

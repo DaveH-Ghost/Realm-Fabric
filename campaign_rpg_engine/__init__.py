@@ -1,5 +1,5 @@
 """
-campaign_rpg_engine — public engine API for CampAIgn-RPG-Engine (1.2.1).
+campaign_rpg_engine — public engine API for CampAIgn-RPG-Engine (1.3.0).
 
 Import from this package in application code.
 """
@@ -126,6 +126,8 @@ from campaign_rpg_engine.entity_templates import (
     spawn_object_from_template,
     validate_template,
 )
+from campaign_rpg_engine.decoration import Decoration
+from campaign_rpg_engine.decoration_edit import DecorationMutationResult
 from campaign_rpg_engine.world_edit_api import WorldMutationResult
 
 __all__ = [
@@ -142,6 +144,8 @@ __all__ = [
     "DEFAULT_SUMMARY_INTERVAL",
     "DEFAULT_SUMMARY_TAIL",
     "DEFAULT_WINDOW",
+    "Decoration",
+    "DecorationMutationResult",
     "GameProfile",
     "GridBounds",
     "LLMParseError",

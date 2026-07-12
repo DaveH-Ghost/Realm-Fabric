@@ -27,6 +27,13 @@ from campaign_rpg_engine.area import Area
 from campaign_rpg_engine.area_edit import (
     delete_agent_by_id,
 )
+from campaign_rpg_engine.decoration_edit import (
+    DecorationMutationResult,
+    add_decoration_to_area,
+    remove_decoration_from_area,
+    reorder_decoration_in_area,
+    update_decoration_in_area,
+)
 from campaign_rpg_engine.session_area_edit import (
     AreaMutationResult,
     create_area_in_session,
@@ -47,6 +54,7 @@ from campaign_rpg_engine.world_edit_api import (
 
 __all__ = [
     "DEFAULT_AREA_ID",
+    "DecorationMutationResult",
     "Session",
     "SessionResult",
     "TurnResult",
@@ -1212,3 +1220,128 @@ class Session:
         if position is not None or "pos" in fields or "area" in fields:
             self._emit_event("agent_moved", agent=agent, area_id=current_area_id)
         return mutation
+
+    # ------------------------------------------------------------------
+    # Scene decorations (V1.3.0) — visual-only; excluded from LLM prompts
+    # ------------------------------------------------------------------
+
+    def create_decoration(
+        self,
+        *,
+        kind: str,
+        image: str,
+        area_id: str | None = None,
+        x: int = 0,
+        y: int = 0,
+        width: int = 0,
+        height: int = 0,
+        z_index: int | None = None,
+        repeat: str = "repeat",
+        decoration_id: str | None = None,
+        label: str = "decor",
+    ) -> DecorationMutationResult:
+        area, err = self._resolve_edit_area(area_id)
+        if area is None:
+            return DecorationMutationResult(ok=False, message=err or "Unknown area.")
+        decoration, message = add_decoration_to_area(
+            area,
+            kind=kind,
+            image=image,
+            x=x,
+            y=y,
+            width=width,
+            height=height,
+            z_index=z_index,
+            repeat=repeat,
+            decoration_id=decoration_id,
+            label=label,
+        )
+        resolved_area = area_id or self.active_area_id
+        return DecorationMutationResult(
+            ok=decoration is not None,
+            message=message,
+            decoration=decoration,
+            area_id=resolved_area,
+        )
+
+    def update_decoration(
+        self,
+        decoration_id: str,
+        *,
+        area_id: str | None = None,
+        image: str | None = None,
+        x: int | None = None,
+        y: int | None = None,
+        width: int | None = None,
+        height: int | None = None,
+        z_index: int | None = None,
+        repeat: str | None = None,
+    ) -> DecorationMutationResult:
+        area, err = self._resolve_edit_area(area_id)
+        if area is None:
+            return DecorationMutationResult(ok=False, message=err or "Unknown area.")
+        decoration, message = update_decoration_in_area(
+            area,
+            decoration_id.strip(),
+            image=image,
+            x=x,
+            y=y,
+            width=width,
+            height=height,
+            z_index=z_index,
+            repeat=repeat,
+        )
+        resolved_area = area_id or self.active_area_id
+        return DecorationMutationResult(
+            ok=decoration is not None,
+            message=message,
+            decoration=decoration,
+            area_id=resolved_area,
+        )
+
+    def delete_decoration(
+        self,
+        decoration_id: str,
+        *,
+        area_id: str | None = None,
+    ) -> DecorationMutationResult:
+        area, err = self._resolve_edit_area(area_id)
+        if area is None:
+            return DecorationMutationResult(ok=False, message=err or "Unknown area.")
+        ok, message = remove_decoration_from_area(area, decoration_id.strip())
+        resolved_area = area_id or self.active_area_id
+        return DecorationMutationResult(
+            ok=ok,
+            message=message,
+            area_id=resolved_area,
+        )
+
+    def reorder_decoration(
+        self,
+        decoration_id: str,
+        direction: str,
+        *,
+        area_id: str | None = None,
+    ) -> DecorationMutationResult:
+        area, err = self._resolve_edit_area(area_id)
+        if area is None:
+            return DecorationMutationResult(ok=False, message=err or "Unknown area.")
+        direction_clean = direction.strip().lower()
+        if direction_clean not in ("up", "down"):
+            return DecorationMutationResult(
+                ok=False,
+                message=f"Invalid direction {direction!r} (use 'up' or 'down').",
+            )
+        ok, message = reorder_decoration_in_area(
+            area,
+            decoration_id.strip(),
+            direction_clean,  # type: ignore[arg-type]
+        )
+        decoration = area.get_decoration_by_id(decoration_id.strip()) if ok else None
+        resolved_area = area_id or self.active_area_id
+        return DecorationMutationResult(
+            ok=ok,
+            message=message,
+            decoration=decoration,
+            area_id=resolved_area,
+        )

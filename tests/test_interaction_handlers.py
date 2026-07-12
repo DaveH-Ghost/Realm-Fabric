@@ -108,7 +108,7 @@ def test_snapshot_v4_round_trip_handler_fields():
     assert obj.actions["eat"].handler_id == "delete_self"
 
     save = build_save_snapshot(session)
-    assert save["snapshot_version"] == SNAPSHOT_VERSION == 4
+    assert save["snapshot_version"] == SNAPSHOT_VERSION == 5
     kick = next(
         o for o in save["areas"]["room"]["objects"] if o["id"] == "obj_ball_01"
     )

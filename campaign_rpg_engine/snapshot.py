@@ -13,6 +13,11 @@ from typing import Any
 
 from campaign_rpg_engine.agent import Agent
 from campaign_rpg_engine.area import Area
+from campaign_rpg_engine.decoration import (
+    DECORATION_KIND_BACKGROUND,
+    DECORATION_KIND_SPRITE,
+    Decoration,
+)
 from campaign_rpg_engine.object import Object
 from campaign_rpg_engine.object_action import ObjectAction
 from campaign_rpg_engine.perception import build_passive_vision
@@ -95,12 +100,32 @@ def serialize_agent(
     return data
 
 
+def serialize_decoration(decoration: Decoration) -> dict[str, Any]:
+    """Public decoration fields for clients."""
+    data: dict[str, Any] = {
+        "id": decoration.id,
+        "kind": decoration.kind,
+        "image": decoration.image,
+        "z_index": decoration.z_index,
+    }
+    if decoration.kind == DECORATION_KIND_BACKGROUND:
+        data["repeat"] = decoration.repeat
+        data["width"] = decoration.width
+        data["height"] = decoration.height
+    else:
+        data["x"] = decoration.x
+        data["y"] = decoration.y
+        data["width"] = decoration.width
+        data["height"] = decoration.height
+    return data
+
+
 def serialize_area_block(
     area: Area,
     *,
     include_private: bool = False,
 ) -> dict[str, Any]:
-    """Per-area grid, description, objects, and events (no agents)."""
+    """Per-area grid, description, objects, decorations, and events (no agents)."""
     return {
         "grid": {
             "min_x": area.min_x,
@@ -111,6 +136,9 @@ def serialize_area_block(
         "area_description": area.area_description,
         "objects": [
             serialize_object(o, include_private=include_private) for o in area.get_objects()
+        ],
+        "decorations": [
+            serialize_decoration(d) for d in area.decorations
         ],
         "recent_events": [
             {"session_turn": event.session_turn, "text": event.text}
@@ -198,6 +226,7 @@ def build_area_snapshot(
         "objects": [
             serialize_object(o, include_private=include_private) for o in area.get_objects()
         ],
+        "decorations": [serialize_decoration(d) for d in area.decorations],
         "recent_events": [
             {"session_turn": event.session_turn, "text": event.text}
             for event in area.recent_events

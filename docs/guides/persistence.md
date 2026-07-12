@@ -13,7 +13,7 @@ Two JSON shapes serve different purposes — do not confuse them.
 | **Includes** | Memory state, prompt blocks, lorebooks, vision settings, all areas | Grid, objects, agents, events, optional `passive_vision` |
 | **Typical use** | Download upload, database blob | `GET /api/state` after a turn |
 
-Save documents include **`snapshot_version`** (currently **4**). Older versions are migrated on import when supported.
+Save documents include **`snapshot_version`** (currently **5**). Older versions are migrated on import when supported.
 
 ---
 

@@ -2,7 +2,7 @@
 
 Release notes and historical implementation checklists for CampAIgn-RPG-Engine.
 
-**Current:** [v1.2.1-changelog.md](v1.2.1-changelog.md) — entity templates (export/spawn portable object and agent blueprints).
+**Current:** [v1.3.0-changelog.md](v1.3.0-changelog.md) — scene decorations (visual-only map layers per area).
 
 ---
 
@@ -10,6 +10,7 @@ Release notes and historical implementation checklists for CampAIgn-RPG-Engine.
 
 | Version | Summary |
 |---------|---------|
+| [1.3.0](v1.3.0-changelog.md) | Scene decorations — background + sprite layers (`snapshot_version` 5) |
 | [1.2.1](v1.2.1-changelog.md) | Entity templates — export/spawn objects and agents without ids or placement |
 | [1.2.0](v1.2.0-changelog.md) | Session extensions, event registry, turn verbs, prompt slots, `plugin_slot` blocks |
 | [1.0.0](v1.0.0-changelog.md) | Single `campaign_rpg_engine` package; no CLI; typed API only; Studio external |

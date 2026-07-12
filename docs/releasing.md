@@ -20,7 +20,7 @@ Package name: **`campaign-rpg-engine`**. License: **MIT** (`LICENSE`, `pyproject
 
 1. [PyPI account](https://pypi.org/account/register/) (and [TestPyPI](https://test.pypi.org/) for dry runs)
 2. API token: PyPI → Account settings → API tokens (scope: whole account or project `campaign-rpg-engine`)
-3. Tag the release in git: `git tag v1.2.0 && git push origin v1.2.0`
+3. Tag the release in git: `git tag v1.3.0 && git push origin v1.3.0`
 
 ---
 
@@ -39,7 +39,7 @@ Artifacts land in `dist/` (`.whl` and `.tar.gz`).
 ```powershell
 uv venv .venv-pypi-test
 .\.venv-pypi-test\Scripts\Activate.ps1
-uv pip install dist\campaign_rpg_engine-1.2.0-py3-none-any.whl
+uv pip install dist\campaign_rpg_engine-1.3.0-py3-none-any.whl
 python -c "from campaign_rpg_engine import Session, __version__; print(__version__)"
 ```
 
@@ -57,7 +57,7 @@ uv publish --publish-url https://test.pypi.org/legacy/
 Install from TestPyPI:
 
 ```powershell
-uv pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ campaign-rpg-engine==1.2.0
+uv pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ campaign-rpg-engine==1.3.0
 ```
 
 (`--extra-index-url` pulls dependencies like pydantic from main PyPI.)
