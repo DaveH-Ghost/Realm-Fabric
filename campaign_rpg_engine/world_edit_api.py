@@ -114,7 +114,11 @@ def create_object_in_area(
         elif area.get_object_by_id(obj_id) is not None:
             return None, f"Object id {obj_id!r} is already in use."
     else:
-        obj_id = generate_object_id(area, name)
+        if session is not None:
+            reserved = frozenset(collect_object_ids_in_session(session))
+            obj_id = generate_object_id(area, name, reserved_ids=reserved)
+        else:
+            obj_id = generate_object_id(area, name)
     obj = Object(
         id=obj_id,
         name=name,
@@ -256,6 +260,14 @@ def find_object_in_session(
         if obj is not None:
             return area_id, area, obj
     return None
+
+
+def collect_object_ids_in_session(session: Session) -> set[str]:
+    """Return every object id across all areas in the session."""
+    ids: set[str] = set()
+    for area in session.areas.values():
+        ids.update(obj.id for obj in area.get_objects())
+    return ids
 
 
 def add_object_action_to_object(obj: Object, action: ObjectAction) -> str | None:

@@ -1,6 +1,6 @@
 # API reference
 
-Stable **`campaign_rpg_engine`** surface (**1.3.0**). Import from this package in application code.
+Stable **`campaign_rpg_engine`** surface (**1.3.1**). Import from this package in application code.
 
 ```python
 import campaign_rpg_engine
@@ -61,6 +61,17 @@ CI enforces export drift via `tests/test_public_api_surface.py`.
 | `reorder_decoration(decoration_id, direction)` | Move decoration in z-order (`"up"` / `"down"`) |
 
 World/area edits return **`WorldMutationResult`** or **`AreaMutationResult`**; decoration edits return **`DecorationMutationResult`** — all with `ok` and `message`.
+
+### Area templates (1.3.1)
+
+| Function | Description |
+|----------|-------------|
+| `export_area_template(session, area_id, *, name, include_hidden_objects)` | Portable whole-area blueprint |
+| `export_decoration_template(decoration)` | Decoration entry without id |
+| `spawn_area_from_template(session, template, *, area_id, mode)` | Create (`new`) or replace (`replace`) area from template |
+| `validate_area_template(data)` | Validate area template JSON |
+
+Returns **`AreaTemplateMutationResult`** from `spawn_area_from_template`.
 
 ---
 

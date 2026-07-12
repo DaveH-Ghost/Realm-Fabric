@@ -41,6 +41,15 @@ def test_generate_object_id_increments():
     assert generate_object_id(area, "Ceramic Ball") == "obj_ceramic_ball_02"
 
 
+def test_generate_object_id_respects_reserved_ids():
+    area = create_initial_area()
+    reserved = frozenset({"obj_ceramic_ball_01", "obj_ceramic_ball_02"})
+    assert (
+        generate_object_id(area, "Ceramic Ball", reserved_ids=reserved)
+        == "obj_ceramic_ball_03"
+    )
+
+
 def test_format_objects_list_initial_world():
     area = create_initial_area()
     text = format_objects_list(area)

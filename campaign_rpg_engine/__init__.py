@@ -1,5 +1,5 @@
 """
-campaign_rpg_engine — public engine API for CampAIgn-RPG-Engine (1.3.0).
+campaign_rpg_engine — public engine API for CampAIgn-RPG-Engine (1.3.1).
 
 Import from this package in application code.
 """
@@ -126,6 +126,13 @@ from campaign_rpg_engine.entity_templates import (
     spawn_object_from_template,
     validate_template,
 )
+from campaign_rpg_engine.area_templates import (
+    AreaTemplateMutationResult,
+    export_area_template,
+    export_decoration_template,
+    spawn_area_from_template,
+    validate_area_template,
+)
 from campaign_rpg_engine.decoration import Decoration
 from campaign_rpg_engine.decoration_edit import DecorationMutationResult
 from campaign_rpg_engine.world_edit_api import WorldMutationResult
@@ -137,6 +144,7 @@ __all__ = [
     "AgentCompoundTurn",
     "Area",
     "AreaMutationResult",
+    "AreaTemplateMutationResult",
     "DEFAULT_AREA_ID",
     "DEFAULT_CHAR_BUDGET",
     "DEFAULT_LOREBOOK_CHAR_BUDGET",
@@ -170,6 +178,7 @@ __all__ = [
     "Session",
     "SessionResult",
     "spawn_agent_from_template",
+    "spawn_area_from_template",
     "spawn_object_from_template",
     "ST_ENTRY_DEFAULTS",
     "TEMPLATE_VERSION",
@@ -197,6 +206,8 @@ __all__ = [
     "describe_scan_sources",
     "emit_session_event",
     "export_agent_template",
+    "export_area_template",
+    "export_decoration_template",
     "export_object_template",
     "enrich_blocks_with_previews",
     "estimate_prompt_tokens",
@@ -240,6 +251,7 @@ __all__ = [
     "run_interaction_handler",
     "run_turn_verb",
     "unregister_event_listeners",
+    "validate_area_template",
     "validate_prompt_blocks",
     "validate_template",
     "with_st_entry_defaults",

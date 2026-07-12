@@ -2,7 +2,7 @@
 
 Release notes and historical implementation checklists for CampAIgn-RPG-Engine.
 
-**Current:** [v1.3.0-changelog.md](v1.3.0-changelog.md) — scene decorations (visual-only map layers per area).
+**Current:** [v1.3.1-changelog.md](v1.3.1-changelog.md) — area templates (whole-area blueprints with decorations).
 
 ---
 
@@ -10,6 +10,7 @@ Release notes and historical implementation checklists for CampAIgn-RPG-Engine.
 
 | Version | Summary |
 |---------|---------|
+| [1.3.1](v1.3.1-changelog.md) | Area templates — export/spawn whole areas (`kind: "area"`) |
 | [1.3.0](v1.3.0-changelog.md) | Scene decorations — background + sprite layers (`snapshot_version` 5) |
 | [1.2.1](v1.2.1-changelog.md) | Entity templates — export/spawn objects and agents without ids or placement |
 | [1.2.0](v1.2.0-changelog.md) | Session extensions, event registry, turn verbs, prompt slots, `plugin_slot` blocks |

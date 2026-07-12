@@ -58,10 +58,17 @@ def slugify_display_name(name: str) -> str:
     return slug or "new"
 
 
-def generate_object_id(area: Area, display_name: str) -> str:
+def generate_object_id(
+    area: Area,
+    display_name: str,
+    *,
+    reserved_ids: frozenset[str] | None = None,
+) -> str:
     """Auto-generate a unique object id from a display name."""
     slug = slugify_display_name(display_name)
     existing = {obj.id for obj in area.objects}
+    if reserved_ids:
+        existing |= set(reserved_ids)
     counter = 1
     while True:
         candidate = f"obj_{slug}_{counter:02d}"
