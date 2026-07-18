@@ -69,7 +69,7 @@ def test_speak_and_emote_both_witnessed():
 
     memory_text = goblin.memory.render_prompt_block(goblin, area)
     assert 'Explorer says: "Hello there!"' in memory_text
-    assert "Explorer smiled at you." in memory_text
+    assert "[emote] Explorer smiled at you." in memory_text
 
 
 def test_look_witnessed_when_only_action():

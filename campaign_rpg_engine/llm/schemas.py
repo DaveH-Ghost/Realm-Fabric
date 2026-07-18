@@ -84,7 +84,10 @@ class AgentCompoundTurn(BaseModel):
     )
     target: Optional[str] = Field(
         default=None,
-        description="Object or agent id (or free text) when action is interact or emote; optional for verb.",
+        description=(
+            "Object or agent id (or free text) for interact; optional for emote "
+            "(omit for undirected gestures) and verb."
+        ),
     )
     verb: Optional[str] = Field(
         default=None,
@@ -137,10 +140,9 @@ class AgentCompoundTurn(BaseModel):
             if not self.verb or not str(self.verb).strip():
                 raise ValueError("ERR:INVALID_TARGET: interact requires verb")
         elif self.action == "emote":
-            if not self.target or not str(self.target).strip():
-                raise ValueError("ERR:INVALID_TARGET: emote requires target")
             if not self.verb or not str(self.verb).strip():
                 raise ValueError("ERR:INVALID_TARGET: emote requires verb")
+            # target is optional — undirected emotes (nod, smile) omit it
         elif self.action == "verb":
             if not self.verb or not str(self.verb).strip():
                 raise ValueError("ERR:INVALID_TARGET: verb action requires verb id")

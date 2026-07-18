@@ -48,6 +48,12 @@ def parse_field_tokens(
 
 
 def _is_extra_field_key(key: str) -> bool:
-    if not key or not key[0].isalpha():
+    """Accept plugin/handler param keys, including numbered prefixes like ``1_pdesc``."""
+    if not key:
+        return False
+    # Reject pure numbers so values are not mistaken for field names.
+    if key.isdigit():
+        return False
+    if not key[0].isalnum():
         return False
     return all(c.isalnum() or c in "_-" for c in key)

@@ -47,6 +47,8 @@ def _witness_text_for_emote(
 ) -> str:
     action_name = (emote_step.content or "").strip()
     target = (emote_step.target or "").strip()
+    if not target:
+        return format_emote_line(actor.name, action_name, "")
     phrase = emote_target_phrase_for_witness(area, target, observer)
     return format_emote_line(actor.name, action_name, phrase)
 

@@ -24,9 +24,9 @@ Running agent turns with **`AgentCompoundTurn`** — the structured output shape
 | `move` | `"x,y"`, entity id, or `null` | Stay put when null |
 | `look` | entity id or `null` | After move; updates look knowledge |
 | `say` | string or `null` | Witnessed dialogue (~500 chars max) |
-| `action` | `"interact"` \| `"emote"` \| `"none"` | Turn-ending action |
-| `target` | string or `null` | Object/agent id for interact; emote target text |
-| `verb` | string or `null` | Object action name (interact) or past-tense emote verb |
+| `action` | `"interact"` \| `"emote"` \| `"verb"` \| `"none"` | Turn-ending action |
+| `target` | string or `null` | Object id for interact; optional aimed-at text for emote |
+| `verb` | string or `null` | Object action name, emote past-tense phrase, or special/inventory id |
 
 Full schema reference: [docs/schemas/README.md](../schemas/README.md).
 

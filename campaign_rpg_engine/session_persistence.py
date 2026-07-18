@@ -116,6 +116,7 @@ def deserialize_object_action(name: str, data: dict[str, Any]) -> ObjectAction:
         halt_movement=bool(data.get("halt_movement", False)),
         delete_after_trigger=bool(data.get("delete_after_trigger", True)),
         trigger_exceptions=list(data.get("trigger_exceptions", [])),
+        enabled=bool(data.get("enabled", True)),
     )
 
 

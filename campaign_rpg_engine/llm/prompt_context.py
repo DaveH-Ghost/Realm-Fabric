@@ -197,10 +197,13 @@ def _turn_verbs_rules_line() -> str:
 
     verbs = list_registered_turn_verbs()
     if not verbs:
-        return "- verb: action \"verb\" + verb (registered id) + optional target."
+        return (
+            "- verb: action \"verb\" + verb (special/inventory id) + optional target."
+        )
     listed = ", ".join(verbs)
     return (
-        f"- verb: action \"verb\" + verb (one of: {listed}) + optional target."
+        f"- verb: action \"verb\" + verb (special/inventory id; "
+        f"one of: {listed}) + optional target."
     )
 
 
@@ -213,12 +216,13 @@ Rules:
 - move: "x,y", entity id (obj_* / agent_*), or null to stay; stay in grid bounds.
 - look: entity id with [?] in passive vision for hidden detail, or null.
 - Hidden detail: [?]; stale examined: [?] [changed].
-- Other agents show their latest observable action on their vision line.
-- speak: set say to dialogue or null.
-- interact: action "interact" + target + verb.
-- emote: action "emote" + target (id or text) + verb (past tense, e.g. pointed).
+- Object actions marked [far] are out of reach this turn — prefer move toward that object so you can speak/emote while approaching; interact still walks closer but may not finish.
+- say: spoken dialogue or null.
+- interact: action "interact" + target + verb. verb must be an exact action name listed under that object in passive vision (including [far] ones); do not invent verbs. For roleplay that is not a listed action, use emote instead.
+- emote: nonverbal beat; verb=past-tense phrase (nodded; sat down); optional target. Results are tagged [emote].
+- [emote]: roleplay gesture/expression — it does not move entities or change objects, but witnesses remember it and it can matter socially.
 {verb_line}
-- action "none": skip interact/emote/verb after optional move/look/speak.
+- action "none": skip interact/emote/special after optional move/look/speak.
 
 Reply with a single valid JSON object only."""
 
@@ -232,12 +236,13 @@ Rules:
 - move: entity id (obj_* / agent_*), or null to stay.
 - look: entity id with [?] in passive vision for hidden detail, or null.
 - Hidden detail: [?]; stale examined: [?] [changed].
-- Other agents show their latest observable action on their vision line.
-- speak: set say to dialogue or null.
-- interact: action "interact" + target + verb.
-- emote: action "emote" + target (id or text) + verb (past tense, e.g. pointed).
+- Object actions marked [far] are out of reach this turn — prefer move toward that object so you can speak/emote while approaching; interact still walks closer but may not finish.
+- say: spoken dialogue or null.
+- interact: action "interact" + target + verb. verb must be an exact action name listed under that object in passive vision (including [far] ones); do not invent verbs. For roleplay that is not a listed action, use emote instead.
+- emote: nonverbal beat; verb=past-tense phrase (nodded; sat down); optional target. Results are tagged [emote].
+- [emote]: roleplay gesture/expression — it does not move entities or change objects, but witnesses remember it and it can matter socially.
 {verb_line}
-- action "none": skip interact/emote/verb after optional move/look/speak.
+- action "none": skip interact/emote/special after optional move/look/speak.
 
 Reply with a single valid JSON object only."""
 
@@ -278,10 +283,10 @@ def compound_output_format() -> str:
         '  "reasoning": "private thoughts (~400 chars max)",\n'
         '  "move": "2,3" | "obj_ball_01" | null,\n'
         '  "look": "obj_ball_01" | null,\n'
-        '  "say": "dialogue (~500 chars max) or null",\n'
+        '  "say": "spoken dialogue (~500 chars max) or null",\n'
         '  "action": "interact" | "emote" | "verb" | "none",\n'
-        '  "target": "obj_* | agent_* | text or null",\n'
-        '  "verb": "eat | pointed | registered_verb_id | null"\n'
+        '  "target": "obj_* | agent_* | short aimed-at text | null",\n'
+        '  "verb": "object action | emote phrase | special/inventory id | null"\n'
         "}"
     )
 
@@ -293,10 +298,10 @@ def compound_output_format_relative() -> str:
         '  "reasoning": "private thoughts (~400 chars max)",\n'
         '  "move": "obj_ball_01" | null,\n'
         '  "look": "obj_ball_01" | null,\n'
-        '  "say": "dialogue (~500 chars max) or null",\n'
+        '  "say": "spoken dialogue (~500 chars max) or null",\n'
         '  "action": "interact" | "emote" | "verb" | "none",\n'
-        '  "target": "obj_* | agent_* | text or null",\n'
-        '  "verb": "eat | pointed | registered_verb_id | null"\n'
+        '  "target": "obj_* | agent_* | short aimed-at text | null",\n'
+        '  "verb": "object action | emote phrase | special/inventory id | null"\n'
         "}"
     )
 

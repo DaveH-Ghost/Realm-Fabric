@@ -19,8 +19,12 @@ Each **`ObjectAction`** on an object has:
 | `handler_id` | Registered handler id (optional — flavor-only if omitted) |
 | `handler_params` | String key-value params validated per handler |
 | `kind` | `"interact"` (default) or `"trigger"` (hidden / zone fires on step) |
+| `enabled` | When `False`, hidden from vision and cannot be used or fire (default `True`) |
 
 Handlers are **process-wide**. Register at startup before loading saves that reference them.
+
+To run several handlers from one action, register a composer (Studio ships `sequence`) that
+calls ``run_named_handler`` for each step — do not add a multi-handler list field to ``ObjectAction``.
 
 Plugins that need to call another handler after branching (e.g. skills pass/fail) should use
 ``run_named_handler(...)`` and optionally ``collect_prefixed_params`` (1.4.2) — do not add

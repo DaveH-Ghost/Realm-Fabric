@@ -89,6 +89,43 @@ def test_agents_can_share_tile_by_default():
     assert is_tile_enterable(area, (1, 1), other.id)
 
 
+def test_move_toward_blocking_object_stays_on_column():
+    """Regression: collinear approach should stop cardinally, not diagonally."""
+    from campaign_rpg_engine.agent import Agent
+    from campaign_rpg_engine.area import Area, GridBounds
+    from campaign_rpg_engine.memory import Memory
+    from campaign_rpg_engine.object import Object
+    from campaign_rpg_engine.occupancy import resolve_standable_goal
+
+    area = Area(bounds=GridBounds.square(5))
+    mover = Agent(
+        id="agent_test_01",
+        name="Tester",
+        personality="",
+        position=(2, 0),
+        memory=Memory(),
+        move_speed=2,
+    )
+    area.add_agent(mover)
+    obj = Object(
+        id="obj_crate_01",
+        name="Crate",
+        description="",
+        position=(2, 3),
+        blocks_movement=True,
+    )
+    area.add_object(obj)
+
+    standable = resolve_standable_goal(
+        area, obj.position, mover.id, from_pos=mover.position
+    )
+    assert standable == (2, 2)
+
+    outcome = do_move(mover, area, "obj_crate_01")
+    assert mover.position == (2, 2)
+    assert "Crate" in outcome.result
+
+
 def test_selective_blocking_exception_allows_passage():
     area = create_initial_area()
     agent = area.get_agent()

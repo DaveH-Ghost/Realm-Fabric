@@ -27,6 +27,7 @@ def parse_compound_step_arg(arg: str) -> ParsedCompoundStep:
         - look obj_ball_01
         2,3 interact obj_cookie_01 eat
         emote obj_sign_01 pointed
+        emote nodded
         2,3
         stay speak Hi there.
     """
@@ -76,11 +77,25 @@ def parse_compound_step_arg(arg: str) -> ParsedCompoundStep:
             idx += 2
         elif cmd == "emote":
             idx += 1
-            if idx + 1 >= len(tokens):
-                raise ValueError("emote requires target and past-tense action name")
-            emote_target = tokens[idx]
-            emote_action = tokens[idx + 1]
-            idx += 2
+            if idx >= len(tokens):
+                raise ValueError(
+                    "emote requires a past-tense action name "
+                    "(optional target: emote [target] verb)"
+                )
+            if idx + 1 < len(tokens) and tokens[idx + 1] not in (
+                "move",
+                "look",
+                "speak",
+                "interact",
+                "emote",
+            ):
+                emote_target = tokens[idx]
+                emote_action = tokens[idx + 1]
+                idx += 2
+            else:
+                emote_target = ""
+                emote_action = tokens[idx]
+                idx += 1
         else:
             raise ValueError(f"Unknown token '{tokens[idx]}' in compound step")
 
@@ -88,9 +103,9 @@ def parse_compound_step_arg(arg: str) -> ParsedCompoundStep:
         turn_action = "interact"
         target = interact_target
         action_name = interact_action
-    elif emote_target:
+    elif emote_action is not None:
         turn_action = "emote"
-        target = emote_target
+        target = emote_target or None
         action_name = emote_action
     else:
         turn_action = "none"

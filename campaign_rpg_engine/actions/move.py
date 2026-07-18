@@ -108,7 +108,7 @@ def move(
 
 
 
-    standable_goal = resolve_standable_goal(area, goal, agent.id)
+    standable_goal = resolve_standable_goal(area, goal, agent.id, from_pos=agent.position)
 
     if standable_goal is None:
 

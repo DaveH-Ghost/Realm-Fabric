@@ -29,6 +29,11 @@ from campaign_rpg_engine.area import Area
 PASSIVE_VISION_LOOK_RULE = (
     "Detail marked [?] can be examined with look."
 )
+PASSIVE_VISION_FAR_RULE = (
+    "Actions marked [far] are out of reach this turn. Prefer move toward that object "
+    "so you can speak or emote while approaching; interact on a [far] action still "
+    "walks you closer but may not finish the action this turn."
+)
 PASSIVE_VISION_NO_LOOK_TARGETS = (
     "There are currently no objects you have not looked at and "
     "cannot gain any new information from looking."
@@ -99,8 +104,9 @@ def build_passive_vision(
     Build the passive vision block for the given agent.
 
     Includes look guidance, per-object interaction hints (indented), and agents.
-    Interactions list actions reachable after spending full ``move_speed`` toward
-    the object (same rules as interact pathing in 0.6.0b).
+    Interactions list all enabled interact actions on visible objects. Actions
+    not reachable this turn (even after spending full ``move_speed``) are tagged
+    ``[far]``.
     """
     bearing_ready = (
         include_relative_bearing
@@ -111,6 +117,7 @@ def build_passive_vision(
     if include_you_are_at:
         lines.append(f"You are at {agent.position}.")
     lines.append(PASSIVE_VISION_LOOK_RULE)
+    lines.append(PASSIVE_VISION_FAR_RULE)
 
     memory = agent.memory
 
@@ -261,7 +268,7 @@ def position_after_move_budget(
     if move_speed is None:
         if is_tile_enterable(area, goal, mover_id):
             return goal
-        standable = resolve_standable_goal(area, goal, mover_id)
+        standable = resolve_standable_goal(area, goal, mover_id, from_pos=start)
         return standable if standable is not None else start
     final, _, _ = walk_with_pathfinding(start, goal, move_speed, area, mover_id)
     return final
@@ -281,22 +288,33 @@ def get_object_interactions_reachable_after_move(
     for action_name, action in sorted(obj.actions.items()):
         if action.kind == "trigger":
             continue
-        if chebyshev_distance_to_object(agent.position, obj) <= action.range:
-            results.append((action_name, action))
+        if not action.enabled:
             continue
-        goal = nearest_standable_in_interact_range(agent, area, obj, action)
-        if goal is None:
-            continue
-        simulated = position_after_move_budget(
-            agent.position,
-            goal,
-            agent.move_speed,
-            area,
-            agent.id,
-        )
-        if chebyshev_distance_to_object(simulated, obj) <= action.range:
+        if is_object_action_reachable_after_move(agent, area, obj, action):
             results.append((action_name, action))
     return results
+
+
+def is_object_action_reachable_after_move(
+    agent: Agent,
+    area: Area,
+    obj: Object,
+    action: ObjectAction,
+) -> bool:
+    """True if *action* can be completed this turn after spending full move budget."""
+    if chebyshev_distance_to_object(agent.position, obj) <= action.range:
+        return True
+    goal = nearest_standable_in_interact_range(agent, area, obj, action)
+    if goal is None:
+        return False
+    simulated = position_after_move_budget(
+        agent.position,
+        goal,
+        agent.move_speed,
+        area,
+        agent.id,
+    )
+    return chebyshev_distance_to_object(simulated, obj) <= action.range
 
 
 def _format_object_interaction_lines(
@@ -307,15 +325,21 @@ def _format_object_interaction_lines(
     vision_units: str = "",
     units_per_tile: int | None = None,
 ) -> list[str]:
-    interactions = get_object_interactions_reachable_after_move(agent, area, obj)
     lines: list[str] = []
-    for action_name, action in interactions:
+    for action_name, action in sorted(obj.actions.items()):
+        if action.kind == "trigger":
+            continue
+        if not action.enabled:
+            continue
         range_label = format_action_range_label(
             action.range,
             vision_units=vision_units,
             units_per_tile=units_per_tile,
         )
-        lines.append(f"  - {action_name} ({range_label})")
+        if is_object_action_reachable_after_move(agent, area, obj, action):
+            lines.append(f"  - {action_name} ({range_label})")
+        else:
+            lines.append(f"  - [far] {action_name} ({range_label})")
     return lines
 
 
@@ -375,6 +399,8 @@ def get_available_interactions(
             continue
         for action_name, action in obj.actions.items():
             if action.kind == "trigger":
+                continue
+            if not action.enabled:
                 continue
             if chebyshev_distance_to_object(agent.position, obj) <= action.range:
                 results.append((action_name, obj.id, obj, action))

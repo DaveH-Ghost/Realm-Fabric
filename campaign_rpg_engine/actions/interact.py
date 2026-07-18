@@ -466,21 +466,30 @@ def interact_phases(
     action = obj.actions.get(action_name)
 
     if action is None:
-
+        available = sorted(
+            name
+            for name, act in obj.actions.items()
+            if act.kind != "trigger" and act.enabled
+        )
+        if available:
+            listed = ", ".join(repr(name) for name in available)
+            hint = (
+                f" Available on {obj.name}: {listed}."
+                " For roleplay that is not listed, use action emote instead."
+            )
+        else:
+            hint = (
+                f" {obj.name} has no interact actions."
+                " For roleplay, use action emote instead."
+            )
         return InteractPhaseResult(
-
             path_move=None,
-
             outcome=ActionOutcome(
-
                 result=(
-
                     f"'{action_name}' is not an action you can perform on {obj.name}."
-
+                    f"{hint}"
                 ),
-
             ),
-
         )
 
 
@@ -496,6 +505,26 @@ def interact_phases(
                 result=(
 
                     f"'{action_name}' is a trigger, not an interact action on {obj.name}."
+
+                ),
+
+            ),
+
+        )
+
+
+
+    if not action.enabled:
+
+        return InteractPhaseResult(
+
+            path_move=None,
+
+            outcome=ActionOutcome(
+
+                result=(
+
+                    f"'{action_name}' is not available on {obj.name}."
 
                 ),
 

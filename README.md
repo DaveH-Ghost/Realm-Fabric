@@ -4,7 +4,7 @@ Grid-based LLM agent simulation engine: multi-area worlds, compound turns (move 
 
 **License:** [MIT](LICENSE) — open source.
 
-**Current version:** **1.5.0** — affinity memory module (relationships + rolling summary). See [changelog index](docs/changelog/README.md).
+**Current version:** **1.5.1** — enabled actions, `[far]` / `[emote]` vision tags, interact/emote prompt UX. See [changelog index](docs/changelog/README.md).
 
 ## Quick start
 

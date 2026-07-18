@@ -5,6 +5,7 @@ from campaign_rpg_engine.area_edit import create_agent_from_args, create_object_
 from campaign_rpg_engine.llm.prompt import build_compound_prompt
 from campaign_rpg_engine.llm.prompt_context import build_prompt_context
 from campaign_rpg_engine.perception import (
+    PASSIVE_VISION_FAR_RULE,
     PASSIVE_VISION_LOOK_RULE,
     PASSIVE_VISION_NO_LOOK_TARGETS,
     build_passive_vision,
@@ -20,6 +21,7 @@ def test_passive_vision_includes_look_rule():
     agent = area.get_agent()
     vision = build_passive_vision(agent, area)
     assert PASSIVE_VISION_LOOK_RULE in vision
+    assert PASSIVE_VISION_FAR_RULE in vision
 
 
 def test_passive_vision_lists_interactions_under_object():
@@ -82,6 +84,8 @@ def test_interactions_reachable_after_move_budget():
 
     goblin.move_speed = 1
     assert get_object_interactions_reachable_after_move(goblin, area, obj) == []
+    vision = build_passive_vision(goblin, area)
+    assert "[far] eat (range 1)" in vision
 
 
 def test_look_and_interact_slot_renders_empty():

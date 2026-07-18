@@ -46,7 +46,7 @@ EDITABLE_SECTION_NAMES = frozenset({"compound_rules", "output_format"})
 
 SLOT_DESCRIPTIONS: dict[str, str] = {
     "character": "Agent name, personality, and detailed description",
-    "passive_vision": "Passive vision, look hints, and reachable object interactions",
+    "passive_vision": "Passive vision, look hints, reachable and [far] object interactions",
     "memory": "Memory module render for the agent",
     "area_description": "Narrative description of the current area",
     "grid_description": "Grid bounds and coordinate instructions",

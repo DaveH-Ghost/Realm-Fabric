@@ -255,6 +255,7 @@ _HANDLER_PARAM_EXCLUDED_FIELDS = frozenset(
         "halt-movement",
         "delete-after-trigger",
         "trigger-exception",
+        "enabled",
     }
 )
 
@@ -318,6 +319,13 @@ def parse_object_action_fields(
     halt_movement = False
     delete_after_trigger = True
     trigger_exceptions: list[str] = []
+    enabled = True
+
+    if "enabled" in fields:
+        enabled, err = parse_bool_field(fields["enabled"], field_name="enabled")
+        if err:
+            return None, err
+        assert enabled is not None
 
     if kind == "trigger":
         if "halt-movement" in fields:
@@ -352,6 +360,7 @@ def parse_object_action_fields(
         halt_movement=halt_movement,
         delete_after_trigger=delete_after_trigger,
         trigger_exceptions=trigger_exceptions,
+        enabled=enabled,
     )
     return {name: action}, None
 
@@ -456,6 +465,7 @@ def create_object_from_args(area: Area, arg: str) -> tuple[Optional[Object], str
             "halt-movement",
             "delete-after-trigger",
             "trigger-exception",
+            "enabled",
         },
         allow_extra=True,
     )
@@ -490,6 +500,7 @@ def _edit_object_add_action(obj: Object, tokens: list[str]) -> str:
             "halt-movement",
             "delete-after-trigger",
             "trigger-exception",
+            "enabled",
         },
         allow_extra=True,
     )

@@ -22,8 +22,8 @@ def test_emote_at_object():
     assert sign is not None
 
     outcome = emote(agent, area, sign.id, "pointed")
-    assert outcome.result == "You pointed at the Wooden Sign."
-    assert outcome.passive_result == "Explorer pointed at the Wooden Sign."
+    assert outcome.result == "[emote] Explorer pointed at the Wooden Sign."
+    assert outcome.passive_result == "[emote] Explorer pointed at the Wooden Sign."
 
 
 def test_emote_at_agent():
@@ -39,22 +39,42 @@ def test_emote_at_agent():
     area.add_agent(goblin)
 
     outcome = emote(explorer, area, goblin.id, "smiled")
-    assert outcome.result == "You smiled at Goblin."
-    assert outcome.passive_result == "Explorer smiled at Goblin."
+    assert outcome.result == "[emote] Explorer smiled at Goblin."
+    assert outcome.passive_result == "[emote] Explorer smiled at Goblin."
 
 
 def test_emote_at_self():
     area = create_initial_area()
     agent = area.get_agent()
     outcome = emote(agent, area, agent.id, "smiled")
-    assert outcome.result == "You smiled at yourself."
+    assert outcome.result == "[emote] Explorer smiled at Explorer."
+
+
+def test_emote_without_target():
+    area = create_initial_area()
+    agent = area.get_agent()
+    outcome = emote(agent, area, "", "nodded")
+    assert outcome.result == "[emote] Explorer nodded."
+    assert outcome.passive_result == "[emote] Explorer nodded."
+
+
+def test_emote_schema_allows_null_target():
+    turn = AgentCompoundTurn(
+        reasoning="Agree quietly.",
+        action="emote",
+        target=None,
+        verb="nodded",
+    )
+    assert turn.action == "emote"
+    assert turn.target is None
+    assert turn.verb == "nodded"
 
 
 def test_phrasing_helpers():
     area = create_initial_area()
     agent = area.get_agent()
     assert emote_target_phrase_neutral(area, "obj_sign_01") == "the Wooden Sign"
-    assert emote_target_phrase_for_actor(area, agent, agent.id) == "yourself"
+    assert emote_target_phrase_for_actor(area, agent, agent.id) == "Explorer"
     goblin = Agent(
         id="agent_goblin_01",
         name="Goblin",
@@ -89,7 +109,7 @@ def test_emote_witness_at_you_in_memory():
     )
 
     memory_text = goblin.memory.render_prompt_block(goblin, area)
-    assert "Explorer smiled at you." in memory_text
+    assert "[emote] Explorer smiled at you." in memory_text
 
 
 def test_emote_compound_turn_step():
@@ -108,7 +128,7 @@ def test_emote_compound_turn_step():
         turn_number=1,
     )
     assert record.steps[-1].kind == "emote"
-    assert record.result == "You pointed at the Wooden Sign."
+    assert record.result == "[emote] Explorer pointed at the Wooden Sign."
 
 
 def test_emote_schema_validation():
@@ -126,7 +146,10 @@ def test_prompt_mentions_emote():
     agent = area.get_agent()
     prompt = build_compound_prompt(agent, area)
     assert '"emote"' in prompt
-    assert "past tense" in prompt.lower()
+    assert "nonverbal" in prompt.lower()
+    assert "past-tense" in prompt.lower()
+    assert "[emote]" in prompt
+    assert "remember" in prompt.lower() or "socially" in prompt.lower()
 
 
 def test_step_compound_emote():
@@ -134,3 +157,10 @@ def test_step_compound_emote():
     assert parsed.turn.action == "emote"
     assert parsed.turn.target == "obj_sign_01"
     assert parsed.turn.verb == "pointed"
+
+
+def test_step_compound_emote_without_target():
+    parsed = parse_compound_step_arg("emote nodded")
+    assert parsed.turn.action == "emote"
+    assert parsed.turn.target is None
+    assert parsed.turn.verb == "nodded"

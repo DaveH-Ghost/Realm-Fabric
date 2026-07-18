@@ -38,6 +38,7 @@ def serialize_object_action(action: ObjectAction) -> dict[str, Any]:
         "handler_id": action.handler_id,
         "handler_params": dict(action.handler_params),
         "kind": action.kind,
+        "enabled": action.enabled,
     }
     if action.kind == "trigger":
         data["halt_movement"] = action.halt_movement

@@ -5,6 +5,8 @@ from __future__ import annotations
 from campaign_rpg_engine.agent import Agent
 from campaign_rpg_engine.area import Area
 
+EMOTE_TAG = "[emote]"
+
 
 def emote_target_phrase_neutral(area: Area, target: str) -> str:
     """Third-person target label for stored passive_result."""
@@ -18,9 +20,9 @@ def emote_target_phrase_neutral(area: Area, target: str) -> str:
 
 
 def emote_target_phrase_for_actor(area: Area, actor: Agent, target: str) -> str:
-    """First-person target label in the actor's result line."""
+    """Target label for the actor's own emote result line (third person)."""
     if target == actor.id:
-        return "yourself"
+        return actor.name
     return emote_target_phrase_neutral(area, target)
 
 
@@ -37,4 +39,10 @@ def emote_target_phrase_for_witness(
 
 
 def format_emote_line(actor_name: str, action_name: str, target_phrase: str) -> str:
-    return f"{actor_name} {action_name} at {target_phrase}."
+    """Format a third-person emote line tagged as cosmetic roleplay."""
+    phrase = (target_phrase or "").strip()
+    if not phrase:
+        body = f"{actor_name} {action_name}."
+    else:
+        body = f"{actor_name} {action_name} at {phrase}."
+    return f"{EMOTE_TAG} {body}"

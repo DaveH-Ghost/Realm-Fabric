@@ -92,7 +92,7 @@ def find_path(
             return [start]
         return []
 
-    standable = resolve_standable_goal(area, goal, mover_id)
+    standable = resolve_standable_goal(area, goal, mover_id, from_pos=start)
     if standable is None:
         return []
 
@@ -140,7 +140,7 @@ def walk_with_pathfinding(
     if max_steps <= 0:
         return from_pos, from_pos == to_pos, [from_pos]
 
-    standable = resolve_standable_goal(area, to_pos, mover_id)
+    standable = resolve_standable_goal(area, to_pos, mover_id, from_pos=from_pos)
     if standable is None:
         return from_pos, False, [from_pos]
 

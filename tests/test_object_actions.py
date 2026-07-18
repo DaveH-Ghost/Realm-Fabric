@@ -101,6 +101,8 @@ def test_unknown_interact_wrong_action_name():
 
     outcome = interact(goblin, area, cookie.id, "drink")
     assert "'drink' is not an action you can perform on Cookie." in outcome.result
+    assert "'eat'" in outcome.result
+    assert "emote" in outcome.result.lower()
     assert area.get_object_by_id(cookie.id) is not None
 
 

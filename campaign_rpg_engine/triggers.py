@@ -62,6 +62,8 @@ def evaluate_triggers_at_position(
         for action_name, action in list(obj.actions.items()):
             if action.kind != "trigger":
                 continue
+            if not action.enabled:
+                continue
             if agent.id in action.trigger_exceptions:
                 continue
             key = (agent.id, obj.id, action_name)

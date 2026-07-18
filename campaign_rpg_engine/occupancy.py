@@ -87,12 +87,17 @@ def resolve_standable_goal(
     area: Area,
     goal: tuple[int, int],
     mover_id: str,
+    *,
+    from_pos: tuple[int, int] | None = None,
 ) -> tuple[int, int] | None:
     """
     Return a standable tile for movement.
 
-    If *goal* is enterable, return it. Otherwise BFS outward for the nearest
-    enterable tile by step count.
+    If *goal* is enterable, return it. Otherwise find enterable tiles at the
+    nearest Chebyshev distance from *goal*. When *from_pos* is set, prefer the
+    candidate closest to the mover (so approach stays on-line when possible).
+    Ties prefer tiles that share a row or column with *goal* (cardinal adjacency)
+    over diagonal neighbors. If the mover is already on a best candidate, stay.
     """
     if not area.is_valid_position(goal):
         return None
@@ -103,6 +108,8 @@ def resolve_standable_goal(
 
     queue: deque[tuple[int, int]] = deque([goal])
     seen = {goal}
+    best_dist: int | None = None
+    candidates: list[tuple[int, int]] = []
 
     while queue:
         current = queue.popleft()
@@ -111,12 +118,34 @@ def resolve_standable_goal(
             if neighbor in seen or not area.is_valid_position(neighbor):
                 continue
             seen.add(neighbor)
+            dist = max(abs(neighbor[0] - goal[0]), abs(neighbor[1] - goal[1]))
+            if best_dist is not None and dist > best_dist:
+                continue
             if is_tile_enterable(area, neighbor, mover_id):
-                return neighbor
+                if best_dist is None:
+                    best_dist = dist
+                if dist == best_dist:
+                    candidates.append(neighbor)
+                continue
             queue.append(neighbor)
 
-    return None
+    if not candidates:
+        return None
 
+    if from_pos is not None and from_pos in candidates:
+        return from_pos
+
+    def _rank(tile: tuple[int, int]) -> tuple[int, int, int, int]:
+        tx, ty = tile
+        gx, gy = goal
+        cardinal = 0 if tx == gx or ty == gy else 1
+        if from_pos is None:
+            return (cardinal, abs(tx - gx) + abs(ty - gy), tx, ty)
+        fx, fy = from_pos
+        to_start = max(abs(tx - fx), abs(ty - fy))
+        return (to_start, cardinal, abs(tx - fx) + abs(ty - fy), tx + ty)
+
+    return min(candidates, key=_rank)
 
 def _blocker_name_at(
     area: Area,
@@ -212,7 +241,7 @@ def find_blocker_between(
         if name is not None:
             return name
 
-    standable = resolve_standable_goal(area, goal_pos, mover_id)
+    standable = resolve_standable_goal(area, goal_pos, mover_id, from_pos=from_pos)
     if standable is not None:
         from campaign_rpg_engine.pathfinding import find_path
 

@@ -40,3 +40,6 @@ class ObjectAction:
 
     trigger_exceptions: list[str] = field(default_factory=list)
     """Agent ids that do not fire this trigger."""
+
+    enabled: bool = True
+    """When False, the action is hidden from vision and cannot be used or fire."""
