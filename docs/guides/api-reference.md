@@ -1,6 +1,6 @@
 # API reference
 
-Stable **`campaign_rpg_engine`** surface (**1.6.0**). Import from this package in application code.
+Stable **`campaign_rpg_engine`** surface (**1.6.1**). Import from this package in application code.
 
 ```python
 import campaign_rpg_engine
