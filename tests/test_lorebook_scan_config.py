@@ -62,7 +62,10 @@ def test_scan_config_round_trip_in_snapshot():
         passive_vision=True,
         memory=False,
     )
-    from campaign_rpg_engine.session_persistence import build_save_snapshot, load_session_from_snapshot
+    from campaign_rpg_engine.session_persistence import (
+        build_save_snapshot,
+        load_session_from_snapshot,
+    )
 
     snapshot = build_save_snapshot(session)
     loaded = load_session_from_snapshot(snapshot)

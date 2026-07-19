@@ -19,6 +19,7 @@ from campaign_rpg_engine.decoration import (
 )
 from campaign_rpg_engine.game_profile import load_profile
 from campaign_rpg_engine.interaction_handlers.registry import is_handler_registered
+from campaign_rpg_engine.lorebook.models import Lorebook
 from campaign_rpg_engine.memory import Memory
 from campaign_rpg_engine.memory_modules.registry import (
     create_module_from_state,
@@ -28,9 +29,8 @@ from campaign_rpg_engine.memory_modules.registry import (
 )
 from campaign_rpg_engine.object import Object
 from campaign_rpg_engine.object_action import ObjectAction, migrate_legacy_effects_to_handler
-from campaign_rpg_engine.lorebook.models import Lorebook
 from campaign_rpg_engine.prompt_blocks import prompt_blocks_from_dicts
-from campaign_rpg_engine.snapshot import serialize_area_block, serialize_object
+from campaign_rpg_engine.snapshot import serialize_area_block
 
 SNAPSHOT_VERSION = 5
 SUPPORTED_SNAPSHOT_VERSIONS = frozenset({1, 2, 3, 4, 5})
@@ -97,9 +97,7 @@ def _position_tuple(position: list[int]) -> tuple[int, int]:
 def deserialize_object_action(name: str, data: dict[str, Any]) -> ObjectAction:
     if "handler_id" in data or "handler_params" in data:
         handler_id = data.get("handler_id")
-        handler_params = {
-            str(k): str(v) for k, v in dict(data.get("handler_params", {})).items()
-        }
+        handler_params = {str(k): str(v) for k, v in dict(data.get("handler_params", {})).items()}
     else:
         handler_id, handler_params = migrate_legacy_effects_to_handler(
             list(data.get("effects", []))
@@ -123,8 +121,7 @@ def deserialize_object_action(name: str, data: dict[str, Any]) -> ObjectAction:
 def deserialize_object(data: dict[str, Any]) -> Object:
     actions_detail = data.get("actions_detail", {})
     actions = {
-        name: deserialize_object_action(name, detail)
-        for name, detail in actions_detail.items()
+        name: deserialize_object_action(name, detail) for name, detail in actions_detail.items()
     }
     return Object(
         id=data["id"],
@@ -326,8 +323,7 @@ def load_session_from_snapshot(data: dict[str, Any]):
         raise ValueError("Session snapshot has no areas")
 
     areas = {
-        area_id: deserialize_area(area_id, area_data)
-        for area_id, area_data in areas_data.items()
+        area_id: deserialize_area(area_id, area_data) for area_id, area_data in areas_data.items()
     }
 
     agent_area: dict[str, str] = dict(data.get("agent_area", {}))
@@ -335,9 +331,7 @@ def load_session_from_snapshot(data: dict[str, Any]):
         agent = deserialize_agent(agent_data)
         area_id = agent_data.get("area_id") or agent_area.get(agent.id)
         if not area_id or area_id not in areas:
-            raise ValueError(
-                f"Agent {agent.id!r} references unknown area {area_id!r}"
-            )
+            raise ValueError(f"Agent {agent.id!r} references unknown area {area_id!r}")
         areas[area_id].add_agent(agent)
         agent_area[agent.id] = area_id
 
@@ -366,9 +360,7 @@ def load_session_from_snapshot(data: dict[str, Any]):
     )
     from campaign_rpg_engine.lorebook.scan_config import LorebookScanConfig
 
-    session.lorebook_scan_config = LorebookScanConfig.from_dict(
-        data.get("lorebook_scan_config")
-    )
+    session.lorebook_scan_config = LorebookScanConfig.from_dict(data.get("lorebook_scan_config"))
 
     lorebooks_raw = data.get("lorebooks") or []
     if lorebooks_raw:

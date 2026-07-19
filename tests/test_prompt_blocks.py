@@ -1,7 +1,7 @@
 """Prompt block model and rendering (V0.4.1b)."""
 
-from campaign_rpg_engine.game_profile import default_compound_profile
 from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.game_profile import default_compound_profile
 from campaign_rpg_engine.llm.prompt_context import build_prompt_context
 from campaign_rpg_engine.prompt_blocks import (
     PromptBlock,
@@ -10,7 +10,6 @@ from campaign_rpg_engine.prompt_blocks import (
     prompt_blocks_from_dicts,
     render_prompt_blocks,
 )
-from campaign_rpg_engine.prompt_template import PromptTemplate
 from campaign_rpg_engine.session import Session
 
 
@@ -68,9 +67,7 @@ def test_section_override_changes_rules():
 
 def test_set_prompt_blocks_validation():
     session = Session.from_default()
-    err = session.set_prompt_blocks(
-        [PromptBlock(type="slot", name="not_a_real_slot")]
-    )
+    err = session.set_prompt_blocks([PromptBlock(type="slot", name="not_a_real_slot")])
     assert err is not None
     assert session.prompt_blocks_use_default()
 
@@ -94,14 +91,16 @@ def test_reset_prompt_blocks():
 
 
 def test_put_invalid_blocks_rejected():
-    session = Session.from_default()
+    Session.from_default()
     _, err = prompt_blocks_from_dicts([{"type": "slot"}])
     assert err is not None
 
 
 def test_character_slot_options_toggle_fields():
     session = Session.from_default()
-    ctx = build_prompt_context(session.get_active_agent(), session.get_area_for_agent(session.get_active_agent()))
+    ctx = build_prompt_context(
+        session.get_active_agent(), session.get_area_for_agent(session.get_active_agent())
+    )
     blocks = [
         PromptBlock(
             type="slot",

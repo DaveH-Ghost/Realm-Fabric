@@ -1,14 +1,16 @@
 """Session save/load round-trip (V0.4.5)."""
 
 import json
-from pathlib import Path
 
 import pytest
-
 from campaign_rpg_engine.agent import Agent
 from campaign_rpg_engine.area import Area
-from campaign_rpg_engine.memory import Memory
-from campaign_rpg_engine.memory_modules.base import MemoryObserveContext, MemoryRecordContext, MemoryRenderContext, WitnessedEvent
+from campaign_rpg_engine.memory_modules.base import (
+    MemoryObserveContext,
+    MemoryRecordContext,
+    MemoryRenderContext,
+    WitnessedEvent,
+)
 from campaign_rpg_engine.memory_modules.registry import export_module_state, restore_module_state
 from campaign_rpg_engine.memory_modules.rolling_summary import RollingSummaryModule
 from campaign_rpg_engine.memory_modules.salient_turns import SalientTurnsModule
@@ -141,9 +143,7 @@ def test_recent_turns_memory_render_matches():
     before = agent.memory.render_prompt_block(agent, session.get_area_for_agent(agent))
     restored = Session.from_snapshot(build_save_snapshot(session))
     r_agent = restored.get_active_agent()
-    after = r_agent.memory.render_prompt_block(
-        r_agent, restored.get_area_for_agent(r_agent)
-    )
+    after = r_agent.memory.render_prompt_block(r_agent, restored.get_area_for_agent(r_agent))
     assert after == before
 
 

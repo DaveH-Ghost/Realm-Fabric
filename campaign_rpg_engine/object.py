@@ -83,11 +83,7 @@ class Object:
 def object_footprint_tiles(obj: Object) -> list[tuple[int, int]]:
     """Return every grid tile occupied by *obj*."""
     ax, ay = obj.position
-    return [
-        (ax + dx, ay + dy)
-        for dx in range(obj.width)
-        for dy in range(obj.height)
-    ]
+    return [(ax + dx, ay + dy) for dx in range(obj.width) for dy in range(obj.height)]
 
 
 def object_occupies_tile(obj: Object, x: int, y: int) -> bool:
@@ -129,7 +125,4 @@ def format_object_footprint_size(obj: Object) -> str:
 
 def object_footprint_fits_bounds(obj: Object, area) -> bool:
     """Return True when every footprint tile is inside *area*'s grid."""
-    for x, y in object_footprint_tiles(obj):
-        if not area.is_valid_position((x, y)):
-            return False
-    return True
+    return all(area.is_valid_position((x, y)) for x, y in object_footprint_tiles(obj))

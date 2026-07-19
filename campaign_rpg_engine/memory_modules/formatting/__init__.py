@@ -1,4 +1,5 @@
 """Memory module text formatting (common render, salient policy, summary batches)."""
+
 from __future__ import annotations
 
 from campaign_rpg_engine.memory_modules.formatting.common import (

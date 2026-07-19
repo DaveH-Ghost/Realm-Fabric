@@ -10,18 +10,22 @@ from campaign_rpg_engine.snapshot import DEFAULT_AREA_ID, build_session_snapshot
 def _two_area_session() -> Session:
     room = Area(area_description="The main room.")
     hall = Area(area_description="A narrow hall.")
-    room.add_agent(Agent(
-        id="agent_01",
-        name="Explorer",
-        position=(1, 1),
-        personality="Curious.",
-    ))
-    hall.add_agent(Agent(
-        id="agent_02",
-        name="Guard",
-        position=(0, 0),
-        personality="Alert.",
-    ))
+    room.add_agent(
+        Agent(
+            id="agent_01",
+            name="Explorer",
+            position=(1, 1),
+            personality="Curious.",
+        )
+    )
+    hall.add_agent(
+        Agent(
+            id="agent_02",
+            name="Guard",
+            position=(0, 0),
+            personality="Alert.",
+        )
+    )
     return Session(
         areas={"room": room, "hall": hall},
         active_area_id="room",

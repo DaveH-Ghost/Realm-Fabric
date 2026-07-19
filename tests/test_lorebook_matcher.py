@@ -2,9 +2,13 @@
 
 from campaign_rpg_engine.agent import Agent
 from campaign_rpg_engine.area import Area
-from campaign_rpg_engine.lorebook import load_lorebook_from_dict, match_lorebook_entries, render_lorebook
+from campaign_rpg_engine.lorebook import (
+    load_lorebook_from_dict,
+    match_lorebook_entries,
+    render_lorebook,
+)
 from campaign_rpg_engine.lorebook.matcher import build_scan_corpus
-from campaign_rpg_engine.lorebook.models import LoreEntry, Lorebook
+from campaign_rpg_engine.lorebook.models import Lorebook, LoreEntry
 
 _BOOK = load_lorebook_from_dict(
     {

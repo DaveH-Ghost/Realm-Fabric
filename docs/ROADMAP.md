@@ -532,12 +532,12 @@ See [v0.6.1-changelog.md](changelog/v0.6.1-changelog.md).
 
 - **`examples/minimal-server/`** — thin FastAPI on port 8770: health, state, turn, manual turn, export/import, optional debug `/api/command`
 - Bootstrap uses **typed API only** (no CLI strings)
-- [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) remains the **full GM reference app**, not the template every project clones
+- [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) is the **GM host** (world authority); player clients attaching later are planned, not the template every project must fork
 
 ### Session hosting
 
 - Documented in `guides/building-on-campaign-rpg-engine.md`: per-match sessions, handler/module process scope, persistence patterns
-- campaign-rpg-studio = singleton in-memory session (reference only)
+- campaign-rpg-studio = singleton in-memory session (GM host; multi-session later)
 
 ### Distribution
 

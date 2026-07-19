@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from campaign_rpg_engine import ObjectAction, Session, WorldMutationResult, load_profile
 
 

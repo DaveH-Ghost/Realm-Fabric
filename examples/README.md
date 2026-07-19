@@ -1,11 +1,11 @@
 # Examples
 
-CampAIgn-RPG-Engine **1.0** ships as a library only. Runnable reference apps live in separate repos:
+CampAIgn-RPG-Engine **1.0+** ships as a library only. The GM host and sample handlers live in a separate repo:
 
-| Reference | Where |
-|-----------|--------|
-| **GM web UI** (grid, lorebooks, handlers) | [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) |
-| Interaction handlers (`delete_self`, `move_area`, …) | [CampAIgn-RPG-Studio/reference_handlers](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio/tree/main/reference_handlers) |
+| Role | Repo / path |
+|------|-------------|
+| **GM host** (grid, lorebooks, handlers) | [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) |
+| Sample interaction handlers | [CampAIgn-RPG-Studio/reference_handlers](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio/tree/main/reference_handlers) |
 
 ### In this repo
 
@@ -13,6 +13,4 @@ CampAIgn-RPG-Engine **1.0** ships as a library only. Runnable reference apps liv
 |------|------|
 | [lorebook/](lorebook/) | Sample SillyTavern lorebook JSON for docs/tests |
 
-Engine tests use copies under [`tests/fixtures/`](../tests/fixtures/) — not published in the PyPI wheel.
-
-**Integrating the library:** [docs/guides/building-on-campaign-rpg-engine.md](../docs/guides/building-on-campaign-rpg-engine.md).
+Engine unit tests live under [`tests/`](../tests/) (not published in the PyPI wheel).

@@ -46,9 +46,7 @@ class Memory:
     ) -> None:
         if module is not None and module_id is not None:
             raise ValueError("Pass module_id or module, not both.")
-        self._module = (
-            module if module is not None else create_module(module_id, **module_config)
-        )
+        self._module = module if module is not None else create_module(module_id, **module_config)
         self._looked_at: set[str] = set()
         self._ever_looked: set[str] = set()
 

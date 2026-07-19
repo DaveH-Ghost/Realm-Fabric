@@ -95,11 +95,7 @@ class Lorebook:
 
     def to_st_export_dict(self) -> dict[str, Any]:
         """SillyTavern load format: ``entries`` map keyed by uid string."""
-        return {
-            "entries": {
-                str(entry.uid): entry.to_dict() for entry in self.sorted_entries()
-            }
-        }
+        return {"entries": {str(entry.uid): entry.to_dict() for entry in self.sorted_entries()}}
 
     def export_filename(self) -> str:
         if self.source_filename:

@@ -1,14 +1,12 @@
 """Entity id and coordinate move targets (V0.4.0a)."""
 
 import pytest
-from pydantic import ValidationError
-
 from campaign_rpg_engine.actions.move import move as do_move
 from campaign_rpg_engine.area import create_initial_area
 from campaign_rpg_engine.area_edit import create_agent_from_args
+from campaign_rpg_engine.coordinates import CoordinateParseError
 from campaign_rpg_engine.llm.prompt import build_compound_prompt
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
-from campaign_rpg_engine.coordinates import CoordinateParseError
 from campaign_rpg_engine.move_target import (
     MoveTargetError,
     resolve_move_target,
@@ -145,6 +143,4 @@ def test_prompt_move_instructions_entity_id_line():
     assert "Entity move targets" not in prompt
     assert "obj_ball_01 Ceramic Ball at" not in prompt
     assert "You may move to any coordinate" in prompt
-    assert (
-        "move may be an entity id (obj_* or agent_*) for that tile."
-    ) in prompt
+    assert ("move may be an entity id (obj_* or agent_*) for that tile.") in prompt

@@ -1,9 +1,14 @@
 """Tests for salient_turns memory module."""
 
 import pytest
-
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.area_edit import create_agent_from_args
 from campaign_rpg_engine.memory import Memory
-from campaign_rpg_engine.memory_modules.base import MemoryObserveContext, MemoryRecordContext, MemoryRenderContext
+from campaign_rpg_engine.memory_modules.base import (
+    MemoryObserveContext,
+    MemoryRecordContext,
+    MemoryRenderContext,
+)
 from campaign_rpg_engine.memory_modules.registry import create_module, format_memory_module_label
 from campaign_rpg_engine.memory_modules.salient_turns import (
     DEFAULT_CHAR_BUDGET,
@@ -13,8 +18,6 @@ from campaign_rpg_engine.memory_modules.salient_turns import (
     validate_char_budget,
 )
 from campaign_rpg_engine.turn_record import TurnRecord, TurnStep
-from campaign_rpg_engine.area import create_initial_area
-from campaign_rpg_engine.area_edit import create_agent_from_args
 
 
 def _record_ctx(agent_id: str = "agent_01", turn_number: int = 1) -> MemoryRecordContext:
@@ -107,11 +110,7 @@ def _compound_turn(turn_number: int) -> TurnRecord:
                 result='You said: "Hello!"',
             ),
         ],
-        result=(
-            "You moved to (1, 2).\n"
-            "You looked at the explorer.\n"
-            'You said: "Hello!"'
-        ),
+        result=('You moved to (1, 2).\nYou looked at the explorer.\nYou said: "Hello!"'),
         reasoning="Chat with the explorer.",
     )
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from campaign_rpg_engine.actions.move import move as do_move
+from campaign_rpg_engine.agent import Agent
 from campaign_rpg_engine.area import Area, GridBounds
 from campaign_rpg_engine.area_edit import create_object_from_args
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
@@ -114,7 +115,7 @@ def test_create_object_with_trigger_action_via_cli():
         area,
         (
             'name "Plate" pdesc "A plate." at 1,1 hidden true blocks-movement false '
-            'action trip range 0 kind trigger halt-movement true delete-after-trigger false '
+            "action trip range 0 kind trigger halt-movement true delete-after-trigger false "
             'result "(trigger)" passive "{actor} triggers the plate."'
         ),
     )

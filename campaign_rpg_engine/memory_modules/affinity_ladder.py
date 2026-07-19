@@ -172,9 +172,7 @@ AFFINITY_MINUS_GUIDANCE: dict[int, str] = {
         "Soft negative first impressions — curtness, inconvenience caused, mild distrust. "
         "Same volatility."
     ),
-    -1: (
-        "Further grounds for caution — odd behavior, pressure, broken small trust. Volatile."
-    ),
+    -1: ("Further grounds for caution — odd behavior, pressure, broken small trust. Volatile."),
     -2: "More friction, confirmation of dislike. Volatile: stack negative signals readily.",
     -3: (
         "Behavior that digs the dislike in — insults, selfishness, threats. Easy to deepen "

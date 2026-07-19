@@ -13,6 +13,6 @@ User-facing documentation for building on CampAIgn-RPG-Engine.
 | 7 | [Plugins](plugins.md) | Session extensions, events, turn verbs, prompt slots (1.2.0) |
 | 8 | [API reference](api-reference.md) | `campaign_rpg_engine` surface |
 
-Runnable reference app: [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio). Sample lorebook JSON: [examples/lorebook](../../examples/lorebook/).
+GM host: [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio). Sample lorebook JSON: [examples/lorebook](../../examples/lorebook/). UML: [../UML/README.md](../UML/README.md).
 
 Upgrading from 0.7? [Migration 0.7 → 1.0](../MIGRATION-0.7-to-1.0.md).

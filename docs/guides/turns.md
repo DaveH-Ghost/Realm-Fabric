@@ -46,7 +46,7 @@ gate = session.gate_agent_turn(agent_id)
 if not gate.ok:
     raise RuntimeError(gate.message)
 
-# 2. Build prompt and call your LLM (OpenRouter in reference apps)
+# 2. Build prompt and call your LLM (OpenRouter / Featherless via engine client)
 prompt = session.build_prompt(agent_id)
 
 # 3. Parse response into AgentCompoundTurn, then run

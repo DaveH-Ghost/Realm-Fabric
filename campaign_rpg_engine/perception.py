@@ -12,23 +12,29 @@ Passive vision lists one line per object using the footprint tile nearest the
 viewer for coordinates and bearing; multi-tile objects also show footprint
 size (e.g. ``3×2 tiles``). Interaction range uses nearest-footprint Chebyshev distance.
 """
+
 from __future__ import annotations
 
 from campaign_rpg_engine.action_outcome import ActionOutcome
 from campaign_rpg_engine.agent import Agent
+from campaign_rpg_engine.area import Area
 from campaign_rpg_engine.grid import chebyshev_distance
-from campaign_rpg_engine.vision_bearing import format_action_range_label, format_relative_bearing_phrase
 from campaign_rpg_engine.memory import Memory
-from campaign_rpg_engine.object import Object, chebyshev_distance_to_object, format_object_footprint_size, nearest_footprint_tile_to
+from campaign_rpg_engine.object import (
+    Object,
+    chebyshev_distance_to_object,
+    format_object_footprint_size,
+    nearest_footprint_tile_to,
+)
 from campaign_rpg_engine.object_action import ObjectAction
 from campaign_rpg_engine.occupancy import is_tile_enterable, resolve_standable_goal
 from campaign_rpg_engine.pathfinding import walk_with_pathfinding
-from campaign_rpg_engine.area import Area
-
-
-PASSIVE_VISION_LOOK_RULE = (
-    "Detail marked [?] can be examined with look."
+from campaign_rpg_engine.vision_bearing import (
+    format_action_range_label,
+    format_relative_bearing_phrase,
 )
+
+PASSIVE_VISION_LOOK_RULE = "Detail marked [?] can be examined with look."
 PASSIVE_VISION_FAR_RULE = (
     "Actions marked [far] are out of reach this turn. Prefer move toward that object "
     "so you can speak or emote while approaching; interact on a [far] action still "
@@ -73,9 +79,7 @@ def format_vision_desc(
 
 def format_object_vision_desc(obj: Object, memory: Memory) -> str:
     """Return the description fragment for one object in passive vision."""
-    return format_vision_desc(
-        memory, obj.id, obj.passive_description, obj.description
-    )
+    return format_vision_desc(memory, obj.id, obj.passive_description, obj.description)
 
 
 def format_agent_vision_desc(other: Agent, memory: Memory) -> str:
@@ -85,9 +89,7 @@ def format_agent_vision_desc(other: Agent, memory: Memory) -> str:
     Static pdesc/desc only ([?] rules). Observable actions (``passive_result``)
     are ingested into memory modules, not repeated here.
     """
-    return format_vision_desc(
-        memory, other.id, other.passive_description, other.description
-    )
+    return format_vision_desc(memory, other.id, other.passive_description, other.description)
 
 
 def build_passive_vision(
@@ -108,11 +110,7 @@ def build_passive_vision(
     not reachable this turn (even after spending full ``move_speed``) are tagged
     ``[far]``.
     """
-    bearing_ready = (
-        include_relative_bearing
-        and units_per_tile is not None
-        and units_per_tile > 0
-    )
+    bearing_ready = include_relative_bearing and units_per_tile is not None and units_per_tile > 0
     lines: list[str] = []
     if include_you_are_at:
         lines.append(f"You are at {agent.position}.")
@@ -455,9 +453,7 @@ def _vision_desc_shows_question_mark(
     memory: Memory, entity_id: str, passive: str, detailed: str
 ) -> bool:
     """True when passive vision would prefix the entity with [?]."""
-    return format_vision_desc(memory, entity_id, passive, detailed).startswith(
-        "[?]"
-    )
+    return format_vision_desc(memory, entity_id, passive, detailed).startswith("[?]")
 
 
 def get_available_look_targets(agent: Agent, area: Area) -> list[str]:

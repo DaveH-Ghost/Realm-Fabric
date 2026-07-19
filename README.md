@@ -1,10 +1,10 @@
 # CampAIgn RPG Engine
 
-Grid-based LLM agent simulation engine: multi-area worlds, compound turns (move → look → speak → interact/emote), pluggable memory modules, and a stable **`campaign_rpg_engine`** library API. Build your own UI and scenarios on the engine; use [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) as a full GM reference app.
+Grid-based LLM agent simulation engine: multi-area worlds, compound turns (move → look → speak → interact/emote), pluggable memory modules, and a stable **`campaign_rpg_engine`** library API. Build on the engine in your own apps; use [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) as the **GM host** (world authoring and session authority). Player clients attaching to Studio are planned later.
 
 **License:** [MIT](LICENSE) — open source.
 
-**Current version:** **1.5.2** — OpenRouter + Featherless providers, max input-token budget. See [changelog index](docs/changelog/README.md).
+**Current version:** **1.6.0** — structure hardening, lint/CI, Mermaid UML. See [changelog index](docs/changelog/README.md).
 
 ## Quick start
 
@@ -26,7 +26,7 @@ result = session.run_compound_turn(
 )
 ```
 
-**GM web UI:** clone [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) (separate GitHub repo):
+**GM host:** clone [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) (separate GitHub repo):
 
 ```powershell
 cd path\to\CampAIgn-RPG-Studio
@@ -65,7 +65,8 @@ Start at **[docs/README.md](docs/README.md)** — guides, API overview, and chan
 | [Plugin primitives](docs/guides/plugins.md) | Extensions, events, turn verbs, prompt slots (1.2.0) |
 | [API reference](docs/guides/api-reference.md) | `campaign_rpg_engine` exports and Session methods |
 | [Migration realm-fabric → campaign-rpg-engine](docs/MIGRATION-realm-fabric-to-campaign-rpg-engine.md) | Rename from Realm-Fabric / `realm_fabric` |
-| [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) | Full GM reference UI (GitHub) |
+| [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) | GM host UI (GitHub) |
+| [UML diagrams](docs/UML/README.md) | Mermaid architecture diagrams |
 | [Roadmap](docs/ROADMAP.md) | Version plans |
 | [Long-term goals](LONG_TERM_GOALS.md) | Aspirational features |
 

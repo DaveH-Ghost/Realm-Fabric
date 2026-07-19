@@ -1,12 +1,12 @@
 """Configurable area grid, room description, and prompt context strings."""
 
 from campaign_rpg_engine.agent import Agent
-from campaign_rpg_engine.llm.prompt_context import PromptContext, build_prompt_context
+from campaign_rpg_engine.area import Area, GridBounds, create_area
 from campaign_rpg_engine.llm.prompt import assemble_default_compound_prompt, build_compound_prompt
+from campaign_rpg_engine.llm.prompt_context import PromptContext, build_prompt_context
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
 from campaign_rpg_engine.memory import Memory
 from campaign_rpg_engine.session import Session
-from campaign_rpg_engine.area import GridBounds, Area, create_area
 
 
 def test_create_area_custom_grid_and_room():

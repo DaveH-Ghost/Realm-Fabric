@@ -4,11 +4,13 @@ test_multi_agent.py
 Tests for V0.1 Section 3 multi-agent support (updated for V0.2 compound turns).
 """
 
+import contextlib
+
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.area_edit import create_agent_from_args, edit_object_from_args
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
 from campaign_rpg_engine.perception import build_passive_vision, perform_look
 from campaign_rpg_engine.simulation import next_turn_number_for_agent, run_compound_turn
-from campaign_rpg_engine.area import create_initial_area
-from campaign_rpg_engine.area_edit import create_agent_from_args, edit_object_from_args
 
 
 def _compound(**kwargs) -> AgentCompoundTurn:
@@ -39,7 +41,10 @@ def test_get_agent_by_name_case_insensitive():
 def test_memory_isolation_between_agents():
     area = create_initial_area()
     explorer = area.get_agent()
-    create_agent_from_args(area, 'name "Goblin" pdesc "A goblin." desc "A green goblin." personality "Secret goblin mind." at 0,3')
+    create_agent_from_args(
+        area,
+        'name "Goblin" pdesc "A goblin." desc "A green goblin." personality "Secret goblin mind." at 0,3',
+    )
     goblin = area.get_agent_by_name("Goblin")
 
     perform_look(explorer, area, "obj_ball_01")
@@ -48,10 +53,7 @@ def test_memory_isolation_between_agents():
     assert not goblin.memory.has_looked_at("obj_ball_01")
     goblin_vision = build_passive_vision(goblin, area)
     assert "Ceramic Ball (obj_ball_01), (2, 2) - [?]" in goblin_vision
-    assert (
-        "Explorer (agent_01), (1, 1) - [?] A curious explorer in the room."
-        in goblin_vision
-    )
+    assert "Explorer (agent_01), (1, 1) - [?] A curious explorer in the room." in goblin_vision
     explorer_vision = build_passive_vision(explorer, area)
     assert "Explorer (agent_01)" not in explorer_vision
     assert "Goblin (agent_goblin_01), (0, 3) - [?] A goblin." in explorer_vision
@@ -75,7 +77,10 @@ def test_personality_not_in_passive_vision_or_look():
 def test_per_agent_turn_numbers_when_alternating():
     area = create_initial_area()
     explorer = area.get_agent()
-    create_agent_from_args(area, 'name "Goblin" pdesc "A goblin." desc "A green goblin." personality "Secret goblin mind." at 0,3')
+    create_agent_from_args(
+        area,
+        'name "Goblin" pdesc "A goblin." desc "A green goblin." personality "Secret goblin mind." at 0,3',
+    )
     goblin = area.get_agent_by_name("Goblin")
 
     run_compound_turn(
@@ -106,8 +111,7 @@ def test_speak_visible_in_observer_memory_not_passive_vision():
     explorer = area.get_agent()
     create_agent_from_args(
         area,
-        'name "Goblin" pdesc "A goblin." desc "A green goblin." '
-        'personality "x" at 0,3',
+        'name "Goblin" pdesc "A goblin." desc "A green goblin." personality "x" at 0,3',
     )
     goblin = area.get_agent_by_name("Goblin")
 
@@ -173,7 +177,10 @@ def test_edit_agent_personality_does_not_invalidate():
 def test_cross_agent_invalidation_per_agent():
     area = create_initial_area()
     explorer = area.get_agent()
-    create_agent_from_args(area, 'name "Goblin" pdesc "A goblin." desc "A green goblin." personality "Secret goblin mind." at 0,3')
+    create_agent_from_args(
+        area,
+        'name "Goblin" pdesc "A goblin." desc "A green goblin." personality "Secret goblin mind." at 0,3',
+    )
     goblin = area.get_agent_by_name("Goblin")
 
     perform_look(explorer, area, "obj_ball_01")
@@ -247,9 +254,7 @@ def test_create_agent_reserved_command_name_rejected():
 
 def test_create_agent_reserved_hyphen_command_rejected():
     area = create_initial_area()
-    agent, msg = create_agent_from_args(
-        area, 'name "create-object" personality "x" at 0,0'
-    )
+    agent, msg = create_agent_from_args(area, 'name "create-object" personality "x" at 0,0')
     assert agent is None
     assert "conflicts" in msg
 
@@ -264,7 +269,7 @@ def test_edit_agent_rename_to_reserved_name_rejected():
 
 
 def test_llm_turn_flow_uses_active_agent(monkeypatch):
-    from campaign_rpg_engine import Session, load_profile, get_compound_turn
+    from campaign_rpg_engine import Session, get_compound_turn, load_profile
     from campaign_rpg_engine.llm.types import LLMResponse
 
     session = Session.from_profile(load_profile("default_compound"))
@@ -284,7 +289,7 @@ def test_llm_turn_flow_uses_active_agent(monkeypatch):
 
 
 def test_llm_turn_after_switch_uses_switched_agent(monkeypatch):
-    from campaign_rpg_engine import Session, load_profile, get_compound_turn
+    from campaign_rpg_engine import Session, get_compound_turn, load_profile
     from campaign_rpg_engine.llm.types import LLMResponse
 
     session = Session.from_profile(load_profile("default_compound"))
@@ -317,7 +322,7 @@ def test_reserved_command_names_include_run_and_hyphenated():
 
 
 def test_llm_failure_does_not_increment_session_turn(monkeypatch):
-    from campaign_rpg_engine import Session, load_profile, get_compound_turn
+    from campaign_rpg_engine import Session, get_compound_turn, load_profile
 
     session = Session.from_profile(load_profile("default_compound"))
     agent = session.get_active_agent()
@@ -328,10 +333,8 @@ def test_llm_failure_does_not_increment_session_turn(monkeypatch):
         raise RuntimeError("LLM unavailable")
 
     monkeypatch.setattr("campaign_rpg_engine.llm.client.get_compound_turn", fail_llm)
-    try:
+    with contextlib.suppress(RuntimeError):
         get_compound_turn(session.build_prompt())
-    except RuntimeError:
-        pass
 
     assert session.session_turn == before_session
     assert agent.memory.turn_count == before_turns

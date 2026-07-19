@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import copy
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
 
 from campaign_rpg_engine.llm.memory_summary import generate_rolling_summary
 from campaign_rpg_engine.memory_modules.base import (
@@ -24,6 +24,7 @@ from campaign_rpg_engine.memory_modules.formatting import (
     format_turns_batch_for_summary,
     join_lines,
 )
+from campaign_rpg_engine.memory_modules.recent_turns import DEFAULT_WINDOW
 from campaign_rpg_engine.memory_modules.serialization import (
     deserialize_turn_list,
     deserialize_witness_list,
@@ -32,7 +33,6 @@ from campaign_rpg_engine.memory_modules.serialization import (
     serialize_witness_list,
     serialize_witnessed_before,
 )
-from campaign_rpg_engine.memory_modules.recent_turns import DEFAULT_WINDOW
 from campaign_rpg_engine.turn_record import TurnRecord
 
 DEFAULT_SUMMARY_INTERVAL = DEFAULT_WINDOW
@@ -62,8 +62,7 @@ SummaryGenerator = Callable[..., str]
 def validate_summary_interval(value: int) -> None:
     if value < MIN_SUMMARY_INTERVAL:
         raise ValueError(
-            f"memory-summary-interval must be at least {MIN_SUMMARY_INTERVAL} "
-            f"(got {value})."
+            f"memory-summary-interval must be at least {MIN_SUMMARY_INTERVAL} (got {value})."
         )
 
 
@@ -77,9 +76,7 @@ def validate_max_summary_chars(value: int) -> None:
 
 def validate_summary_tail(value: int) -> None:
     if value < MIN_SUMMARY_TAIL:
-        raise ValueError(
-            f"memory-summary-tail must be at least {MIN_SUMMARY_TAIL} (got {value})."
-        )
+        raise ValueError(f"memory-summary-tail must be at least {MIN_SUMMARY_TAIL} (got {value}).")
 
 
 @dataclass
@@ -103,9 +100,7 @@ class RollingSummaryModule:
     max_summary_chars: int = DEFAULT_MAX_SUMMARY_CHARS
     summary_tail: int = DEFAULT_SUMMARY_TAIL
     background_consolidation: bool = True
-    _summary_generator: SummaryGenerator = field(
-        default=generate_rolling_summary, repr=False
-    )
+    _summary_generator: SummaryGenerator = field(default=generate_rolling_summary, repr=False)
 
     _summary: str = field(default="", repr=False)
     _turns: list[TurnRecord] = field(default_factory=list, repr=False)
@@ -148,9 +143,7 @@ class RollingSummaryModule:
 
     def render(self, ctx: MemoryRenderContext) -> str:
         del ctx
-        detail = format_stored_turns_block(
-            self._turns, self._witnessed_before, self._pending
-        )
+        detail = format_stored_turns_block(self._turns, self._witnessed_before, self._pending)
         if not self._summary and not detail:
             return ""
 
@@ -196,7 +189,7 @@ class RollingSummaryModule:
         """Own turns not yet covered by the rolling summary (excludes prior tail)."""
         turns: list[TurnRecord] = []
         witnessed: list[list[WitnessedEvent]] = []
-        for turn, events in zip(self._turns, self._witnessed_before):
+        for turn, events in zip(self._turns, self._witnessed_before, strict=False):
             if turn.turn_number > self._last_summarized_turn_number:
                 turns.append(turn)
                 witnessed.append(events)
@@ -219,7 +212,7 @@ class RollingSummaryModule:
         tail_numbers = self._tail_turn_numbers_from_batch(snapshot.turns)
         kept_turns: list[TurnRecord] = []
         kept_witnessed: list[list[WitnessedEvent]] = []
-        for turn, events in zip(self._turns, self._witnessed_before):
+        for turn, events in zip(self._turns, self._witnessed_before, strict=False):
             if turn.turn_number in tail_numbers or turn.turn_number > snapshot.turn_number:
                 kept_turns.append(turn)
                 kept_witnessed.append(events)
@@ -227,9 +220,7 @@ class RollingSummaryModule:
         self._witnessed_before = kept_witnessed
 
     def _run_summary_for_snapshot(self, snapshot: ConsolidationSnapshot) -> str:
-        batch_text = format_turns_batch_for_summary(
-            snapshot.turns, snapshot.witnessed_before
-        )
+        batch_text = format_turns_batch_for_summary(snapshot.turns, snapshot.witnessed_before)
         return self._summary_generator(
             agent_name=snapshot.agent_name,
             previous_summary=snapshot.previous_summary,
@@ -282,12 +273,8 @@ class RollingSummaryModule:
         validate_summary_tail(self.summary_tail)
         self._total_turns = int(data["total_turns"])
         self._summary = str(data.get("summary", ""))
-        self._last_summarized_turn_number = int(
-            data.get("last_summarized_turn_number", 0)
-        )
+        self._last_summarized_turn_number = int(data.get("last_summarized_turn_number", 0))
         self._turns = deserialize_turn_list(data.get("turns", []))
-        self._witnessed_before = deserialize_witnessed_before(
-            data.get("witnessed_before", [])
-        )
+        self._witnessed_before = deserialize_witnessed_before(data.get("witnessed_before", []))
         self._pending = deserialize_witness_list(data.get("pending", []))
         self._consolidation_runner = ConsolidationRunner()

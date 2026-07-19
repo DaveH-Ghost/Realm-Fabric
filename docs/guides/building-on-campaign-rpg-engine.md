@@ -17,7 +17,7 @@ Guide for application authors integrating **CampAIgn-RPG-Engine 1.0** as a libra
 | Memory & lore | [Memory & lorebooks](memory-and-lorebooks.md) |
 | Full export list | [API reference](api-reference.md) |
 
-Runnable template: [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) (`backend/` shows HTTP + typed `Session` usage).
+GM host (HTTP + authoring UI): [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) (`backend/` shows typed `Session` usage). Player clients attaching to Studio are planned later.
 
 ---
 
@@ -45,7 +45,7 @@ my-realm-game/
     bootstrap.py          # typed world setup
 ```
 
-Keep **scenario content** (handlers, lorebooks, UI) in your repo. Use **CampAIgn-RPG-Studio** as the HTTP + GM reference; fork it only if you need a full editor.
+Keep **scenario content** (handlers, lorebooks, UI) in your repo. Run **CampAIgn-RPG-Studio** as the GM host for authoring, or build your own host on the same `Session` API.
 
 ---
 

@@ -14,35 +14,26 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from campaign_rpg_engine.agent import Agent
-from campaign_rpg_engine.game_profile import GameProfile, default_compound_profile
-from campaign_rpg_engine.llm.prompt_context import build_prompt_context
-from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
-from campaign_rpg_engine.memory import TurnRecord
-from campaign_rpg_engine.simulation import next_turn_number_for_agent, run_compound_turn
-from campaign_rpg_engine.object import Object
 from campaign_rpg_engine.area import Area
-from campaign_rpg_engine.area_edit import (
+from campaign_rpg_engine.edit.area_edit import (
     delete_agent_by_id,
 )
-from campaign_rpg_engine.decoration_edit import (
+from campaign_rpg_engine.edit.decoration_edit import (
     DecorationMutationResult,
     add_decoration_to_area,
     remove_decoration_from_area,
     reorder_decoration_in_area,
     update_decoration_in_area,
 )
-from campaign_rpg_engine.session_area_edit import (
-    AreaMutationResult,
+from campaign_rpg_engine.edit.session_area_edit import (
     create_area_in_session,
     delete_area_by_id,
     edit_area_in_session,
 )
-from campaign_rpg_engine.snapshot import DEFAULT_AREA_ID
-from campaign_rpg_engine.object_action import ObjectAction
-from campaign_rpg_engine.world_edit_api import (
+from campaign_rpg_engine.edit.world_edit_api import (
     WorldMutationResult,
     add_object_action_to_object,
     create_agent_in_area,
@@ -51,6 +42,14 @@ from campaign_rpg_engine.world_edit_api import (
     edit_object_with_fields,
     find_object_in_session,
 )
+from campaign_rpg_engine.game_profile import GameProfile, default_compound_profile
+from campaign_rpg_engine.llm.prompt_context import build_prompt_context
+from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
+from campaign_rpg_engine.memory import TurnRecord
+from campaign_rpg_engine.object import Object
+from campaign_rpg_engine.object_action import ObjectAction
+from campaign_rpg_engine.simulation import next_turn_number_for_agent, run_compound_turn
+from campaign_rpg_engine.snapshot import DEFAULT_AREA_ID
 
 __all__ = [
     "DEFAULT_AREA_ID",
@@ -76,8 +75,8 @@ class TurnResult:
 
     ok: bool
     message: str
-    record: Optional[TurnRecord] = None
-    agent: Optional[Agent] = None
+    record: TurnRecord | None = None
+    agent: Agent | None = None
 
 
 class Session:
@@ -95,7 +94,7 @@ class Session:
         active_area_id: str | None = None,
         agent_area: dict[str, str] | None = None,
         profile: GameProfile | None = None,
-        active_agent_id: Optional[str] = None,
+        active_agent_id: str | None = None,
         include_examples: bool = False,
     ) -> None:
         self.profile = profile or default_compound_profile()
@@ -220,7 +219,7 @@ class Session:
             raise RuntimeError(f"Active agent missing: {self.active_agent_id!r}")
         return agent
 
-    def get_agent(self, name_or_id: str) -> Optional[Agent]:
+    def get_agent(self, name_or_id: str) -> Agent | None:
         """Resolve an agent by id (``agent_*``) or display name (case-insensitive)."""
         key = name_or_id.strip()
         if not key:
@@ -250,10 +249,7 @@ class Session:
         area_id = self.agent_area.get(agent.id, "?")
         return SessionResult(
             ok=True,
-            message=(
-                f"Active agent: {agent.name} ({agent.id}) at {agent.position} "
-                f"[{area_id}]"
-            ),
+            message=(f"Active agent: {agent.name} ({agent.id}) at {agent.position} [{area_id}]"),
         )
 
     def set_active_area(self, area_id: str) -> SessionResult:
@@ -342,10 +338,7 @@ class Session:
         if not dest_area.is_valid_position(position):
             return SessionResult(
                 ok=False,
-                message=(
-                    f"Invalid position {position}. "
-                    f"{dest_area.format_grid_bounds_message()}"
-                ),
+                message=(f"Invalid position {position}. {dest_area.format_grid_bounds_message()}"),
             )
         from campaign_rpg_engine.object import object_footprint_fits_bounds
 
@@ -376,8 +369,7 @@ class Session:
         return SessionResult(
             ok=True,
             message=(
-                f"Moved object {object_id} from {source_area_id} "
-                f"to {dest_area_id} at {position}."
+                f"Moved object {object_id} from {source_area_id} to {dest_area_id} at {position}."
             ),
         )
 
@@ -481,7 +473,7 @@ class Session:
     # Prompts
     # ------------------------------------------------------------------
 
-    def build_prompt(self, name_or_id: Optional[str] = None) -> str:
+    def build_prompt(self, name_or_id: str | None = None) -> str:
         """Build the compound-turn LLM prompt for an agent (default: active)."""
         agent = self._resolve_agent_or_active(name_or_id)
         area = self.get_area_for_agent(agent)
@@ -537,7 +529,7 @@ class Session:
 
     def get_prompt_blocks(self) -> list:
         """Return the session prompt layout (custom or profile default)."""
-        from campaign_rpg_engine.prompt_blocks import PromptBlock, default_prompt_blocks
+        from campaign_rpg_engine.prompt_blocks import default_prompt_blocks
 
         if self._prompt_blocks is not None:
             return list(self._prompt_blocks)
@@ -589,7 +581,7 @@ class Session:
         self.coordinate_mode = normalize_coordinate_mode(cleaned or None)
         return None
 
-    def build_prompt_context_for_agent(self, name_or_id: Optional[str] = None):
+    def build_prompt_context_for_agent(self, name_or_id: str | None = None):
         """Build ``PromptContext`` for an agent (default: active)."""
         agent = self._resolve_agent_or_active(name_or_id)
         area = self.get_area_for_agent(agent)
@@ -632,7 +624,7 @@ class Session:
             raise TypeError(f"Expected Session, got {type(session)!r}")
         return session
 
-    def format_debug_state(self, name_or_id: Optional[str] = None) -> str:
+    def format_debug_state(self, name_or_id: str | None = None) -> str:
         """Human-readable agent/area debug report (CLI ``state`` command)."""
         from campaign_rpg_engine.memory_modules.registry import format_memory_module_label
         from campaign_rpg_engine.memory_modules.rolling_summary import RollingSummaryModule
@@ -662,10 +654,7 @@ class Session:
                 f"{last_summarized if last_summarized else '(never)'}"
             )
             detail_numbers = [t.turn_number for t in module.stored_turns]
-            lines.append(
-                "Memory detail turns: "
-                f"{detail_numbers if detail_numbers else '(none)'}"
-            )
+            lines.append(f"Memory detail turns: {detail_numbers if detail_numbers else '(none)'}")
             if module.summary:
                 lines.append(f"Rolling summary length: {len(module.summary)} chars")
         lines.extend(
@@ -693,7 +682,7 @@ class Session:
     # Turns
     # ------------------------------------------------------------------
 
-    def gate_agent_turn(self, name_or_id: Optional[str] = None) -> SessionResult:
+    def gate_agent_turn(self, name_or_id: str | None = None) -> SessionResult:
         """Return ok=False if the agent cannot act yet (e.g. memory consolidation)."""
         agent = self._resolve_agent_or_active(name_or_id)
         return self._gate_agent_turn(agent)
@@ -702,7 +691,7 @@ class Session:
         self,
         turn: AgentCompoundTurn,
         *,
-        agent_id: Optional[str] = None,
+        agent_id: str | None = None,
     ) -> TurnResult:
         """
         Execute one compound turn for an agent (default: active).
@@ -760,7 +749,7 @@ class Session:
             del self._agents_by_name[old_name_lower]
         self._agents_by_name[agent.name.lower()] = agent
 
-    def _resolve_agent_or_active(self, name_or_id: Optional[str]) -> Agent:
+    def _resolve_agent_or_active(self, name_or_id: str | None) -> Agent:
         if name_or_id is None:
             return self.get_active_agent()
         agent = self.get_agent(name_or_id)
@@ -930,8 +919,7 @@ class Session:
                 self.active_agent_id = fallback.id
                 active = self.get_active_agent()
                 message = (
-                    f"{message}\n"
-                    f"Active agent: {active.name} ({active.id}) at {active.position}"
+                    f"{message}\nActive agent: {active.name} ({active.id}) at {active.position}"
                 )
         mutation = WorldMutationResult(
             ok=delete_result.ok,
@@ -942,9 +930,7 @@ class Session:
             self._emit_event("agent_removed", agent=deleted_agent)
         return mutation
 
-    def add_object_action(
-        self, object_id: str, action: ObjectAction
-    ) -> WorldMutationResult:
+    def add_object_action(self, object_id: str, action: ObjectAction) -> WorldMutationResult:
         located = find_object_in_session(self, object_id.strip())
         if located is None:
             return WorldMutationResult(
@@ -967,9 +953,7 @@ class Session:
             area_id=area_id,
         )
 
-    def remove_object_action(
-        self, object_id: str, action_name: str
-    ) -> WorldMutationResult:
+    def remove_object_action(self, object_id: str, action_name: str) -> WorldMutationResult:
         located = find_object_in_session(self, object_id.strip())
         if located is None:
             return WorldMutationResult(
@@ -1116,7 +1100,7 @@ class Session:
         movement_exceptions: list[str] | None = None,
         is_player: bool | None = None,
     ) -> WorldMutationResult:
-        from campaign_rpg_engine.area_edit import (
+        from campaign_rpg_engine.edit.area_edit import (
             _apply_agent_content_fields,
             _apply_agent_location_fields,
         )
@@ -1126,8 +1110,8 @@ class Session:
             return WorldMutationResult(
                 ok=False,
                 message=(
-                    f"Commands require agent id (e.g. agent_01), not display name. "
-                    f"Use 'agents' or 'list' to look up ids."
+                    "Commands require agent id (e.g. agent_01), not display name. "
+                    "Use 'agents' or 'list' to look up ids."
                 ),
             )
 
@@ -1135,18 +1119,14 @@ class Session:
         if located_area_id is None or located_area_id not in self.areas:
             return WorldMutationResult(
                 ok=False,
-                message=(
-                    f"Agent '{cleaned}' not found. Use 'agents' or 'list' to look up ids."
-                ),
+                message=(f"Agent '{cleaned}' not found. Use 'agents' or 'list' to look up ids."),
             )
         area = self.areas[located_area_id]
         agent = area.get_agent_by_id(cleaned)
         if agent is None:
             return WorldMutationResult(
                 ok=False,
-                message=(
-                    f"Agent '{cleaned}' not found. Use 'agents' or 'list' to look up ids."
-                ),
+                message=(f"Agent '{cleaned}' not found. Use 'agents' or 'list' to look up ids."),
             )
 
         fields: dict[str, str] = {}
@@ -1196,16 +1176,12 @@ class Session:
             current_area_id = fields["area"].strip()
         current_area = self.areas[current_area_id]
 
-        content_err = _apply_agent_content_fields(
-            current_area, agent, cleaned, fields, changes
-        )
+        content_err = _apply_agent_content_fields(current_area, agent, cleaned, fields, changes)
         if content_err:
             return WorldMutationResult(ok=False, message=content_err)
 
         if not changes:
-            return WorldMutationResult(
-                ok=False, message=f"No changes applied to {cleaned}."
-            )
+            return WorldMutationResult(ok=False, message=f"No changes applied to {cleaned}.")
 
         if "name" in changes:
             self._rename_agent_in_index(old_name_lower, agent)

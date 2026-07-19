@@ -4,8 +4,6 @@ test_world_edit.py
 Tests for V0.1 area editing commands (Section 2).
 """
 
-from campaign_rpg_engine.object import Object
-from campaign_rpg_engine.perception import build_passive_vision, perform_look
 from campaign_rpg_engine.area import create_initial_area
 from campaign_rpg_engine.area_edit import (
     create_agent_from_args,
@@ -20,6 +18,8 @@ from campaign_rpg_engine.area_edit import (
     generate_object_id,
     slugify_display_name,
 )
+from campaign_rpg_engine.object import Object
+from campaign_rpg_engine.perception import build_passive_vision, perform_look
 
 
 def test_slugify_display_name():
@@ -44,10 +44,7 @@ def test_generate_object_id_increments():
 def test_generate_object_id_respects_reserved_ids():
     area = create_initial_area()
     reserved = frozenset({"obj_ceramic_ball_01", "obj_ceramic_ball_02"})
-    assert (
-        generate_object_id(area, "Ceramic Ball", reserved_ids=reserved)
-        == "obj_ceramic_ball_03"
-    )
+    assert generate_object_id(area, "Ceramic Ball", reserved_ids=reserved) == "obj_ceramic_ball_03"
 
 
 def test_format_objects_list_initial_world():
@@ -133,9 +130,7 @@ def test_edit_pdesc_does_not_invalidate():
 def test_create_object_appears_in_vision_as_unknown():
     area = create_initial_area()
     agent = area.get_agent()
-    obj, msg = create_object_from_args(
-        area, 'name "Crate" desc "A wooden crate." at 0,0'
-    )
+    obj, msg = create_object_from_args(area, 'name "Crate" desc "A wooden crate." at 0,0')
     assert obj is not None
     assert obj.id == "obj_crate_01"
     assert "obj_crate_01" in msg
@@ -286,9 +281,7 @@ def test_create_agent_duplicate_name_rejected():
 
 def test_create_object_case_insensitive_keywords():
     area = create_initial_area()
-    obj, msg = create_object_from_args(
-        area, 'NAME "Box" PDESC "A box." DESC "Inside." AT 1,1'
-    )
+    obj, msg = create_object_from_args(area, 'NAME "Box" PDESC "A box." DESC "Inside." AT 1,1')
     assert obj is not None
     assert obj.passive_description == "A box."
     assert obj.description == "Inside."
@@ -296,9 +289,7 @@ def test_create_object_case_insensitive_keywords():
 
 def test_parse_duplicate_field_rejected():
     area = create_initial_area()
-    obj, msg = create_object_from_args(
-        area, 'name "A" name "B" desc "x" at 0,0'
-    )
+    obj, msg = create_object_from_args(area, 'name "A" name "B" desc "x" at 0,0')
     assert obj is None
     assert "Duplicate field" in msg
 

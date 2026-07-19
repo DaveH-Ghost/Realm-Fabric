@@ -28,7 +28,7 @@ def build_affinity_update_prompt(
         score = int(entry.get("score", 0))
         prior = str(entry.get("summary") or "").strip() or "(none yet)"
         blocks.append(
-            f"""### {name} (id={entry['agent_id']})
+            f"""### {name} (id={entry["agent_id"]})
 Current affinity: {score}
 Prior relationship summary: {prior}
 When to emit +1: {plus_guidance(score, name)}

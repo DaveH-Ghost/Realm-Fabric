@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import copy
 import re
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 from campaign_rpg_engine.llm.affinity_update import generate_affinity_updates
 from campaign_rpg_engine.memory_modules.affinity_ladder import (
@@ -66,9 +67,7 @@ class AffinityModule(RollingSummaryModule):
             if other.id != ctx.agent.id:
                 self._directory[other.id] = other.name
 
-        detail = format_stored_turns_block(
-            self._turns, self._witnessed_before, self._pending
-        )
+        detail = format_stored_turns_block(self._turns, self._witnessed_before, self._pending)
         detail_text = join_lines(detail) if detail else ""
         affinity_ids = self._prompt_affinity_ids(ctx, detail_text)
         affinity_lines = self._format_affinity_block(affinity_ids)
@@ -118,9 +117,7 @@ class AffinityModule(RollingSummaryModule):
         )
 
     def _run_affinity_consolidation(self, snapshot: ConsolidationSnapshot) -> dict[str, Any]:
-        batch_text = format_turns_batch_for_summary(
-            snapshot.turns, snapshot.witnessed_before
-        )
+        batch_text = format_turns_batch_for_summary(snapshot.turns, snapshot.witnessed_before)
         candidates = list(snapshot.extra.get("candidates") or [])
 
         def run_a() -> str:
@@ -241,9 +238,7 @@ class AffinityModule(RollingSummaryModule):
         cleaned = (name or "").strip()
         if not cleaned or is_reserved_mention_name(cleaned):
             return False
-        return bool(
-            re.search(rf"\b{re.escape(cleaned)}\b", mention_text, re.IGNORECASE)
-        )
+        return bool(re.search(rf"\b{re.escape(cleaned)}\b", mention_text, re.IGNORECASE))
 
     def _remember_agents(self, nearby: tuple[tuple[str, str], ...]) -> None:
         for agent_id, name in nearby:
@@ -309,14 +304,14 @@ class AffinityModule(RollingSummaryModule):
                     "summary": str(entry.get("summary") or ""),
                 }
         directory = data.get("directory") or {}
-        self._directory = {
-            str(k): str(v) for k, v in directory.items()
-        } if isinstance(directory, dict) else {}
+        self._directory = (
+            {str(k): str(v) for k, v in directory.items()} if isinstance(directory, dict) else {}
+        )
         window_nearby = data.get("window_nearby_ids") or []
-        self._window_nearby_ids = {
-            str(agent_id) for agent_id in window_nearby
-        } if isinstance(window_nearby, list) else set()
+        self._window_nearby_ids = (
+            {str(agent_id) for agent_id in window_nearby}
+            if isinstance(window_nearby, list)
+            else set()
+        )
         if "relationship_summary_max_chars" in data:
-            self.relationship_summary_max_chars = int(
-                data["relationship_summary_max_chars"]
-            )
+            self.relationship_summary_max_chars = int(data["relationship_summary_max_chars"])

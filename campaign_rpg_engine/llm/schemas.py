@@ -5,12 +5,14 @@ One AgentCompoundTurn per agent turn: optional move, then optional look, then tu
 V0.4.1a: reasoning and speak content are truncated at sentence boundaries.
 V0.4.4c: compact JSON keys (move, look, say, action, verb); legacy 0.4.3 keys normalized.
 """
+
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
-from campaign_rpg_engine.coordinates import CoordinateParseError, parse_coordinate_target
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+from campaign_rpg_engine.coordinates import CoordinateParseError
 from campaign_rpg_engine.llm.text_truncation import (
     REASONING_MAX_CHARS,
     SPEAK_MAX_CHARS,
@@ -18,7 +20,6 @@ from campaign_rpg_engine.llm.text_truncation import (
     truncate_at_sentence_boundary,
 )
 from campaign_rpg_engine.move_target import validate_move_target_syntax
-
 
 TurnActionType = Literal["interact", "emote", "verb", "none"]
 
@@ -43,7 +44,7 @@ def _truncate_reasoning(v: str) -> str:
     return truncate_at_sentence_boundary(v, REASONING_MAX_CHARS)
 
 
-def _truncate_say(v: Optional[str]) -> Optional[str]:
+def _truncate_say(v: str | None) -> str | None:
     if v is None:
         return v
     text = v.strip()
@@ -71,29 +72,29 @@ class AgentCompoundTurn(BaseModel):
     reasoning: str = Field(
         description="Private thoughts for the full turn (~400 chars max).",
     )
-    move: Optional[str] = Field(
+    move: str | None = Field(
         default=None,
         description='Grid coordinate "x,y", entity id (obj_* / agent_*), or null to stay.',
     )
-    look: Optional[str] = Field(
+    look: str | None = Field(
         default=None,
         description="Entity id to examine after moving, or null to skip look.",
     )
     action: TurnActionType = Field(
         description='Turn-ending action: "interact", "emote", "verb", or "none".',
     )
-    target: Optional[str] = Field(
+    target: str | None = Field(
         default=None,
         description=(
             "Object or agent id (or free text) for interact; optional for emote "
             "(omit for undirected gestures) and verb."
         ),
     )
-    verb: Optional[str] = Field(
+    verb: str | None = Field(
         default=None,
-        description='Object action name (interact), past-tense emote verb (emote), or registered verb id (verb).',
+        description="Object action name (interact), past-tense emote verb (emote), or registered verb id (verb).",
     )
-    say: Optional[str] = Field(
+    say: str | None = Field(
         default=None,
         description="Optional speak dialogue (~500 chars max).",
     )
@@ -117,7 +118,7 @@ class AgentCompoundTurn(BaseModel):
 
     @field_validator("move")
     @classmethod
-    def validate_move(cls, v: Optional[str]) -> Optional[str]:
+    def validate_move(cls, v: str | None) -> str | None:
         if v is None:
             return v
         if not str(v).strip():
@@ -129,11 +130,11 @@ class AgentCompoundTurn(BaseModel):
 
     @field_validator("say")
     @classmethod
-    def validate_say(cls, v: Optional[str]) -> Optional[str]:
+    def validate_say(cls, v: str | None) -> str | None:
         return _truncate_say(v)
 
     @model_validator(mode="after")
-    def validate_action_fields(self) -> "AgentCompoundTurn":
+    def validate_action_fields(self) -> AgentCompoundTurn:
         if self.action == "interact":
             if not self.target or not str(self.target).strip():
                 raise ValueError("ERR:INVALID_TARGET: interact requires target object id")
@@ -162,7 +163,5 @@ class AgentCompoundTurn(BaseModel):
                     raise ValueError(err)
         elif self.action == "none":
             if self.target or self.verb:
-                raise ValueError(
-                    "ERR:INVALID_TARGET: target and verb must be empty for none"
-                )
+                raise ValueError("ERR:INVALID_TARGET: target and verb must be empty for none")
         return self

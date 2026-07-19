@@ -5,11 +5,6 @@ V0.2 Section 3: declarative object interactions.
 """
 
 from campaign_rpg_engine.actions.interact import interact
-from campaign_rpg_engine.llm.prompt import build_compound_prompt
-from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
-from campaign_rpg_engine.interaction_handlers.registry import format_handlers_list
-from campaign_rpg_engine.perception import build_passive_vision, PASSIVE_VISION_LOOK_RULE, perform_look
-from campaign_rpg_engine.simulation import next_turn_number_for_agent, run_compound_turn
 from campaign_rpg_engine.area import create_initial_area
 from campaign_rpg_engine.area_edit import (
     create_agent_from_args,
@@ -18,11 +13,19 @@ from campaign_rpg_engine.area_edit import (
     edit_object_from_args,
     format_objects_list,
 )
-
+from campaign_rpg_engine.interaction_handlers.registry import format_handlers_list
+from campaign_rpg_engine.llm.prompt import build_compound_prompt
+from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
+from campaign_rpg_engine.perception import (
+    PASSIVE_VISION_LOOK_RULE,
+    build_passive_vision,
+    perform_look,
+)
+from campaign_rpg_engine.simulation import next_turn_number_for_agent, run_compound_turn
 
 COOKIE_ARGS = (
     'name "Cookie" pdesc "A cookie." desc "A tasty cookie." at 2,2 '
-    'action eat range 1 handler delete_self '
+    "action eat range 1 handler delete_self "
     'result "You ate the cookie, it was delicious." '
     'passive "{actor} ate the cookie."'
 )
@@ -30,7 +33,7 @@ COOKIE_ARGS = (
 
 COOKIE_FAR_ARGS = (
     'name "Cookie" pdesc "A cookie." desc "A tasty cookie." at 4,4 '
-    'action eat range 1 handler delete_self '
+    "action eat range 1 handler delete_self "
     'result "You ate the cookie, it was delicious." '
     'passive "{actor} ate the cookie."'
 )
@@ -43,9 +46,7 @@ def _create_cookie(area):
 
 
 def _create_goblin(area, at="0,3"):
-    agent, _ = create_agent_from_args(
-        area, f'name "Goblin" personality "Hungry." at {at}'
-    )
+    agent, _ = create_agent_from_args(area, f'name "Goblin" personality "Hungry." at {at}')
     assert agent is not None
     return agent
 
@@ -60,7 +61,10 @@ def test_handlers_command_lists_registered_handlers():
 
 
 def test_handler_registry_descriptions_match_registration():
-    from campaign_rpg_engine.interaction_handlers.registry import get_handler_registration, list_registered_handlers
+    from campaign_rpg_engine.interaction_handlers.registry import (
+        get_handler_registration,
+        list_registered_handlers,
+    )
 
     for handler_id in list_registered_handlers():
         reg = get_handler_registration(handler_id)
@@ -124,18 +128,15 @@ def test_range_zero_same_tile_interact():
 
 def test_multiple_actions_on_one_object():
     area = create_initial_area()
-    obj, _ = create_object_from_args(
-        area, 'name "Cookie" desc "Tasty." at 2,2'
-    )
+    obj, _ = create_object_from_args(area, 'name "Cookie" desc "Tasty." at 2,2')
     assert edit_object_from_args(
         area,
-        f'{obj.id} add-action eat range 1 handler delete_self '
+        f"{obj.id} add-action eat range 1 handler delete_self "
         'result "Yum." passive "{actor} ate it."',
     ).startswith("Added action")
     assert edit_object_from_args(
         area,
-        f'{obj.id} add-action smell range 1 result "Nice." '
-        'passive "{actor} smells it."',
+        f'{obj.id} add-action smell range 1 result "Nice." passive "{{actor}} smells it."',
     ).startswith("Added action")
 
     text = format_objects_list(area)
@@ -167,9 +168,7 @@ def test_interact_templates_substitute_object_start_and_end(monkeypatch):
     )
 
     outcome = interact(explorer, area, "obj_ball_01", "kick")
-    assert outcome.result == (
-        "You kick the Ceramic Ball. It rolls from (2, 2) to (4, 0)."
-    )
+    assert outcome.result == ("You kick the Ceramic Ball. It rolls from (2, 2) to (4, 0).")
     assert outcome.passive_result == (
         "Explorer kicks the Ceramic Ball. It rolls from (2, 2) to (4, 0)."
     )
@@ -348,8 +347,7 @@ def test_create_object_unknown_handler_rejected():
     area = create_initial_area()
     obj, msg = create_object_from_args(
         area,
-        'name "Cookie" desc "x" at 2,2 action eat range 1 handler vanish '
-        'result "x" passive "x"',
+        'name "Cookie" desc "x" at 2,2 action eat range 1 handler vanish result "x" passive "x"',
     )
     assert obj is None
     assert "Unknown handler" in msg
@@ -383,12 +381,10 @@ def test_result_only_interact_leaves_object():
 
 def test_edit_object_add_and_remove_action():
     area = create_initial_area()
-    obj, _ = create_object_from_args(
-        area, 'name "Cookie" desc "Tasty." at 2,2'
-    )
+    obj, _ = create_object_from_args(area, 'name "Cookie" desc "Tasty." at 2,2')
     msg = edit_object_from_args(
         area,
-        f'{obj.id} add-action eat range 1 handler delete_self '
+        f"{obj.id} add-action eat range 1 handler delete_self "
         'result "Yum." passive "{actor} ate it."',
     )
     assert "Added action" in msg
@@ -443,10 +439,7 @@ def test_random_move_self_moves_ball(monkeypatch):
 
     assert ball.position == (0, 4)
     assert ball.position != original
-    assert (
-        "You kick the Ceramic Ball. It rolls from (2, 2) to (0, 4)."
-        in record.result
-    )
+    assert "You kick the Ceramic Ball. It rolls from (2, 2) to (0, 4)." in record.result
     assert (
         explorer.passive_result
         == "Explorer kicks the Ceramic Ball. It rolls from (2, 2) to (0, 4)."
@@ -466,7 +459,9 @@ def test_random_move_self_excludes_current_tile(monkeypatch):
         seen_positions.append(set(positions))
         return (0, 0)
 
-    monkeypatch.setattr("reference_handlers.handlers.random_move_self.random.choice", capture_choice)
+    monkeypatch.setattr(
+        "reference_handlers.handlers.random_move_self.random.choice", capture_choice
+    )
 
     interact(explorer, area, "obj_ball_01", "kick")
 
@@ -490,4 +485,7 @@ def test_step_compound_kick_ball_moves(monkeypatch):
 
     ball = session.area.get_object_by_id("obj_ball_01")
     assert ball.position == (4, 0)
-    assert "You kick the Ceramic Ball. It rolls from (2, 2) to (4, 0)." in session.get_active_agent().memory.turns[-1].result
+    assert (
+        "You kick the Ceramic Ball. It rolls from (2, 2) to (4, 0)."
+        in session.get_active_agent().memory.turns[-1].result
+    )

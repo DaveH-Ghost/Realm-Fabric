@@ -1,4 +1,5 @@
 """Pluggable agent memory modules for prompt assembly."""
+
 from __future__ import annotations
 
 from campaign_rpg_engine.memory_modules.base import (

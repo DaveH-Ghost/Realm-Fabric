@@ -53,7 +53,7 @@ def test_disabled_action_hidden_from_vision_and_interact():
     obj, msg = create_object_from_args(
         area,
         'name "Box" pdesc "A box." desc "A closed box." at 1,1 '
-        'action open range 1 enabled false '
+        "action open range 1 enabled false "
         'result "You open it." passive "{actor} opens it."',
     )
     assert obj is not None, msg
@@ -72,9 +72,7 @@ def test_disabled_action_hidden_from_vision_and_interact():
 def test_lower_chairs_sequence_updates_text_and_hides_action():
     area = create_initial_area()
     table = _make_table_with_lower_chairs(area)
-    agent, msg = create_agent_from_args(
-        area, 'name "Praxis" personality "Helpful." at 2,1'
-    )
+    agent, msg = create_agent_from_args(area, 'name "Praxis" personality "Helpful." at 2,1')
     assert agent is not None, msg
 
     action = table.actions["lower chairs"]
@@ -98,8 +96,8 @@ def test_lower_chairs_sequence_updates_text_and_hides_action():
 
 
 def test_set_object_text_clear_desc_keeps_pdesc():
-    from reference_handlers.handlers.set_object_text import set_object_text
     from campaign_rpg_engine.object_action import ObjectAction
+    from reference_handlers.handlers.set_object_text import set_object_text
 
     area = create_initial_area()
     obj, msg = create_object_from_args(

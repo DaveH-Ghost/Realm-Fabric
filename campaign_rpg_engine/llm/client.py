@@ -3,10 +3,11 @@ client.py
 
 LLM client for OpenAI-compatible providers (OpenRouter, Featherless).
 """
+
 from __future__ import annotations
 
 import os
-from typing import Optional, Type, TypeVar
+from typing import TypeVar
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -41,7 +42,7 @@ T = TypeVar("T", bound=BaseModel)
 class LLMParseError(ValueError):
     """Raised when LLM output is not valid JSON or fails schema validation."""
 
-    def __init__(self, message: str, *, raw_response: Optional[str] = None):
+    def __init__(self, message: str, *, raw_response: str | None = None):
         super().__init__(message)
         self.raw_response = raw_response
 
@@ -67,16 +68,13 @@ def get_llm_provider() -> str:
     return PROVIDER_OPENROUTER
 
 
-def resolve_llm_model(explicit: Optional[str] = None) -> str:
+def resolve_llm_model(explicit: str | None = None) -> str:
     """Resolve model id for the active provider (or *explicit* override)."""
     if explicit and explicit.strip():
         return explicit.strip()
     provider = get_llm_provider()
     if provider == PROVIDER_FEATHERLESS:
-        return (
-            os.getenv("FEATHERLESS_MODEL", "").strip()
-            or DEFAULT_FEATHERLESS_MODEL
-        )
+        return os.getenv("FEATHERLESS_MODEL", "").strip() or DEFAULT_FEATHERLESS_MODEL
     return os.getenv("OPENROUTER_MODEL", "").strip() or DEFAULT_OPENROUTER_MODEL
 
 
@@ -147,7 +145,7 @@ def _looks_like_missing_leading_brace(content: str) -> bool:
     return bool(text) and not text.startswith("{") and text.endswith("}")
 
 
-def _parse_structured_json(schema: Type[T], content: str) -> tuple[T, str]:
+def _parse_structured_json(schema: type[T], content: str) -> tuple[T, str]:
     """Parse JSON into *schema*; retry once with a leading ``{`` if needed.
 
     Returns ``(parsed, content_used)``. On final failure raises ``LLMParseError``
@@ -173,8 +171,8 @@ def _parse_structured_json(schema: Type[T], content: str) -> tuple[T, str]:
 
 def get_structured_turn(
     prompt: str,
-    schema: Type[T],
-    model: Optional[str] = None,
+    schema: type[T],
+    model: str | None = None,
     temperature: float = 0.7,
 ) -> LLMResponse:
     """Send prompt to LLM and parse JSON into the given Pydantic schema."""
@@ -213,7 +211,7 @@ def get_structured_turn(
 
 def get_text_completion(
     prompt: str,
-    model: Optional[str] = None,
+    model: str | None = None,
     temperature: float = 0.7,
 ) -> LLMResponse:
     """Send prompt to LLM; entire message content is the response text."""

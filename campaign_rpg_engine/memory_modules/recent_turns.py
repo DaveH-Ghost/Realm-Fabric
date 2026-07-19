@@ -94,7 +94,5 @@ class RecentTurnsModule:
         validate_window(self.window)
         self._total_turns = int(data["total_turns"])
         self._turns = deserialize_turn_list(data.get("turns", []))
-        self._witnessed_before = deserialize_witnessed_before(
-            data.get("witnessed_before", [])
-        )
+        self._witnessed_before = deserialize_witnessed_before(data.get("witnessed_before", []))
         self._pending = deserialize_witness_list(data.get("pending", []))

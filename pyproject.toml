@@ -1,6 +1,6 @@
 [project]
 name = "campaign-rpg-engine"
-version = "1.5.2"
+version = "1.6.0"
 description = "CampAIgn — map-based LLM RPG simulation engine (Session API, multi-area worlds, compound turns)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -47,6 +47,7 @@ Changelog = "https://github.com/DaveH-Ghost/CampAIgn-RPG-Engine/blob/main/docs/c
 [dependency-groups]
 dev = [
     "pytest>=9.0.3",
+    "ruff>=0.15.22",
 ]
 
 [tool.pytest.ini_options]
@@ -72,3 +73,26 @@ force-include = { "profiles" = "profiles" }
 
 [tool.uv]
 package = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["campaign_rpg_engine", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = ["E501", "SIM102", "SIM105", "SIM108", "SIM110", "SIM115", "SIM401", "B017", "B905"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B011"]
+"campaign_rpg_engine/__init__.py" = ["F401", "F403"]
+"campaign_rpg_engine/prompt_blocks.py" = ["E402"]
+"campaign_rpg_engine/log_utils/__init__.py" = ["F401"]
+"campaign_rpg_engine/area_edit.py" = ["E402"]
+"campaign_rpg_engine/world_edit_api.py" = ["E402"]
+"campaign_rpg_engine/entity_templates.py" = ["E402"]
+"campaign_rpg_engine/area_templates.py" = ["E402"]
+"campaign_rpg_engine/interact_templates.py" = ["E402"]
+"campaign_rpg_engine/session_area_edit.py" = ["E402"]
+"campaign_rpg_engine/decoration_edit.py" = ["E402"]
+"campaign_rpg_engine/area_edit_parse.py" = ["E402"]

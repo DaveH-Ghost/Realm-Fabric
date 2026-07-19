@@ -8,6 +8,7 @@ The engine supplies factual strings — passive vision, memory, area text, etc. 
 via ``build_prompt_context``. The default compound prompt in ``prompt.py`` is
 one reference assembly; game projects can ignore it and compose their own.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -197,13 +198,10 @@ def _turn_verbs_rules_line() -> str:
 
     verbs = list_registered_turn_verbs()
     if not verbs:
-        return (
-            "- verb: action \"verb\" + verb (special/inventory id) + optional target."
-        )
+        return '- verb: action "verb" + verb (special/inventory id) + optional target.'
     listed = ", ".join(verbs)
     return (
-        f"- verb: action \"verb\" + verb (special/inventory id; "
-        f"one of: {listed}) + optional target."
+        f'- verb: action "verb" + verb (special/inventory id; one of: {listed}) + optional target.'
     )
 
 

@@ -1,4 +1,5 @@
 """LLM rolling memory summary generation (V0.2.5e)."""
+
 from __future__ import annotations
 
 from campaign_rpg_engine.llm.client import get_text_completion

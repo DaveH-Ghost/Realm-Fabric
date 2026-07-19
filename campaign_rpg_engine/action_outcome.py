@@ -1,4 +1,5 @@
 """Action result types — first-person result for the actor, passive for observers."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass

@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
 from campaign_rpg_engine.llm.memory_summary import log_consolidation_error
 from campaign_rpg_engine.memory_modules.base import WitnessedEvent

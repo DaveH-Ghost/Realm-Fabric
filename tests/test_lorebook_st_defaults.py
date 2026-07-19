@@ -1,6 +1,10 @@
 """ST lorebook entry defaults (V0.5.0)."""
 
-from campaign_rpg_engine.lorebook.st_defaults import ST_ENTRY_DEFAULTS, new_st_entry_dict, with_st_entry_defaults
+from campaign_rpg_engine.lorebook.st_defaults import (
+    ST_ENTRY_DEFAULTS,
+    new_st_entry_dict,
+    with_st_entry_defaults,
+)
 
 
 def test_with_st_entry_defaults_fills_missing_keys():

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 from campaign_rpg_engine.action_outcome import ActionOutcome
 
@@ -48,9 +49,7 @@ def register_turn_verb(
     if not cleaned:
         raise ValueError("verb_id must not be empty")
     if (path_range is None) != (path_target_from_turn is None):
-        raise ValueError(
-            "path_range and path_target_from_turn must both be set or both omitted"
-        )
+        raise ValueError("path_range and path_target_from_turn must both be set or both omitted")
     if path_range is not None and path_range < 0:
         raise ValueError("path_range must be non-negative")
     _REGISTRY[cleaned] = TurnVerbRegistration(

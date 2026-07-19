@@ -117,7 +117,9 @@ def test_reorder_sprite_z_index():
 
     up = session.reorder_decoration("decor_a", "up")
     assert up.ok
-    assert area.get_decoration_by_id("decor_a").z_index > area.get_decoration_by_id("decor_b").z_index
+    assert (
+        area.get_decoration_by_id("decor_a").z_index > area.get_decoration_by_id("decor_b").z_index
+    )
 
 
 def test_decorations_in_snapshot():

@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from campaign_rpg_engine.session import Session
@@ -40,9 +41,7 @@ def unregister_event_listeners(plugin_id: str) -> None:
     if not cleaned:
         return
     for event in list(_REGISTRY):
-        _REGISTRY[event] = [
-            reg for reg in _REGISTRY[event] if reg.plugin_id != cleaned
-        ]
+        _REGISTRY[event] = [reg for reg in _REGISTRY[event] if reg.plugin_id != cleaned]
         if not _REGISTRY[event]:
             del _REGISTRY[event]
 

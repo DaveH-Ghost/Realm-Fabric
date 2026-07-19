@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from campaign_rpg_engine import (
     Session,
     export_area_template,

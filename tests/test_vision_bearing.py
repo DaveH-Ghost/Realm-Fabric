@@ -49,12 +49,6 @@ def test_format_action_range_label_tiles_by_default():
 
 
 def test_format_action_range_label_with_session_units():
-    assert (
-        format_action_range_label(1, vision_units="ft", units_per_tile=5)
-        == "range 5 ft"
-    )
-    assert (
-        format_action_range_label(2, vision_units="ft", units_per_tile=5)
-        == "range 10 ft"
-    )
+    assert format_action_range_label(1, vision_units="ft", units_per_tile=5) == "range 5 ft"
+    assert format_action_range_label(2, vision_units="ft", units_per_tile=5) == "range 10 ft"
     assert format_action_range_label(1, units_per_tile=5) == "range 5"

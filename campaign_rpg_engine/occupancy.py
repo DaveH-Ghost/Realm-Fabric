@@ -29,9 +29,7 @@ def _entity_blocks_for_mover(
 ) -> bool:
     if not entity.blocks_movement:
         return False
-    if mover_id in entity.movement_exceptions:
-        return False
-    return True
+    return mover_id not in entity.movement_exceptions
 
 
 def entity_blocks_for_mover(
@@ -147,6 +145,7 @@ def resolve_standable_goal(
 
     return min(candidates, key=_rank)
 
+
 def _blocker_name_at(
     area: Area,
     position: tuple[int, int],
@@ -227,9 +226,8 @@ def find_blocker_between(
     """
     from campaign_rpg_engine.pathing import path_step_towards
 
-    if (
-        not _goal_ignored(goal_pos, ignore_tiles)
-        and not is_tile_enterable(area, goal_pos, mover_id)
+    if not _goal_ignored(goal_pos, ignore_tiles) and not is_tile_enterable(
+        area, goal_pos, mover_id
     ):
         name = _blocker_name_at(area, goal_pos, mover_id)
         if name is not None:

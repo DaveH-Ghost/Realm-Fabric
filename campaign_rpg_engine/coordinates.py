@@ -8,7 +8,9 @@ Canonical advertised form: "x,y". Parser also accepts "(x,y)" variants silently.
 Grid bounds are defined on ``Area`` (``min_x`` / ``max_x`` / ``min_y`` / ``max_y``);
 this module only parses.
 """
+
 from __future__ import annotations
+
 
 class CoordinateParseError(ValueError):
     """Raised when a move target cannot be parsed as grid coordinates."""
@@ -25,9 +27,7 @@ def parse_coordinate_target(target: str) -> tuple[int, int]:
     """
     text = target.strip()
     if not text:
-        raise CoordinateParseError(
-            "ERR:INVALID_TARGET: move requires a coordinate target 'x,y'"
-        )
+        raise CoordinateParseError("ERR:INVALID_TARGET: move requires a coordinate target 'x,y'")
 
     if text.startswith("(") and text.endswith(")"):
         text = text[1:-1].strip()

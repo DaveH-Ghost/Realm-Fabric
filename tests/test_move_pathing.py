@@ -160,9 +160,7 @@ def test_move_speed_straight_horizontal_stays_on_row():
     path = find_path((0, 2), (4, 2), area, mover.id)
     assert path == [(0, 2), (1, 2), (2, 2), (3, 2), (4, 2)]
 
-    final, reached, segment = walk_with_pathfinding(
-        (0, 2), (4, 2), 3, area, mover.id
-    )
+    final, reached, segment = walk_with_pathfinding((0, 2), (4, 2), 3, area, mover.id)
     assert final == (3, 2)
     assert reached is False
     assert all(pos[1] == 2 for pos in segment)
@@ -175,8 +173,8 @@ def test_move_speed_straight_horizontal_stays_on_row():
 
 def test_move_speed_straight_vertical_stays_on_column():
     """Regression: collinear vertical moves must not drift diagonally (V0.7.1)."""
-    from campaign_rpg_engine.area import create_area
     from campaign_rpg_engine.agent import Agent
+    from campaign_rpg_engine.area import create_area
     from campaign_rpg_engine.pathfinding import find_path, walk_with_pathfinding
 
     area = create_area(width=5, height=5)

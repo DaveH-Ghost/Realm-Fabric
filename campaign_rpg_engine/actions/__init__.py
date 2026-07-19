@@ -4,6 +4,7 @@ Actions package.
 Contains move, speak, and interact implementations. Look is implemented in
 perception.py (perform_look) because it shares vision/memory logic.
 """
+
 from __future__ import annotations
 
 from campaign_rpg_engine.actions.emote import emote as do_emote

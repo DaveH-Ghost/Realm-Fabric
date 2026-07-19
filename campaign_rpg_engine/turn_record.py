@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Optional
-
+from typing import Literal
 
 StepKind = Literal["move", "look", "speak", "interact", "emote", "verb"]
 
@@ -13,8 +12,8 @@ class TurnStep:
 
     kind: StepKind
     reasoning: str
-    target: Optional[str]
-    content: Optional[str]
+    target: str | None
+    content: str | None
     result: str
     passive_result: str = ""
     passive_witness_exclude_agent_ids: tuple[str, ...] = ()

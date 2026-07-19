@@ -12,6 +12,7 @@ from campaign_rpg_engine.move_target import (
 from campaign_rpg_engine.object import Object
 from campaign_rpg_engine.occupancy import resolve_standable_goal
 
+
 def test_partial_move_to_entity_reports_steps_away_without_coordinates():
     area = Area(bounds=GridBounds.square(5))
     mover = Agent(
@@ -48,8 +49,7 @@ def test_format_move_towards_entity_includes_blocker_when_given():
         blocker_name="Wall",
     )
     assert message == (
-        "You moved towards Ceramic Ball; you are still 2 steps away. "
-        "Wall is blocking the way."
+        "You moved towards Ceramic Ball; you are still 2 steps away. Wall is blocking the way."
     )
 
 
@@ -94,9 +94,7 @@ def test_unreachable_entity_behind_wall_partition_reports_blocker():
     outcome = do_move(mover, area, "obj_ball_01")
 
     assert mover.position == (0, 0)
-    assert outcome.result == (
-        "You cannot reach Ceramic Ball; Wall is blocking the way."
-    )
+    assert outcome.result == ("You cannot reach Ceramic Ball; Wall is blocking the way.")
 
 
 def test_unreachable_message_without_blocker_name():
@@ -129,6 +127,4 @@ def test_already_at_coordinate_as_close_as_possible_to_blocked_tile():
     outcome = do_move(mover, area, "2,2")
 
     assert mover.position == (1, 1)
-    assert outcome.result == (
-        "You are already at (1, 1), as close as you can get to (2, 2)."
-    )
+    assert outcome.result == ("You are already at (1, 1), as close as you can get to (2, 2).")

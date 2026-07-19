@@ -10,7 +10,11 @@ from dataclasses import dataclass
 
 from campaign_rpg_engine.agent import Agent
 from campaign_rpg_engine.area import Area
-from campaign_rpg_engine.coordinates import CoordinateParseError, format_coordinate, parse_coordinate_target
+from campaign_rpg_engine.coordinates import (
+    CoordinateParseError,
+    format_coordinate,
+    parse_coordinate_target,
+)
 from campaign_rpg_engine.grid import chebyshev_distance
 from campaign_rpg_engine.object import chebyshev_distance_to_object
 from campaign_rpg_engine.occupancy import entity_blocks_for_mover
@@ -69,9 +73,7 @@ def resolve_move_target(area: Area, target: str) -> ResolvedMoveTarget:
                 entity_id=text,
                 entity_name=other.name,
             )
-        raise MoveTargetError(
-            f"ERR:INVALID_TARGET: unknown entity id {text!r}"
-        )
+        raise MoveTargetError(f"ERR:INVALID_TARGET: unknown entity id {text!r}")
 
     try:
         position = parse_coordinate_target(text)
@@ -169,10 +171,7 @@ def format_unreachable_message(
             return f"You cannot reach {label}; {blocker_name} is blocking the way."
         return f"You cannot reach {label}; movement is fully blocked."
     if blocker_name:
-        return (
-            f"You cannot reach {goal_label}; "
-            f"{blocker_name} is blocking the way."
-        )
+        return f"You cannot reach {goal_label}; {blocker_name} is blocking the way."
     return f"You cannot reach {goal_label}; movement is fully blocked."
 
 
@@ -198,10 +197,7 @@ def format_move_towards_message(
     label = format_move_target_label(resolved)
     if resolved.entity_id:
         distance = _entity_stop_distance(stop_position, resolved, area)
-        message = (
-            f"You moved towards {label}; "
-            f"you are still {_step_label(distance)} away."
-        )
+        message = f"You moved towards {label}; you are still {_step_label(distance)} away."
         if blocker_name:
             message = f"{message} {blocker_name} is blocking the way."
         return message
@@ -219,15 +215,9 @@ def format_move_towards_passive(
     label = format_move_target_label(resolved)
     if resolved.entity_id:
         distance = _entity_stop_distance(stop_position, resolved, area)
-        return (
-            f"{agent_name} moves towards {label}; "
-            f"still {_step_label(distance)} away."
-        )
+        return f"{agent_name} moves towards {label}; still {_step_label(distance)} away."
     stop = format_coordinate(*stop_position)
-    return (
-        f"{agent_name} moves towards {label}, "
-        f"stopping at {stop}."
-    )
+    return f"{agent_name} moves towards {label}, stopping at {stop}."
 
 
 def format_move_speed_line(
@@ -257,9 +247,7 @@ def format_move_instructions(
     lines: list[str] = []
     if include_coordinate_moves:
         lines.append(area.format_move_coordinate_rule())
-    lines.append(
-        "move may be an entity id (obj_* or agent_*) for that tile."
-    )
+    lines.append("move may be an entity id (obj_* or agent_*) for that tile.")
     if agent.move_speed is not None:
         lines.append(
             format_move_speed_line(

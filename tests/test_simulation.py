@@ -4,10 +4,10 @@ test_simulation.py
 Compound turn simulation tests.
 """
 
+from campaign_rpg_engine.area import create_initial_area
 from campaign_rpg_engine.llm.prompt import build_compound_prompt
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
-from campaign_rpg_engine.simulation import next_turn_number_for_agent, run_compound_turn
-from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.simulation import run_compound_turn
 
 
 def compound(**kwargs) -> AgentCompoundTurn:
@@ -53,9 +53,7 @@ def test_compound_move_success():
     area = create_initial_area()
     agent = area.get_agent()
 
-    record = run_compound_turn(
-        agent, area, compound(move="2,3"), turn_number=1
-    )
+    record = run_compound_turn(agent, area, compound(move="2,3"), turn_number=1)
 
     assert agent.position == (2, 3)
     assert record.result == "You moved to (2, 3)."
@@ -66,9 +64,7 @@ def test_compound_move_failure_off_grid():
     area = create_initial_area()
     agent = area.get_agent()
 
-    record = run_compound_turn(
-        agent, area, compound(move="5,5"), turn_number=1
-    )
+    record = run_compound_turn(agent, area, compound(move="5,5"), turn_number=1)
 
     assert agent.position == (1, 1)
     assert "outside the room" in record.result.lower()

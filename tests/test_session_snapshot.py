@@ -5,7 +5,12 @@ import json
 from campaign_rpg_engine import ObjectAction
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
 from campaign_rpg_engine.session import Session
-from campaign_rpg_engine.snapshot import DEFAULT_AREA_ID, build_area_snapshot, build_session_snapshot, serialize_agent
+from campaign_rpg_engine.snapshot import (
+    DEFAULT_AREA_ID,
+    build_area_snapshot,
+    build_session_snapshot,
+    serialize_agent,
+)
 
 
 def _room(snap: dict) -> dict:

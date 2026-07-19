@@ -5,13 +5,12 @@ Pydantic validation for V0.2.5 compound turn schema.
 """
 
 import pytest
-from pydantic import ValidationError
-
 from campaign_rpg_engine.llm.schemas import (
     AgentCompoundTurn,
     count_speak_sentences,
     normalize_compound_turn_payload,
 )
+from pydantic import ValidationError
 
 
 def test_valid_compound_stay_and_speak():

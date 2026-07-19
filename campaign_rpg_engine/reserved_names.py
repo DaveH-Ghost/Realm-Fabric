@@ -66,10 +66,7 @@ def _name_variants(name: str) -> set[str]:
 def agent_name_conflicts_with_commands(name: str) -> bool:
     """Return True if name would collide with a reserved command (case-insensitive)."""
     variants = _name_variants(name)
-    for reserved in _RESERVED_COMMAND_NAMES:
-        if variants & _name_variants(reserved):
-            return True
-    return False
+    return any(variants & _name_variants(reserved) for reserved in _RESERVED_COMMAND_NAMES)
 
 
 def reserved_agent_name_message(name: str) -> str:

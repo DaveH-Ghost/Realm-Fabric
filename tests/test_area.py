@@ -4,10 +4,8 @@ test_area.py — initial demo area state and grid helpers.
 Run: uv run pytest tests/test_area.py -v
 """
 
-import pytest
-
+from campaign_rpg_engine.area import create_area, create_initial_area
 from campaign_rpg_engine.perception import build_passive_vision, perform_look
-from campaign_rpg_engine.area import create_initial_area, create_area
 
 
 def test_initial_area_has_correct_agent():
@@ -124,10 +122,7 @@ def test_passive_vision_matches_initial_state():
     # Ball starts unknown
     assert "Ceramic Ball (obj_ball_01), (2, 2) - [?]" in vision
     # Sign shows passive glance + [?] until examined
-    assert (
-        "Wooden Sign (obj_sign_01), (2, 4) - [?] A simple wooden sign on the wall."
-        in vision
-    )
+    assert "Wooden Sign (obj_sign_01), (2, 4) - [?] A simple wooden sign on the wall." in vision
 
 
 def test_perform_look_updates_memory_and_returns_description():

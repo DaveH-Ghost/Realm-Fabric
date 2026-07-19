@@ -10,6 +10,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from campaign_rpg_engine.coordinate_mode import (
+    COORDINATE_MODE_RELATIVE,
+    normalize_coordinate_mode,
+)
 from campaign_rpg_engine.llm.prompt_context import (
     PromptContext,
     _compound_turn_rules,
@@ -22,16 +26,13 @@ from campaign_rpg_engine.llm.prompt_context import (
     render_move_instructions_slot,
     render_passive_vision_slot,
 )
-from campaign_rpg_engine.coordinate_mode import (
-    COORDINATE_MODE_RELATIVE,
-    normalize_coordinate_mode,
-)
 
 
 def _is_registered_plugin_slot(name: str) -> bool:
     from campaign_rpg_engine.prompt_slots.registry import is_prompt_slot_registered
 
     return is_prompt_slot_registered(name)
+
 
 from campaign_rpg_engine.agent import Agent
 from campaign_rpg_engine.area import Area
@@ -64,11 +65,7 @@ KNOWN_SLOT_NAMES = frozenset(SLOT_DESCRIPTIONS)
 def list_registered_plugin_slot_names() -> list[str]:
     from campaign_rpg_engine.prompt_slots.registry import list_registered_prompt_slots
 
-    return [
-        name
-        for name in list_registered_prompt_slots()
-        if name not in KNOWN_SLOT_NAMES
-    ]
+    return [name for name in list_registered_prompt_slots() if name not in KNOWN_SLOT_NAMES]
 
 
 SLOT_SETTINGS: dict[str, dict[str, Any]] = {
@@ -170,10 +167,7 @@ def _validate_lorebook_slot(options: dict[str, Any] | None) -> str | None:
         return "lorebook slot requires options.lorebook_id."
     unknown = set(options) - {"lorebook_id"}
     if unknown:
-        return (
-            f"Unknown lorebook option(s): {', '.join(sorted(unknown))}. "
-            "Allowed: lorebook_id."
-        )
+        return f"Unknown lorebook option(s): {', '.join(sorted(unknown))}. Allowed: lorebook_id."
     return None
 
 
@@ -212,9 +206,7 @@ def validate_prompt_blocks(blocks: list[PromptBlock]) -> str | None:
         if block.type == "slot":
             if not block.name:
                 return f"{prefix}: slot block requires name."
-            if block.name not in KNOWN_SLOT_NAMES and not _is_registered_plugin_slot(
-                block.name
-            ):
+            if block.name not in KNOWN_SLOT_NAMES and not _is_registered_plugin_slot(block.name):
                 known = ", ".join(sorted(KNOWN_SLOT_NAMES))
                 return f"{prefix}: unknown slot {block.name!r}. Known: {known}."
             if block.content is not None:
@@ -231,9 +223,7 @@ def validate_prompt_blocks(blocks: list[PromptBlock]) -> str | None:
             if not block.name:
                 return f"{prefix}: plugin slot block requires name."
             if block.name in KNOWN_SLOT_NAMES:
-                return (
-                    f"{prefix}: {block.name!r} is an engine slot; use type 'slot' instead."
-                )
+                return f"{prefix}: {block.name!r} is an engine slot; use type 'slot' instead."
             if not _is_registered_plugin_slot(block.name):
                 known = ", ".join(list_registered_plugin_slot_names()) or "(none)"
                 return f"{prefix}: unknown plugin slot {block.name!r}. Known: {known}."
@@ -283,9 +273,7 @@ def prompt_blocks_from_dicts(items: list[dict[str, Any]]) -> tuple[list[PromptBl
             if not isinstance(options_raw, dict):
                 return [], f"{prefix}: options must be an object."
             options = {str(key): value for key, value in options_raw.items()}
-        blocks.append(
-            PromptBlock(type=block_type, name=name, content=content, options=options)
-        )
+        blocks.append(PromptBlock(type=block_type, name=name, content=content, options=options))
     err = validate_prompt_blocks(blocks)
     if err:
         return [], err

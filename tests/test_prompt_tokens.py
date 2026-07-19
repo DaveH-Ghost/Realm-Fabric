@@ -1,7 +1,10 @@
 """Default prompt token budget regression tests (V0.4.4)."""
 
 from campaign_rpg_engine.llm.prompt_context import build_prompt_context
-from campaign_rpg_engine.llm.token_estimate import DEFAULT_PROMPT_TOKEN_BUDGET, estimate_prompt_tokens
+from campaign_rpg_engine.llm.token_estimate import (
+    DEFAULT_PROMPT_TOKEN_BUDGET,
+    estimate_prompt_tokens,
+)
 from campaign_rpg_engine.session import Session
 
 

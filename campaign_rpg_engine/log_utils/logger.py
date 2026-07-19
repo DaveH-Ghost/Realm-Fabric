@@ -12,23 +12,22 @@ Per the readiness checklist Section 9:
 Uses 'rich' for pretty output (already a project dependency).
 For file logs, writes plain text (or can be extended to JSON).
 """
+
 from __future__ import annotations
 
-import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, TextIO
+from typing import TextIO
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.syntax import Syntax
-from rich.text import Text
 
 console = Console()
 
 # Global state for file logging
-_log_file: Optional[TextIO] = None
-_log_path: Optional[Path] = None
+_log_file: TextIO | None = None
+_log_path: Path | None = None
 
 
 def setup_file_logging(logs_dir: str = "logs") -> Path:
@@ -70,13 +69,13 @@ def _write_to_file(text: str) -> None:
 def log_turn(
     turn_number: int,
     *,
-    phase: Optional[str] = None,
-    prompt: Optional[str] = None,
-    raw_output: Optional[str] = None,
-    parsed_turn: Optional[dict] = None,
-    result: Optional[str] = None,
-    error: Optional[str] = None,
-    tokens: Optional[dict] = None,
+    phase: str | None = None,
+    prompt: str | None = None,
+    raw_output: str | None = None,
+    parsed_turn: dict | None = None,
+    result: str | None = None,
+    error: str | None = None,
+    tokens: dict | None = None,
     always_to_file: bool = False,
 ) -> None:
     """
@@ -140,7 +139,7 @@ def log_turn(
     console.rule()
 
 
-def log_error(message: str, exc: Optional[Exception] = None) -> None:
+def log_error(message: str, exc: Exception | None = None) -> None:
     """Log an error to console (and file if active). Always goes to file."""
     log_turn(
         0,

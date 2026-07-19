@@ -13,9 +13,7 @@ def chebyshev_distance(a: tuple[int, int], b: tuple[int, int]) -> int:
     return max(abs(a[0] - b[0]), abs(a[1] - b[1]))
 
 
-def path_step_towards(
-    from_pos: tuple[int, int], to_pos: tuple[int, int]
-) -> tuple[int, int]:
+def path_step_towards(from_pos: tuple[int, int], to_pos: tuple[int, int]) -> tuple[int, int]:
     """One greedy step toward *to_pos* (diagonal first, then straight)."""
     fx, fy = from_pos
     tx, ty = to_pos

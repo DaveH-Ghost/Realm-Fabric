@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import pytest
-
 from campaign_rpg_engine.area import create_initial_area
 from campaign_rpg_engine.area_edit import create_agent_from_args
 from campaign_rpg_engine.llm.affinity_update import parse_and_validate_affinity_updates

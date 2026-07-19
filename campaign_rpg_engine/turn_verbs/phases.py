@@ -41,9 +41,7 @@ def _in_range_of_agent(agent: Agent, target: Agent, action_range: int) -> bool:
 
 def _too_far_message(target: Agent, verb_id: str) -> ActionOutcome:
     return ActionOutcome(
-        result=(
-            f"Unfortunately you are too far from {target.name} to {verb_id}."
-        ),
+        result=(f"Unfortunately you are too far from {target.name} to {verb_id}."),
     )
 
 
@@ -80,9 +78,7 @@ def _build_agent_path_move_outcome(
         )
 
     blocker = None
-    if standable_goal is not None and not find_path(
-        agent.position, standable_goal, area, agent.id
-    ):
+    if standable_goal is not None and not find_path(agent.position, standable_goal, area, agent.id):
         blocker = find_blocker_between(
             area,
             agent.position,
@@ -135,9 +131,7 @@ def _path_agent_toward_agent(
         return None, _too_far_message(target, verb_id)
 
     if agent.position == goal:
-        path_move = _build_agent_path_move_outcome(
-            agent, area, target, start_pos, goal
-        )
+        path_move = _build_agent_path_move_outcome(agent, area, target, start_pos, goal)
         return path_move, _too_far_message(target, verb_id)
 
     if agent.move_speed is None:
@@ -162,9 +156,7 @@ def _path_agent_toward_agent(
 
                 evaluate_triggers_at_position(session, agent, area, trigger_fired)
 
-        path_move = _build_agent_path_move_outcome(
-            agent, area, target, start_pos, goal
-        )
+        path_move = _build_agent_path_move_outcome(agent, area, target, start_pos, goal)
         if _in_range_of_agent(agent, target, action_range):
             return path_move, None
         return path_move, _too_far_message(target, verb_id)
@@ -189,9 +181,7 @@ def _path_agent_toward_agent(
     else:
         agent.position = final_pos
 
-    path_move = _build_agent_path_move_outcome(
-        agent, area, target, start_pos, goal
-    )
+    path_move = _build_agent_path_move_outcome(agent, area, target, start_pos, goal)
     if _in_range_of_agent(agent, target, action_range):
         return path_move, None
     return path_move, _too_far_message(target, verb_id)

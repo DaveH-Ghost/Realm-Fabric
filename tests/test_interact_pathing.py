@@ -3,7 +3,7 @@
 from campaign_rpg_engine.area import create_initial_area
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
 from campaign_rpg_engine.session import Session
-from campaign_rpg_engine.simulation import execute_nav_phase, run_compound_turn
+from campaign_rpg_engine.simulation import execute_nav_phase
 
 
 def test_nav_phase_skips_move_when_interact():

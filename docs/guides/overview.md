@@ -62,8 +62,8 @@ See [Building on CampAIgn-RPG-Engine](building-on-campaign-rpg-engine.md) and [I
 
 | You are building… | Start with |
 |-------------------|------------|
-| HTTP / web game | [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) + [Building on CampAIgn-RPG-Engine](building-on-campaign-rpg-engine.md) |
-| GM authoring tool | [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) (reference; fork or replace) |
+| GM host / authoring UI | [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) |
+| Custom game / player client | [Building on CampAIgn-RPG-Engine](building-on-campaign-rpg-engine.md) (+ Studio later for shared worlds) |
 | Headless / tests | `Session` + manual `AgentCompoundTurn` |
 
 ---

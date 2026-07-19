@@ -1,8 +1,8 @@
 # CampAIgn-RPG-Engine documentation
 
-**CampAIgn-RPG-Engine** is a grid-based LLM agent simulation engine with a stable **`campaign_rpg_engine`** library API. The reference GM app is **[CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio)** (GitHub only).
+**CampAIgn-RPG-Engine** is a grid-based LLM agent simulation engine with a stable **`campaign_rpg_engine`** library API. The GM host is **[CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio)** (GitHub only) — it owns the world/session today; player clients attaching later are planned, not implemented.
 
-**Current release:** **1.5.2** — OpenRouter + Featherless providers, max input-token budget. See [changelog index](changelog/README.md). Library-first since 1.0; [Migration 0.7 → 1.0](MIGRATION-0.7-to-1.0.md) still applies for older upgrades.
+**Current release:** **1.6.0** — structure hardening, lint/CI, Mermaid UML. See [changelog index](changelog/README.md). Library-first since 1.0; [Migration 0.7 → 1.0](MIGRATION-0.7-to-1.0.md) still applies for older upgrades.
 
 ---
 
@@ -10,7 +10,7 @@
 
 1. [Overview](guides/overview.md) — mental model (Session, areas, compound turns)
 2. [Building on CampAIgn-RPG-Engine](guides/building-on-campaign-rpg-engine.md) — install, typed API, hosting
-3. [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) — runnable reference app (grid, lorebooks, handlers, memory upload)
+3. [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) — GM host (grid, lorebooks, handlers, session save/load)
 
 ---
 
@@ -27,6 +27,7 @@
 | [Plugins](guides/plugins.md) | Extensions, events, turn verbs, prompt slots (1.2.0) |
 | [API reference](guides/api-reference.md) | `campaign_rpg_engine` exports and Session methods |
 | [LLM turn schemas](schemas/README.md) | `AgentCompoundTurn` JSON shape |
+| [UML diagrams](UML/README.md) | Mermaid architecture diagrams (1.6.0) |
 
 ---
 

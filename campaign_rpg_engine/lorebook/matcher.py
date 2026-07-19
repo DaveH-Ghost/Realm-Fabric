@@ -67,9 +67,7 @@ def _entry_matches(entry: LoreEntry, corpus: str) -> bool:
     primary = _any_key_matches(entry.keys, corpus, case_sensitive=case_sensitive)
     if not entry.selective:
         return primary
-    secondary = _any_key_matches(
-        entry.keys_secondary, corpus, case_sensitive=case_sensitive
-    )
+    secondary = _any_key_matches(entry.keys_secondary, corpus, case_sensitive=case_sensitive)
     if entry.selective_logic == 3:
         return primary or secondary
     return primary and secondary

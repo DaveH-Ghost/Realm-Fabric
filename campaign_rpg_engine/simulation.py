@@ -14,11 +14,11 @@ from typing import TYPE_CHECKING
 from campaign_rpg_engine.action_outcome import ActionOutcome
 from campaign_rpg_engine.actions import do_emote, do_interact_phases, do_move, do_speak
 from campaign_rpg_engine.agent import Agent
+from campaign_rpg_engine.area import Area
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
-from campaign_rpg_engine.memory import Memory, StepKind, TurnRecord, TurnStep
+from campaign_rpg_engine.memory import StepKind, TurnRecord, TurnStep
 from campaign_rpg_engine.perception import perform_look as do_look
 from campaign_rpg_engine.turn_verbs.phases import run_turn_verb_phases, verb_turn_has_pathing
-from campaign_rpg_engine.area import Area
 
 if TYPE_CHECKING:
     from campaign_rpg_engine.session import Session
@@ -277,9 +277,7 @@ def commit_turn_record(
         agent_id=agent.id,
         agent_name=agent.name,
         nearby_agents=tuple(
-            (other.id, other.name)
-            for other in commit_area.agents
-            if other.id != agent.id
+            (other.id, other.name) for other in commit_area.agents if other.id != agent.id
         ),
     )
 
@@ -343,9 +341,7 @@ def run_compound_turn(
     )
 
     record = finalize_turn_record(turn, nav_steps, action_steps, turn_number)
-    return commit_turn_record(
-        agent, record, turn, area, session_turn=session_turn, session=session
-    )
+    return commit_turn_record(agent, record, turn, area, session_turn=session_turn, session=session)
 
 
 # Checklist name alias

@@ -3,6 +3,7 @@ speak.py
 
 Implementation of the `speak` action for V0.
 """
+
 from __future__ import annotations
 
 from campaign_rpg_engine.action_outcome import ActionOutcome

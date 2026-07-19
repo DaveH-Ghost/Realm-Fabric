@@ -1,9 +1,9 @@
 """Session API (V0.3.0a) — engine entry point for turns and commands."""
 
 from campaign_rpg_engine import ObjectAction
+from campaign_rpg_engine.area import create_initial_area
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
 from campaign_rpg_engine.session import Session
-from campaign_rpg_engine.area import create_initial_area
 
 
 def test_from_default_matches_initial_world():
@@ -31,9 +31,7 @@ def test_create_object_adds_to_world():
         },
     )
     assert result.ok
-    cookies = [
-        o for o in session.area.get_objects() if o.name == "Cookie"
-    ]
+    cookies = [o for o in session.area.get_objects() if o.name == "Cookie"]
     assert len(cookies) == 1
     assert cookies[0].position == (2, 2)
 
@@ -185,9 +183,7 @@ def test_web_handler_flow_create_then_turn():
         },
     )
     assert create.ok
-    cookie_id = next(
-        o.id for o in session.area.get_objects() if o.name == "Cookie"
-    )
+    cookie_id = next(o.id for o in session.area.get_objects() if o.name == "Cookie")
 
     session.set_active_agent("Explorer")
     session.run_compound_turn(

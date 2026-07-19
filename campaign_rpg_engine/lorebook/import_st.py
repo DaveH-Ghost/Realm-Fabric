@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 from pathlib import Path
@@ -31,10 +32,8 @@ def _parse_st_entries(data: dict[str, Any]) -> list[LoreEntry]:
             raise ValueError(f"Entry {key!r} must be an object.")
         entry = LoreEntry.from_dict(item)
         if "uid" not in item:
-            try:
+            with contextlib.suppress(ValueError):
                 entry.uid = int(key)
-            except ValueError:
-                pass
         entries.append(entry)
     return entries
 

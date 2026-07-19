@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from campaign_rpg_engine.memory_modules.affinity import AffinityModule
 from campaign_rpg_engine.memory_modules.base import MemoryModule
@@ -73,34 +74,27 @@ def is_module_loaded(module_id: str) -> bool:
 
 def unknown_memory_module_message(module_id: str) -> str:
     known = ", ".join(builtin_module_ids())
-    return (
-        f"Unknown or unsupported memory module {module_id!r}. "
-        f"Built-in modules: {known}."
-    )
+    return f"Unknown or unsupported memory module {module_id!r}. Built-in modules: {known}."
 
 
 def _validate_builtin_module_config(module_id: str, config: dict[str, Any]) -> None:
     if module_id != "recent_turns" and "window" in config:
         raise ValueError(
-            "memory-window is only valid with memory recent_turns "
-            f"(got memory {module_id!r})."
+            f"memory-window is only valid with memory recent_turns (got memory {module_id!r})."
         )
     if module_id == "recent_turns" and "window" in config:
         validate_window(int(config["window"]))
 
     if module_id != "salient_turns" and "char_budget" in config:
         raise ValueError(
-            "memory-budget is only valid with memory salient_turns "
-            f"(got memory {module_id!r})."
+            f"memory-budget is only valid with memory salient_turns (got memory {module_id!r})."
         )
     if module_id == "salient_turns" and "char_budget" in config:
         validate_char_budget(int(config["char_budget"]))
 
     _SUMMARY_FLAG_MODULES = frozenset({"rolling_summary", "affinity"})
     if module_id not in _SUMMARY_FLAG_MODULES and (
-        "summary_interval" in config
-        or "max_summary_chars" in config
-        or "summary_tail" in config
+        "summary_interval" in config or "max_summary_chars" in config or "summary_tail" in config
     ):
         raise ValueError(
             "memory-summary-interval, memory-summary-max, and memory-summary-tail "
@@ -189,18 +183,14 @@ def format_memory_modules_list() -> str:
                 f"turns ({DEFAULT_MAX_SUMMARY_CHARS} char cap); keeps last "
                 f"{DEFAULT_SUMMARY_TAIL} turns in detail after each summary"
             )
-            flags = (
-                "memory-summary-interval N, memory-summary-max N, memory-summary-tail N"
-            )
+            flags = "memory-summary-interval N, memory-summary-max N, memory-summary-tail N"
         elif module_id == "affinity":
             desc = (
                 f"Relationships (-10…+10) + rolling LLM summary every "
                 f"{DEFAULT_SUMMARY_INTERVAL} turns; consolidates affinity deltas from "
                 f"the same turn window"
             )
-            flags = (
-                "memory-summary-interval N, memory-summary-max N, memory-summary-tail N"
-            )
+            flags = "memory-summary-interval N, memory-summary-max N, memory-summary-tail N"
         else:
             desc = "(unknown)"
             flags = "(none)"

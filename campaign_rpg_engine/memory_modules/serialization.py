@@ -20,9 +20,7 @@ def serialize_turn_step(step: TurnStep) -> dict[str, Any]:
     if step.content is not None:
         data["content"] = step.content
     if step.passive_witness_exclude_agent_ids:
-        data["passive_witness_exclude_agent_ids"] = list(
-            step.passive_witness_exclude_agent_ids
-        )
+        data["passive_witness_exclude_agent_ids"] = list(step.passive_witness_exclude_agent_ids)
     return data
 
 

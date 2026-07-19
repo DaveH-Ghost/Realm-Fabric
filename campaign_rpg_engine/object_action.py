@@ -1,4 +1,5 @@
 """Declarative object interaction definitions for V0.2 / V0.6.1."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

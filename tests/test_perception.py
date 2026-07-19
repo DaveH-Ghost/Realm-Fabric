@@ -5,7 +5,9 @@ Tests for V0.1 passive/detailed perception and cross-agent invalidation.
 """
 
 from campaign_rpg_engine.agent import Agent
+from campaign_rpg_engine.area import create_initial_area
 from campaign_rpg_engine.memory import Memory
+from campaign_rpg_engine.object import Object
 from campaign_rpg_engine.perception import (
     PASSIVE_VISION_LOOK_RULE,
     PASSIVE_VISION_NO_LOOK_TARGETS,
@@ -13,8 +15,6 @@ from campaign_rpg_engine.perception import (
     format_object_vision_desc,
     perform_look,
 )
-from campaign_rpg_engine.object import Object
-from campaign_rpg_engine.area import create_initial_area
 
 
 def test_initial_sign_shows_passive_not_pre_marked():
@@ -25,10 +25,7 @@ def test_initial_sign_shows_passive_not_pre_marked():
     assert not agent.memory.has_looked_at("obj_sign_01")
     assert not agent.memory.has_ever_looked_at("obj_sign_01")
     vision = build_passive_vision(agent, area)
-    assert (
-        "Wooden Sign (obj_sign_01), (2, 4) - [?] A simple wooden sign on the wall."
-        in vision
-    )
+    assert "Wooden Sign (obj_sign_01), (2, 4) - [?] A simple wooden sign on the wall." in vision
 
 
 def test_passive_vision_can_omit_you_are_at():
@@ -162,9 +159,7 @@ def test_agent_who_never_looked_sees_plain_question_mark():
     area.invalidate_object_knowledge("obj_ball_01")
 
     goblin_vision = build_passive_vision(goblin, area)
-    ball_line = next(
-        line for line in goblin_vision.split("\n") if "obj_ball_01" in line
-    )
+    ball_line = next(line for line in goblin_vision.split("\n") if "obj_ball_01" in line)
     assert ball_line == "Ceramic Ball (obj_ball_01), (2, 2) - [?]"
 
 
@@ -242,9 +237,7 @@ def test_format_object_vision_desc_all_states():
     assert format_object_vision_desc(obj, memory) == "Full description here."
 
     memory.invalidate_look("obj_test_01")
-    assert (
-        format_object_vision_desc(obj, memory) == "[?] [changed] A vague shape."
-    )
+    assert format_object_vision_desc(obj, memory) == "[?] [changed] A vague shape."
 
 
 def test_get_available_look_targets_only_question_mark_entities():

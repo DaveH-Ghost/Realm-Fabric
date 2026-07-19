@@ -4,6 +4,8 @@ test_compound_turn.py
 V0.2.5: compound agent turns (single LLM call schema, sequential execution).
 """
 
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.area_edit import create_agent_from_args
 from campaign_rpg_engine.compound_arg_parse import parse_compound_step_arg
 from campaign_rpg_engine.llm.prompt import build_compound_prompt
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
@@ -14,8 +16,6 @@ from campaign_rpg_engine.simulation import (
     next_turn_number_for_agent,
     run_compound_turn,
 )
-from campaign_rpg_engine.area import create_initial_area
-from campaign_rpg_engine.area_edit import create_agent_from_args
 
 
 def compound(
@@ -81,9 +81,7 @@ def test_post_move_look_on_same_tile_as_object():
     agent = area.get_agent()
 
     execute_nav_phase(agent, area, compound(move="2,2"))
-    steps = execute_action_phase(
-        agent, area, compound(look="obj_ball_01", action="none")
-    )
+    steps = execute_action_phase(agent, area, compound(look="obj_ball_01", action="none"))
     assert steps[0].result.startswith("You looked at")
     assert "scuffs" in steps[0].result
 
@@ -175,7 +173,7 @@ def test_passive_result_speak_wins_over_move_and_look():
 
 
 def test_step_compound_parser():
-    parsed = parse_compound_step_arg('2,3 look obj_ball_01 speak Hello.')
+    parsed = parse_compound_step_arg("2,3 look obj_ball_01 speak Hello.")
     assert parsed.turn.move == "2,3"
     assert parsed.turn.look == "obj_ball_01"
     assert parsed.turn.say == "Hello."

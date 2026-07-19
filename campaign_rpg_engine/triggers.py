@@ -6,10 +6,13 @@ from typing import TYPE_CHECKING
 
 from campaign_rpg_engine.agent import Agent
 from campaign_rpg_engine.area import Area
-from campaign_rpg_engine.interact_templates import InteractTemplateContext, format_interact_template
 from campaign_rpg_engine.interaction_handlers.registry import run_interaction_handler
 from campaign_rpg_engine.object import Object, chebyshev_distance_to_object
 from campaign_rpg_engine.object_action import ObjectAction
+from campaign_rpg_engine.templates.interact_templates import (
+    InteractTemplateContext,
+    format_interact_template,
+)
 
 if TYPE_CHECKING:
     from campaign_rpg_engine.session import Session

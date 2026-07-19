@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Iterable
+from collections.abc import Iterable
 
 from campaign_rpg_engine.lorebook.import_st import derive_lorebook_id_from_filename
 from campaign_rpg_engine.lorebook.models import Lorebook

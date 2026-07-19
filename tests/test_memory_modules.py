@@ -1,13 +1,13 @@
 """Tests for pluggable memory modules (recent_turns default)."""
 
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.area_edit import create_agent_from_args
 from campaign_rpg_engine.llm.prompt import build_compound_prompt
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
 from campaign_rpg_engine.memory import Memory, TurnRecord, TurnStep
 from campaign_rpg_engine.memory_modules.base import WitnessedEvent
 from campaign_rpg_engine.memory_modules.recent_turns import RecentTurnsModule
 from campaign_rpg_engine.simulation import next_turn_number_for_agent, run_compound_turn
-from campaign_rpg_engine.area import create_initial_area
-from campaign_rpg_engine.area_edit import create_agent_from_args
 
 
 def _turn(turn_number: int, *, reasoning: str = "thoughts") -> TurnRecord:

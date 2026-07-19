@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import pytest
-
-from campaign_rpg_engine.area_edit import create_object_from_args
 from campaign_rpg_engine.agent import Agent
 from campaign_rpg_engine.area import Area
+from campaign_rpg_engine.area_edit import create_object_from_args
 from campaign_rpg_engine.interaction_handlers.registry import (
     clear_handlers_for_tests,
     collect_prefixed_params,
@@ -89,14 +88,18 @@ def test_collect_prefixed_params_strips_and_skips_controls():
         "fail_result": "nope",
         "stat": "DEX",
     }
-    assert collect_prefixed_params(
-        params, "pass_", skip_keys={"pass_handler"}
-    ) == {"dest-area": "hall", "dest-at": "1,2"}
-    assert collect_prefixed_params(
-        params,
-        "fail_",
-        skip_keys={"fail_handler", "fail_result", "fail_passive"},
-    ) == {}
+    assert collect_prefixed_params(params, "pass_", skip_keys={"pass_handler"}) == {
+        "dest-area": "hall",
+        "dest-at": "1,2",
+    }
+    assert (
+        collect_prefixed_params(
+            params,
+            "fail_",
+            skip_keys={"fail_handler", "fail_result", "fail_passive"},
+        )
+        == {}
+    )
 
 
 def test_run_named_handler_invokes_with_explicit_params(isolated_registry):
@@ -148,9 +151,7 @@ def test_run_named_handler_returns_validation_error(isolated_registry):
     agent = Agent(id="agent_01", name="A", position=(0, 0), personality="")
     obj = Object(id="obj_01", name="O", description="", position=(0, 0))
     source = ObjectAction(name="x", range=0, result="", passive_result="")
-    err = run_named_handler(
-        None, area, agent, obj, "noop", {"bad": "1"}, source_action=source
-    )
+    err = run_named_handler(None, area, agent, obj, "noop", {"bad": "1"}, source_action=source)
     assert err is not None
     assert "does not accept parameters" in err
 
@@ -258,9 +259,7 @@ def test_snapshot_v4_round_trip_handler_fields():
 
     save = build_save_snapshot(session)
     assert save["snapshot_version"] == SNAPSHOT_VERSION == 5
-    kick = next(
-        o for o in save["areas"]["room"]["objects"] if o["id"] == "obj_ball_01"
-    )
+    kick = next(o for o in save["areas"]["room"]["objects"] if o["id"] == "obj_ball_01")
     assert kick["actions_detail"]["kick"]["handler_id"] == "random_move_self"
 
     restored = load_session_from_snapshot(save)

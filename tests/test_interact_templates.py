@@ -88,7 +88,5 @@ def test_interact_move_area_substitutes_actor_area_placeholders():
         session=session,
         source_area_id="room",
     )
-    assert outcome.result == (
-        "You leave room at (1, 2) and arrive in hall at (0, 0)."
-    )
+    assert outcome.result == ("You leave room at (1, 2) and arrive in hall at (0, 0).")
     assert outcome.passive_result == "Explorer travels from room to hall."

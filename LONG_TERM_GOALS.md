@@ -13,7 +13,7 @@ Treat this file like a trophy case. Checking something off here should feel like
 
 Concrete improvements we expect to build — not current-version scope, but not distant dreams either.
 
-- [ ] **Multiplayer / shared sessions** — Server-authoritative `Session`, rooms, auth, and multiple clients on one world (WebSocket or equivalent). V0.3.1 campaign-rpg-studio stays single-player demo; V0.4 multi-area may inform snapshot shape but netcode is not current scope. See [ROADMAP.md](docs/ROADMAP.md) V0.4 for multi-area (separate from multiplayer).
+- [ ] **Multiplayer / shared sessions** — Server-authoritative `Session`, rooms, auth, and multiple clients on one world (WebSocket or equivalent). Studio is the GM host (single-session today); player clients attaching to Studio are the intended model. See [docs/UML/01-system-overview.md](docs/UML/01-system-overview.md).
 
 ---
 
@@ -27,7 +27,7 @@ These are still distant or unspecified. They are not committed roadmap items.
 
 ## Out of scope (for CampAIgn-RPG-Engine / campaign-rpg-studio)
 
-CampAIgn-RPG-Engine is a **simulation engine** and **library API**. [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) is a **reference demo** for authoring and testing — not a full game or VTT product. The following experiences are intentionally **not** built into the core project or reference studio. **Apps** built on CampAIgn-RPG-Engine can implement them using pluggable memory modules, interaction handlers (V0.6.1+), lorebooks, and their own UI.
+CampAIgn-RPG-Engine is a **simulation engine** and **library API**. [CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio) is the **GM host** for authoring and running sessions — world authority for a campaign. It is not a full multiplayer VTT yet; **player clients attaching to Studio** are a planned goal (see Planned Goals). The following experiences are intentionally **not** built into the core engine. **Apps** (including future clients) can implement them using pluggable memory modules, interaction handlers (V0.6.1+), lorebooks, and their own UI.
 
 - **Multi-agent social simulation** — agents that observe each other, start targeted conversations, form relationships, and influence one another over time.  
   V0.1 shipped shared-grid multi-agent with passive vision, `look` at other agents, and observable speech/movement via `passive_result`. That is engine support only. Rich social dynamics belong in **downstream apps** with custom memory modules and app-specific prompts/rules.

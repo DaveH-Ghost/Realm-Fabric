@@ -1,10 +1,8 @@
 """SillyTavern lorebook import (V0.5.0)."""
 
-import json
 from pathlib import Path
 
 import pytest
-
 from campaign_rpg_engine.lorebook import derive_lorebook_id_from_filename, load_lorebook_from_dict
 
 MINIMAL_ST = {

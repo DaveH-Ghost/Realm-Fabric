@@ -78,7 +78,7 @@ def test_move_to_entity_stops_adjacent_to_blocking_object():
 
 def test_agents_can_share_tile_by_default():
     area = create_initial_area()
-    agent = area.get_agent()
+    area.get_agent()
     from campaign_rpg_engine.area_edit import create_agent_from_args
 
     other, _ = create_agent_from_args(
@@ -116,9 +116,7 @@ def test_move_toward_blocking_object_stays_on_column():
     )
     area.add_object(obj)
 
-    standable = resolve_standable_goal(
-        area, obj.position, mover.id, from_pos=mover.position
-    )
+    standable = resolve_standable_goal(area, obj.position, mover.id, from_pos=mover.position)
     assert standable == (2, 2)
 
     outcome = do_move(mover, area, "obj_crate_01")

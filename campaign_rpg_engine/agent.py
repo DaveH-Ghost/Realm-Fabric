@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
 
 from campaign_rpg_engine.memory import Memory
-from campaign_rpg_engine.turn_record import TurnRecord
 
 
 @dataclass
@@ -57,7 +55,7 @@ class Agent:
     Replaced on each new successful action; not shown in look or personality.
     """
 
-    last_action: Optional[str] = None
+    last_action: str | None = None
     """The action taken on the previous turn (retained for future use)."""
 
     appearance: str = ""
@@ -68,7 +66,7 @@ class Agent:
     no custom token image.
     """
 
-    move_speed: Optional[int] = None
+    move_speed: int | None = None
     """
     Max grid steps per move toward a target (5e: diagonal and orthogonal each cost 1).
 

@@ -1,4 +1,5 @@
 """Pluggable object interaction handlers (V0.6.1)."""
+
 from __future__ import annotations
 
 from campaign_rpg_engine.interaction_handlers.base import InteractionHandler

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import shlex
 from dataclasses import dataclass
-from typing import Optional
 
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
 
@@ -33,15 +32,17 @@ def parse_compound_step_arg(arg: str) -> ParsedCompoundStep:
     """
     tokens = shlex.split(arg) if arg.strip() else []
     if not tokens:
-        raise ValueError("compound step requires at least one token (use '-' or 'stay' for no move)")
+        raise ValueError(
+            "compound step requires at least one token (use '-' or 'stay' for no move)"
+        )
 
-    move_target: Optional[str] = None
-    look_target: Optional[str] = None
-    speak_content: Optional[str] = None
-    interact_target: Optional[str] = None
-    interact_action: Optional[str] = None
-    emote_target: Optional[str] = None
-    emote_action: Optional[str] = None
+    move_target: str | None = None
+    look_target: str | None = None
+    speak_content: str | None = None
+    interact_target: str | None = None
+    interact_action: str | None = None
+    emote_target: str | None = None
+    emote_action: str | None = None
     idx = 0
 
     first = tokens[0].lower()
@@ -79,8 +80,7 @@ def parse_compound_step_arg(arg: str) -> ParsedCompoundStep:
             idx += 1
             if idx >= len(tokens):
                 raise ValueError(
-                    "emote requires a past-tense action name "
-                    "(optional target: emote [target] verb)"
+                    "emote requires a past-tense action name (optional target: emote [target] verb)"
                 )
             if idx + 1 < len(tokens) and tokens[idx + 1] not in (
                 "move",

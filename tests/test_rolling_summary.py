@@ -3,9 +3,14 @@
 import threading
 
 import pytest
-
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.area_edit import create_agent_from_args
 from campaign_rpg_engine.memory import Memory
-from campaign_rpg_engine.memory_modules.base import MemoryObserveContext, MemoryRecordContext, MemoryRenderContext
+from campaign_rpg_engine.memory_modules.base import (
+    MemoryObserveContext,
+    MemoryRecordContext,
+    MemoryRenderContext,
+)
 from campaign_rpg_engine.memory_modules.recent_turns import DEFAULT_WINDOW
 from campaign_rpg_engine.memory_modules.registry import create_module, format_memory_module_label
 from campaign_rpg_engine.memory_modules.rolling_summary import (
@@ -19,8 +24,6 @@ from campaign_rpg_engine.memory_modules.rolling_summary import (
     validate_summary_tail,
 )
 from campaign_rpg_engine.turn_record import TurnRecord, TurnStep
-from campaign_rpg_engine.area import create_initial_area
-from campaign_rpg_engine.area_edit import create_agent_from_args
 
 
 def _record_ctx(
@@ -253,13 +256,15 @@ def test_generate_rolling_summary_uses_plain_text_completion(monkeypatch):
     def fake_log_turn(turn_number, **kwargs):
         log_calls.append({"turn_number": turn_number, **kwargs})
 
-    monkeypatch.setattr("campaign_rpg_engine.llm.memory_summary.get_text_completion", fake_completion)
+    monkeypatch.setattr(
+        "campaign_rpg_engine.llm.memory_summary.get_text_completion", fake_completion
+    )
     monkeypatch.setattr("campaign_rpg_engine.llm.memory_summary.log_turn", fake_log_turn)
 
     summary = generate_rolling_summary(
         agent_name="Explorer",
         previous_summary="",
-        batch_text="Turn 1:\nResult: You said: \"Hi.\"",
+        batch_text='Turn 1:\nResult: You said: "Hi."',
         max_chars=8000,
         turn_number=10,
     )
@@ -417,9 +422,7 @@ def test_memory_facade_ensure_ready_waits_for_background():
     memory = Memory(
         module=_async_module(
             summary_interval=2,
-            _summary_generator=_blocking_summary_generator(
-                started, release, "Facade summary"
-            ),
+            _summary_generator=_blocking_summary_generator(started, release, "Facade summary"),
         )
     )
     memory.record_turn(_speak_turn(1), agent_id="agent_01", agent_name="Explorer")

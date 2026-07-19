@@ -42,8 +42,7 @@ OMISSION_LINE = "…earlier memories omitted."
 def validate_char_budget(value: int) -> None:
     if value < MIN_CHAR_BUDGET or value > MAX_CHAR_BUDGET:
         raise ValueError(
-            f"memory-budget must be between {MIN_CHAR_BUDGET} and {MAX_CHAR_BUDGET} "
-            f"(got {value})."
+            f"memory-budget must be between {MIN_CHAR_BUDGET} and {MAX_CHAR_BUDGET} (got {value})."
         )
 
 
@@ -131,11 +130,7 @@ class SalientTurnsModule:
 
         for index, turn in enumerate(self._turns):
             in_recency_floor = index >= recency_start
-            witnessed = (
-                self._witnessed_before[index]
-                if index < len(self._witnessed_before)
-                else []
-            )
+            witnessed = self._witnessed_before[index] if index < len(self._witnessed_before) else []
             if witnessed:
                 blocks.append(
                     _RenderBlock(
@@ -152,18 +147,14 @@ class SalientTurnsModule:
                 )
                 order += 1
 
-            selected_steps = select_salient_steps(
-                turn.steps, in_recency_floor=in_recency_floor
-            )
+            selected_steps = select_salient_steps(turn.steps, in_recency_floor=in_recency_floor)
             result_text = join_step_results(selected_steps)
             include_reasoning = should_include_reasoning(index, total)
             if not result_text and not (include_reasoning and turn.reasoning):
                 continue
 
             block_salience = (
-                max(step_salience(step.kind) for step in selected_steps)
-                if selected_steps
-                else 0
+                max(step_salience(step.kind) for step in selected_steps) if selected_steps else 0
             )
             blocks.append(
                 _RenderBlock(
@@ -229,9 +220,7 @@ class SalientTurnsModule:
 
     def _evict_storage_if_needed(self) -> None:
         while len(self._turns) > self.storage_window:
-            protected = set(
-                range(max(0, len(self._turns) - self.recency_floor), len(self._turns))
-            )
+            protected = set(range(max(0, len(self._turns) - self.recency_floor), len(self._turns)))
             evict_index = None
             evict_score = None
             for index in range(len(self._turns)):
@@ -279,8 +268,6 @@ class SalientTurnsModule:
             raise ValueError("storage_window must be >= recency_floor")
         self._total_turns = int(data["total_turns"])
         self._turns = deserialize_turn_list(data.get("turns", []))
-        self._witnessed_before = deserialize_witnessed_before(
-            data.get("witnessed_before", [])
-        )
+        self._witnessed_before = deserialize_witnessed_before(data.get("witnessed_before", []))
         self._salience_scores = [int(score) for score in data.get("salience_scores", [])]
         self._pending = deserialize_witness_list(data.get("pending", []))

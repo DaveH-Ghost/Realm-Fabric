@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from campaign_rpg_engine.memory_modules.base import WitnessedEvent
 from campaign_rpg_engine.area_event import AREA_EVENT_ACTOR_ID
+from campaign_rpg_engine.memory_modules.base import WitnessedEvent
 from campaign_rpg_engine.turn_record import TurnRecord, TurnStep
 
 REASONING_WINDOW = 3
@@ -80,10 +80,7 @@ def format_stored_turns_block(
         lines.append("")
 
     if pending:
-        if turns:
-            heading = f"Since turn {turns[-1].turn_number}, you observed:"
-        else:
-            heading = "You observed:"
+        heading = f"Since turn {turns[-1].turn_number}, you observed:" if turns else "You observed:"
         lines.extend(format_witnessed_events(pending, heading))
 
     return lines

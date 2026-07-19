@@ -15,7 +15,6 @@ from campaign_rpg_engine.agent import Agent
 from campaign_rpg_engine.area import Area
 from campaign_rpg_engine.decoration import (
     DECORATION_KIND_BACKGROUND,
-    DECORATION_KIND_SPRITE,
     Decoration,
 )
 from campaign_rpg_engine.object import Object
@@ -55,8 +54,7 @@ def serialize_object(obj: Object, *, include_private: bool = False) -> dict[str,
         "position": _position_list(obj.position),
         "actions": sorted(obj.actions.keys()),
         "actions_detail": {
-            name: serialize_object_action(action)
-            for name, action in sorted(obj.actions.items())
+            name: serialize_object_action(action) for name, action in sorted(obj.actions.items())
         },
         "appearance": obj.appearance,
         "blocks_movement": obj.blocks_movement,
@@ -138,12 +136,9 @@ def serialize_area_block(
         "objects": [
             serialize_object(o, include_private=include_private) for o in area.get_objects()
         ],
-        "decorations": [
-            serialize_decoration(d) for d in area.decorations
-        ],
+        "decorations": [serialize_decoration(d) for d in area.decorations],
         "recent_events": [
-            {"session_turn": event.session_turn, "text": event.text}
-            for event in area.recent_events
+            {"session_turn": event.session_turn, "text": event.text} for event in area.recent_events
         ],
     }
 
@@ -229,8 +224,7 @@ def build_area_snapshot(
         ],
         "decorations": [serialize_decoration(d) for d in area.decorations],
         "recent_events": [
-            {"session_turn": event.session_turn, "text": event.text}
-            for event in area.recent_events
+            {"session_turn": event.session_turn, "text": event.text} for event in area.recent_events
         ],
     }
 

@@ -120,9 +120,7 @@ def test_emit_area_event_targeted_agent():
     assert result.ok
     assert "Goblin" in result.message
 
-    assert "A whisper only you hear." in goblin.memory.render_prompt_block(
-        goblin, session.area
-    )
+    assert "A whisper only you hear." in goblin.memory.render_prompt_block(goblin, session.area)
     assert "A whisper only you hear." not in explorer.memory.render_prompt_block(
         explorer, session.area
     )
@@ -169,7 +167,5 @@ def test_emit_area_event_empty_agent_ids_broadcasts_all():
     assert result.ok
 
     for agent in (explorer, goblin):
-        assert "Everyone hears this." in agent.memory.render_prompt_block(
-            agent, session.area
-        )
+        assert "Everyone hears this." in agent.memory.render_prompt_block(agent, session.area)
     assert len(session.area.recent_events) == 1

@@ -5,16 +5,15 @@ V0.2 Section 1: coordinate-based move (via compound nav phase).
 """
 
 import pytest
-from pydantic import ValidationError
-
 from campaign_rpg_engine.actions.move import move as do_move
+from campaign_rpg_engine.area import create_initial_area
+from campaign_rpg_engine.area_edit import create_agent_from_args
 from campaign_rpg_engine.coordinates import CoordinateParseError, parse_coordinate_target
 from campaign_rpg_engine.llm.prompt import build_compound_prompt
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
 from campaign_rpg_engine.perception import build_passive_vision
 from campaign_rpg_engine.simulation import execute_nav_phase, run_compound_turn
-from campaign_rpg_engine.area import create_initial_area
-from campaign_rpg_engine.area_edit import create_agent_from_args
+from pydantic import ValidationError
 
 
 @pytest.mark.parametrize(

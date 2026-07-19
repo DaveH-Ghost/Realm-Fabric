@@ -1,6 +1,5 @@
 """Player agents — human-controlled turns without LLM."""
 
-from campaign_rpg_engine.actions.move import move as do_move
 from campaign_rpg_engine.area import create_initial_area
 from campaign_rpg_engine.area_edit import create_agent_from_args, edit_agent_from_args
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
@@ -41,9 +40,7 @@ def test_session_snapshot_includes_is_player():
         personality="x",
         is_player=True,
     )
-    agent = next(
-        item for item in session.snapshot()["agents"] if item["name"] == "Tester"
-    )
+    agent = next(item for item in session.snapshot()["agents"] if item["name"] == "Tester")
     assert agent["is_player"] is True
 
 

@@ -1,21 +1,18 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 from campaign_rpg_engine.agent import Agent
-from campaign_rpg_engine.memory import Memory
-from campaign_rpg_engine.decoration import Decoration
-from campaign_rpg_engine.object import Object
-from campaign_rpg_engine.object_action import ObjectAction
 from campaign_rpg_engine.area_event import (
     DEFAULT_MAX_RECENT_AREA_EVENTS,
     AreaEventRecord,
 )
+from campaign_rpg_engine.decoration import Decoration
+from campaign_rpg_engine.memory import Memory
+from campaign_rpg_engine.object import Object
+from campaign_rpg_engine.object_action import ObjectAction
 
-DEFAULT_AREA_DESCRIPTION = (
-    "You are in a small room with a hardwood floor and four wooden walls."
-)
+DEFAULT_AREA_DESCRIPTION = "You are in a small room with a hardwood floor and four wooden walls."
 
 
 @dataclass(frozen=True)
@@ -119,16 +116,9 @@ class Area:
 
     def format_grid_bounds_message(self) -> str:
         """Short bounds text for validation errors and prompts."""
-        if (
-            self.min_x == self.min_y
-            and self.max_x == self.max_y
-            and self.min_x == 0
-        ):
+        if self.min_x == self.min_y and self.max_x == self.max_y and self.min_x == 0:
             return f"Grid is {self.min_x}-{self.max_x} in both axes."
-        return (
-            f"Grid x is {self.min_x}-{self.max_x}, "
-            f"y is {self.min_y}-{self.max_y}."
-        )
+        return f"Grid x is {self.min_x}-{self.max_x}, y is {self.min_y}-{self.max_y}."
 
     def format_move_coordinate_rule(self) -> str:
         """Tell the agent which coordinates are in bounds."""
@@ -202,7 +192,7 @@ class Area:
         """Return a copy of all agents in the area."""
         return list(self.agents)
 
-    def get_agent(self) -> Optional[Agent]:
+    def get_agent(self) -> Agent | None:
         """
         Return the first agent in the world (backward compatibility for V0).
 
@@ -213,14 +203,14 @@ class Area:
             return None
         return self.agents[0]
 
-    def get_agent_by_id(self, agent_id: str) -> Optional[Agent]:
+    def get_agent_by_id(self, agent_id: str) -> Agent | None:
         """Return the agent with the given ID, if it exists in the area."""
         for agent in self.agents:
             if agent.id == agent_id:
                 return agent
         return None
 
-    def get_agent_by_name(self, name: str) -> Optional[Agent]:
+    def get_agent_by_name(self, name: str) -> Agent | None:
         """Return the agent with the given display name (case-insensitive)."""
         name_lower = name.strip().lower()
         for agent in self.agents:
@@ -228,7 +218,7 @@ class Area:
                 return agent
         return None
 
-    def get_object_at(self, position: tuple[int, int]) -> Optional[Object]:
+    def get_object_at(self, position: tuple[int, int]) -> Object | None:
         """Return the first object whose footprint contains *position*, if any."""
         from campaign_rpg_engine.object import object_occupies_tile
 
@@ -238,7 +228,7 @@ class Area:
                 return obj
         return None
 
-    def get_object_by_id(self, object_id: str) -> Optional[Object]:
+    def get_object_by_id(self, object_id: str) -> Object | None:
         """Return the object with the given ID, if it exists in the area."""
         for obj in self.objects:
             if obj.id == object_id:
@@ -249,14 +239,14 @@ class Area:
         """Return all objects currently in the area."""
         return self.objects
 
-    def get_decoration_by_id(self, decoration_id: str) -> Optional[Decoration]:
+    def get_decoration_by_id(self, decoration_id: str) -> Decoration | None:
         """Return the decoration with the given ID, if it exists in the area."""
         for decoration in self.decorations:
             if decoration.id == decoration_id:
                 return decoration
         return None
 
-    def remove_decoration_by_id(self, decoration_id: str) -> Optional[Decoration]:
+    def remove_decoration_by_id(self, decoration_id: str) -> Decoration | None:
         """Remove and return a decoration by id, or None if not found."""
         for index, decoration in enumerate(self.decorations):
             if decoration.id == decoration_id:
@@ -266,9 +256,7 @@ class Area:
     def is_valid_position(self, position: tuple[int, int]) -> bool:
         """Check whether a position is inside the playable grid."""
         x, y = position
-        return (
-            self.min_x <= x <= self.max_x and self.min_y <= y <= self.max_y
-        )
+        return self.min_x <= x <= self.max_x and self.min_y <= y <= self.max_y
 
     def get_area_description(self) -> str:
         """
@@ -370,8 +358,7 @@ def create_initial_area() -> Area:
         name="Explorer",
         passive_description="A curious explorer in the room.",
         description=(
-            "A traveler in worn boots and a dusty coat, watching the room "
-            "with careful attention."
+            "A traveler in worn boots and a dusty coat, watching the room with careful attention."
         ),
         personality=(
             "You are a curious explorer placed in a small, controlled room. "

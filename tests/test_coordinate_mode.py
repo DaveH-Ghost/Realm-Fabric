@@ -55,7 +55,7 @@ def test_relative_mode_prompt_omits_coordinates():
     assert '"2,3"' not in prompt
     assert "northwest" not in prompt
     assert "You may move to any coordinate" not in prompt
-    assert 'move may be an entity id' in prompt
+    assert "move may be an entity id" in prompt
 
 
 def test_relative_mode_uses_entity_id_output_example():
