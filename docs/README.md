@@ -2,7 +2,7 @@
 
 **CampAIgn-RPG-Engine** is a grid-based LLM agent simulation engine with a stable **`campaign_rpg_engine`** library API. The reference GM app is **[CampAIgn-RPG-Studio](https://github.com/DaveH-Ghost/CampAIgn-RPG-Studio)** (GitHub only).
 
-**Current release:** **1.5.1** — enabled actions, `[far]` / `[emote]` tags, interact/emote prompt UX. See [changelog index](changelog/README.md). Library-first since 1.0; [Migration 0.7 → 1.0](MIGRATION-0.7-to-1.0.md) still applies for older upgrades.
+**Current release:** **1.5.2** — OpenRouter + Featherless providers, max input-token budget. See [changelog index](changelog/README.md). Library-first since 1.0; [Migration 0.7 → 1.0](MIGRATION-0.7-to-1.0.md) still applies for older upgrades.
 
 ---
 

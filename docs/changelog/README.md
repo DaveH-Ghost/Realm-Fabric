@@ -2,7 +2,7 @@
 
 Release notes and historical implementation checklists for CampAIgn-RPG-Engine.
 
-**Current:** [v1.5.1-changelog.md](v1.5.1-changelog.md) — enabled actions, `[far]` / `[emote]` tags, interact/emote prompt UX.
+**Current:** [v1.5.2-changelog.md](v1.5.2-changelog.md) — Featherless + OpenRouter, max input tokens, JSON brace repair.
 
 ---
 
@@ -10,6 +10,7 @@ Release notes and historical implementation checklists for CampAIgn-RPG-Engine.
 
 | Version | Summary |
 |---------|---------|
+| [1.5.2](v1.5.2-changelog.md) | Featherless provider, token budget, missing-`{` JSON repair |
 | [1.5.1](v1.5.1-changelog.md) | Enabled actions, `[far]` vision, `[emote]` tagging, interact verb hints |
 | [1.5.0](v1.5.0-changelog.md) | Affinity memory — relationships (-10…+10) + rolling summary |
 | [1.4.2](v1.4.2-changelog.md) | ``run_named_handler`` / ``collect_prefixed_params`` (plugin follow-ups) |

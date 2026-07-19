@@ -1,5 +1,5 @@
 """
-campaign_rpg_engine — public engine API for CampAIgn-RPG-Engine (1.5.1).
+campaign_rpg_engine — public engine API for CampAIgn-RPG-Engine (1.5.2).
 
 Import from this package in application code.
 """
@@ -20,10 +20,23 @@ from campaign_rpg_engine.area_edit import (
 )
 from campaign_rpg_engine.game_profile import GameProfile, default_compound_profile, load_profile
 from campaign_rpg_engine.interact_templates import interact_template_var_help
-from campaign_rpg_engine.llm.client import LLMParseError, get_compound_turn
+from campaign_rpg_engine.llm.client import (
+    LLMParseError,
+    PromptTooLargeError,
+    get_compound_turn,
+    get_llm_provider,
+)
 from campaign_rpg_engine.llm.prompt_context import PromptContext, build_prompt_context
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
-from campaign_rpg_engine.llm.token_estimate import estimate_prompt_tokens
+from campaign_rpg_engine.llm.token_estimate import (
+    DEFAULT_INPUT_WARNING_PERCENT,
+    DEFAULT_MAX_INPUT_TOKENS,
+    estimate_prompt_tokens,
+    get_input_warning_percent,
+    get_max_input_tokens,
+    prompt_exceeds_max_input,
+    prompt_token_budget_status,
+)
 from campaign_rpg_engine.llm.types import LLMResponse
 from campaign_rpg_engine.lorebook import (
     DEFAULT_LOREBOOK_CHAR_BUDGET,
@@ -152,7 +165,9 @@ __all__ = [
     "AreaTemplateMutationResult",
     "DEFAULT_AREA_ID",
     "DEFAULT_CHAR_BUDGET",
+    "DEFAULT_INPUT_WARNING_PERCENT",
     "DEFAULT_LOREBOOK_CHAR_BUDGET",
+    "DEFAULT_MAX_INPUT_TOKENS",
     "DEFAULT_MAX_SUMMARY_CHARS",
     "DEFAULT_SUMMARY_INTERVAL",
     "DEFAULT_SUMMARY_TAIL",
@@ -174,6 +189,7 @@ __all__ = [
     "MIN_MAX_SUMMARY_CHARS",
     "MIN_SUMMARY_INTERVAL",
     "MIN_SUMMARY_TAIL",
+    "PromptTooLargeError",
     "MIN_WINDOW",
     "Object",
     "ObjectAction",
@@ -228,6 +244,9 @@ __all__ = [
     "format_turn_verbs_list",
     "get_compound_turn",
     "get_handler_registration",
+    "get_input_warning_percent",
+    "get_llm_provider",
+    "get_max_input_tokens",
     "handler_catalog_entry",
     "interact_template_var_help",
     "is_handler_registered",
@@ -247,7 +266,9 @@ __all__ = [
     "parse_position",
     "prompt_block_catalog",
     "prompt_blocks_from_dicts",
+    "prompt_exceeds_max_input",
     "prompt_slot_catalog",
+    "prompt_token_budget_status",
     "register_interaction_handler",
     "register_event_listener",
     "register_prompt_slot",
