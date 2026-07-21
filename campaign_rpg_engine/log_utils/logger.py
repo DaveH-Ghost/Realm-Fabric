@@ -84,6 +84,8 @@ def log_turn(
     If file logging is active (or always_to_file), also writes to the log file.
 
     This provides the "rich, verbose console output on every turn" required by the spec.
+    On errors, pass *prompt* and *raw_output* when available so they print above the
+    ERROR panel.
     """
     header = f"Turn {turn_number}"
     if phase:
@@ -139,13 +141,45 @@ def log_turn(
     console.rule()
 
 
-def log_error(message: str, exc: Exception | None = None) -> None:
-    """Log an error to console (and file if active). Always goes to file."""
+_LOGGED_ATTR = "_campaign_rpg_logged"
+
+
+def mark_exception_logged(exc: BaseException) -> None:
+    """Mark *exc* so callers skip a duplicate ``log_error`` / consolidation log."""
+    try:
+        setattr(exc, _LOGGED_ATTR, True)
+    except Exception:
+        pass
+
+
+def exception_already_logged(exc: BaseException) -> bool:
+    return bool(getattr(exc, _LOGGED_ATTR, False))
+
+
+def log_error(
+    message: str,
+    exc: Exception | None = None,
+    *,
+    turn_number: int = 0,
+    phase: str | None = None,
+    prompt: str | None = None,
+    raw_output: str | None = None,
+) -> None:
+    """Log an error to console (and file if active). Always goes to file.
+
+    When *prompt* / *raw_output* are provided they print above the ERROR panel.
+    """
+    detail = message + (f"\n{exc}" if exc else "")
     log_turn(
-        0,
-        error=message + (f"\n{exc}" if exc else ""),
+        turn_number,
+        phase=phase,
+        prompt=prompt,
+        raw_output=raw_output,
+        error=detail,
         always_to_file=True,
     )
+    if exc is not None:
+        mark_exception_logged(exc)
 
 
 # Optional: structured JSON logging could be added here later for the "both" option in checklist.

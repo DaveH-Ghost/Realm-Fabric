@@ -7,14 +7,19 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+from campaign_rpg_engine.llm.client import is_concurrency_limit_error
 from campaign_rpg_engine.llm.memory_summary import log_consolidation_error
+from campaign_rpg_engine.log_utils import exception_already_logged
 from campaign_rpg_engine.memory_modules.base import WitnessedEvent
+from campaign_rpg_engine.memory_modules.consolidation_hooks import notify_consolidation_failure
 from campaign_rpg_engine.turn_record import TurnRecord
 
 ConsolidationState = Literal["idle", "running", "failed"]
 
 ConsolidationRun = Callable[["ConsolidationSnapshot"], Any]
 ConsolidationSuccess = Callable[[Any, "ConsolidationSnapshot"], None]
+
+ERROR_CODE_CONCURRENCY_LIMIT = "concurrency_limit_exceeded"
 
 
 class MemoryConsolidationError(RuntimeError):
@@ -25,17 +30,32 @@ class MemoryConsolidationError(RuntimeError):
         *,
         agent_name: str = "",
         turn_number: int | None = None,
+        concurrency_limit_exceeded: bool = False,
     ) -> None:
         subject = f"Agent {agent_name!r}" if agent_name else "Agent"
         if turn_number is not None:
             subject = f"{subject} (turn {turn_number})"
-        super().__init__(
-            f"{subject} cannot act until memory summary consolidation succeeds. "
-            "Check the log for consolidation errors (API, network, or LLM response). "
-            "Fix the issue and try again."
-        )
+        if concurrency_limit_exceeded:
+            detail = (
+                f"{subject} cannot act until memory summary consolidation succeeds. "
+                "The last consolidation failed because the LLM provider rejected an "
+                "overlapping request (concurrency limit). This often happens during "
+                "background memory consolidation or affinity Call A/B. Disable "
+                "Concurrent LLM calls for one-at-a-time providers, then try again."
+            )
+        else:
+            detail = (
+                f"{subject} cannot act until memory summary consolidation succeeds. "
+                "Check the log for consolidation errors (API, network, or LLM response). "
+                "Fix the issue and try again."
+            )
+        super().__init__(detail)
         self.agent_name = agent_name
         self.turn_number = turn_number
+        self.concurrency_limit_exceeded = concurrency_limit_exceeded
+        self.error_code = (
+            ERROR_CODE_CONCURRENCY_LIMIT if concurrency_limit_exceeded else None
+        )
 
 
 @dataclass
@@ -61,10 +81,15 @@ class ConsolidationRunner:
     _snapshot: ConsolidationSnapshot | None = field(default=None, init=False)
     _lock: threading.Lock = field(default_factory=threading.Lock, init=False)
     _thread: threading.Thread | None = field(default=None, init=False)
+    _last_failure_was_concurrency: bool = field(default=False, init=False)
 
     @property
     def state(self) -> ConsolidationState:
         return self._state
+
+    @property
+    def last_failure_was_concurrency(self) -> bool:
+        return self._last_failure_was_concurrency
 
     def start(
         self,
@@ -78,6 +103,7 @@ class ConsolidationRunner:
         with self._lock:
             self._snapshot = snapshot
             self._state = "running"
+            self._last_failure_was_concurrency = False
 
         if background:
             thread = threading.Thread(
@@ -117,9 +143,11 @@ class ConsolidationRunner:
                     if self._state == "idle":
                         return
                     snapshot = self._snapshot
+                    concurrency = self._last_failure_was_concurrency
                 raise MemoryConsolidationError(
                     agent_name=snapshot.agent_name if snapshot else "",
                     turn_number=snapshot.turn_number if snapshot else None,
+                    concurrency_limit_exceeded=concurrency,
                 )
 
     def wait_for_background(self) -> None:
@@ -128,6 +156,38 @@ class ConsolidationRunner:
             thread = self._thread
         if thread is not None and thread.is_alive():
             thread.join()
+
+    def flush_for_save(self) -> None:
+        """
+        Wait until consolidation is idle or failed.
+
+        Unlike ``ensure_ready``, does not retry a failed job and never raises.
+        Used before session save/checkpoint so one agent's failed consolidation
+        cannot block another agent's turn undo snapshot.
+        """
+        while True:
+            with self._lock:
+                state = self._state
+            if state in ("idle", "failed"):
+                return
+            if state == "running":
+                self.wait_for_background()
+                continue
+            return
+
+    def _mark_failed(self, exc: BaseException, snapshot: ConsolidationSnapshot | None) -> None:
+        concurrency = is_concurrency_limit_error(exc)
+        with self._lock:
+            self._state = "failed"
+            self._thread = None
+            self._last_failure_was_concurrency = concurrency
+        notify_consolidation_failure(
+            agent_name=snapshot.agent_name if snapshot else "",
+            turn_number=snapshot.turn_number if snapshot else None,
+            concurrency_limit_exceeded=concurrency,
+            message=str(exc),
+            error_code="concurrency_limit_exceeded" if concurrency else None,
+        )
 
     def _worker(
         self,
@@ -138,10 +198,13 @@ class ConsolidationRunner:
         try:
             new_summary = run(snapshot)
         except Exception as exc:
-            log_consolidation_error("Rolling summary consolidation failed", exc)
-            with self._lock:
-                self._state = "failed"
-                self._thread = None
+            if not exception_already_logged(exc):
+                log_consolidation_error(
+                    "Memory consolidation failed",
+                    exc,
+                    turn_number=snapshot.turn_number,
+                )
+            self._mark_failed(exc, snapshot)
             return
 
         with self._lock:
@@ -149,6 +212,7 @@ class ConsolidationRunner:
                 on_success(new_summary, snapshot)
                 self._state = "idle"
                 self._snapshot = None
+                self._last_failure_was_concurrency = False
             self._thread = None
 
     def _retry_sync(
@@ -160,14 +224,19 @@ class ConsolidationRunner:
             snapshot = self._snapshot
             if snapshot is None:
                 self._state = "idle"
+                self._last_failure_was_concurrency = False
                 return
 
         try:
             new_summary = run(snapshot)
         except Exception as exc:
-            log_consolidation_error("Rolling summary consolidation retry failed", exc)
-            with self._lock:
-                self._state = "failed"
+            if not exception_already_logged(exc):
+                log_consolidation_error(
+                    "Memory consolidation retry failed",
+                    exc,
+                    turn_number=snapshot.turn_number if snapshot else 0,
+                )
+            self._mark_failed(exc, snapshot)
             return
 
         with self._lock:
@@ -175,6 +244,7 @@ class ConsolidationRunner:
                 on_success(new_summary, snapshot)
                 self._state = "idle"
                 self._snapshot = None
+                self._last_failure_was_concurrency = False
 
     def _snapshot_matches(self, snapshot: ConsolidationSnapshot) -> bool:
         if self._snapshot is None:

@@ -251,7 +251,9 @@ def _prepare_session_for_save(session: object) -> None:
         raise TypeError(f"Expected Session, got {type(session)!r}")
     for area in session.areas.values():
         for agent in area.agents:
-            agent.memory.ensure_ready_for_turn()
+            # Wait for in-flight jobs only — do not retry/raise on failed
+            # consolidations (that would block unrelated agents' checkpoints).
+            agent.memory.flush_for_save()
 
 
 def build_save_snapshot(session: object) -> dict[str, Any]:

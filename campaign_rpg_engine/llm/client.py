@@ -60,12 +60,162 @@ class PromptTooLargeError(RuntimeError):
         )
 
 
+class ConcurrencyLimitError(RuntimeError):
+    """Raised when the provider rejects a call for overlapping / concurrent usage."""
+
+    ERROR_CODE = "concurrency_limit_exceeded"
+
+    def __init__(
+        self,
+        message: str | None = None,
+        *,
+        status_code: int | None = None,
+        provider_code: str | None = None,
+        raw_message: str | None = None,
+    ) -> None:
+        self.status_code = status_code
+        self.provider_code = provider_code
+        self.raw_message = raw_message or message or ""
+        super().__init__(
+            message
+            or (
+                "LLM concurrency limit exceeded. Another request is probably still "
+                "in flight (memory consolidation or affinity). Disable Concurrent "
+                "LLM calls for one-at-a-time providers, then retry."
+            )
+        )
+
+
+_CONCURRENCY_TOKEN_RE = (
+    "concurrency_limit",
+    "concurrency limit",
+    "concurrent request",
+    "concurrent unit",
+    "concurrent calls",
+    "concurrent llm",
+    "over limit by",
+    "plan concurrency",
+    "concurrency cost",
+)
+
+
+def _error_text_blobs(exc: BaseException) -> list[str]:
+    """Collect string fragments from provider exception shapes (OpenAI / Featherless)."""
+    blobs: list[str] = [str(exc)]
+    for attr in ("message", "code", "type", "param"):
+        value = getattr(exc, attr, None)
+        if value is not None:
+            blobs.append(str(value))
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict):
+        blobs.append(str(body))
+        err = body.get("error")
+        if isinstance(err, dict):
+            for key in ("message", "code", "type"):
+                if err.get(key) is not None:
+                    blobs.append(str(err[key]))
+        elif isinstance(err, str):
+            blobs.append(err)
+    elif body is not None:
+        blobs.append(str(body))
+    response = getattr(exc, "response", None)
+    if response is not None:
+        text = getattr(response, "text", None)
+        if text:
+            blobs.append(str(text))
+    return blobs
+
+
+def _blob_suggests_concurrency(text: str) -> bool:
+    lowered = text.lower()
+    if "concurren" in lowered:
+        return True
+    return any(token in lowered for token in _CONCURRENCY_TOKEN_RE)
+
+
+def is_concurrency_limit_error(exc: BaseException) -> bool:
+    """
+    True when *exc* looks like a provider concurrency / overlapping-request limit.
+
+    Robust to Featherless/OpenRouter wording changes: combines HTTP 429 (when
+    present) with concurrency-related codes or message tokens. Generic rate
+    limits without concurrency signals return False.
+    """
+    if isinstance(exc, ConcurrencyLimitError):
+        return True
+
+    status = getattr(exc, "status_code", None)
+    blobs = _error_text_blobs(exc)
+    joined = "\n".join(blobs)
+    has_concurrency_signal = _blob_suggests_concurrency(joined)
+
+    provider_code = None
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict):
+        err = body.get("error")
+        if isinstance(err, dict) and err.get("code") is not None:
+            provider_code = str(err["code"])
+    code_attr = getattr(exc, "code", None)
+    if code_attr is not None:
+        provider_code = provider_code or str(code_attr)
+    if provider_code and "concurren" in provider_code.lower():
+        return True
+
+    if status == 429 and has_concurrency_signal:
+        return True
+    # Some SDKs omit status_code but embed 429 + concurrency in the message.
+    if has_concurrency_signal and ("429" in joined or "concurrency_limit" in joined.lower()):
+        return True
+    return False
+
+
+def concurrency_limit_error_from_exception(exc: BaseException) -> ConcurrencyLimitError:
+    """Build a ``ConcurrencyLimitError`` from a provider exception."""
+    status = getattr(exc, "status_code", None)
+    provider_code = None
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict):
+        err = body.get("error")
+        if isinstance(err, dict) and err.get("code") is not None:
+            provider_code = str(err["code"])
+    if provider_code is None and getattr(exc, "code", None) is not None:
+        provider_code = str(exc.code)
+    return ConcurrencyLimitError(
+        status_code=int(status) if status is not None else None,
+        provider_code=provider_code,
+        raw_message=str(exc),
+    )
+
+
+def _reraise_classified_api_error(exc: BaseException) -> None:
+    if is_concurrency_limit_error(exc):
+        raise concurrency_limit_error_from_exception(exc) from exc
+    raise exc
+
+
 def get_llm_provider() -> str:
     """Return active provider id (``openrouter`` or ``featherless``)."""
     raw = (os.environ.get("LLM_PROVIDER") or PROVIDER_OPENROUTER).strip().lower()
     if raw in (PROVIDER_OPENROUTER, PROVIDER_FEATHERLESS):
         return raw
     return PROVIDER_OPENROUTER
+
+
+def concurrent_llm_calls_enabled() -> bool:
+    """
+    Whether overlapping LLM calls are allowed (default True).
+
+    When False (e.g. Featherless Premium with a 4-unit DeepSeek model):
+    memory consolidations run synchronously before the turn returns, and
+    affinity Call A/B run sequentially.
+    """
+    raw = (os.environ.get("LLM_CONCURRENT_CALLS") or "1").strip().lower()
+    return raw not in ("0", "false", "no", "off")
+
+
+def set_concurrent_llm_calls(enabled: bool) -> None:
+    """Set process-wide concurrent LLM policy (Studio Settings / tests)."""
+    os.environ["LLM_CONCURRENT_CALLS"] = "1" if enabled else "0"
 
 
 def resolve_llm_model(explicit: str | None = None) -> str:
@@ -180,12 +330,15 @@ def get_structured_turn(
     client = get_llm_client()
     model = resolve_llm_model(model)
 
-    response = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=temperature,
-        response_format={"type": "json_object"},
-    )
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=temperature,
+            response_format={"type": "json_object"},
+        )
+    except Exception as exc:
+        _reraise_classified_api_error(exc)
 
     content = response.choices[0].message.content
     if not content:
@@ -219,11 +372,14 @@ def get_text_completion(
     client = get_llm_client()
     model = resolve_llm_model(model)
 
-    response = client.chat.completions.create(
-        model=model,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=temperature,
-    )
+    try:
+        response = client.chat.completions.create(
+            model=model,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=temperature,
+        )
+    except Exception as exc:
+        _reraise_classified_api_error(exc)
 
     content = response.choices[0].message.content
     if not content or not content.strip():

@@ -234,6 +234,97 @@ def test_parse_affinity_updates_rejects_bad_delta():
         )
 
 
+def test_parse_affinity_updates_fills_omitted_candidates_as_no_change():
+    candidates = [
+        {"agent_id": "a", "name": "A", "score": 1, "summary": "Prior A"},
+        {"agent_id": "b", "name": "B", "score": 0, "summary": "Prior B"},
+        {"agent_id": "c", "name": "C", "score": -1, "summary": "Prior C"},
+    ]
+    updates = parse_and_validate_affinity_updates(
+        '[{"agent_id":"b","name":"B","delta":1,"summary":"Warm chat."}]',
+        candidates=candidates,
+    )
+    assert [u["agent_id"] for u in updates] == ["a", "b", "c"]
+    assert updates[0] == {
+        "agent_id": "a",
+        "name": "A",
+        "delta": 0,
+        "summary": "Prior A",
+    }
+    assert updates[1]["delta"] == 1
+    assert updates[1]["summary"] == "Warm chat."
+    assert updates[2] == {
+        "agent_id": "c",
+        "name": "C",
+        "delta": 0,
+        "summary": "Prior C",
+    }
+
+
+def test_area_events_are_not_affinity_candidates():
+    captured: list[list[dict]] = []
+
+    def capture_affinity(**kwargs):
+        captured.append(list(kwargs.get("candidates") or []))
+        return _fake_affinity(**kwargs)
+
+    mod = AffinityModule(
+        summary_interval=2,
+        summary_tail=0,
+        background_consolidation=False,
+        _summary_generator=_fake_summary,
+        _affinity_generator=capture_affinity,
+    )
+    mod.record_observation(
+        WitnessedEvent(
+            session_turn=0,
+            actor_id="__area__",
+            actor_name="Environment",
+            text="Pip enters the tavern.",
+            actor_position=(-1, -1),
+        ),
+        MemoryObserveContext(observer_id="hero"),
+    )
+    mod.record_observation(
+        WitnessedEvent(
+            session_turn=0,
+            actor_id="agent_pip_01",
+            actor_name="Pip",
+            text='Pip says: "Hello."',
+            actor_position=(1, 1),
+        ),
+        MemoryObserveContext(observer_id="hero"),
+    )
+    mod.record_turn(_speak_turn(1), _ctx(nearby=(("agent_pip_01", "Pip"),)))
+    mod.record_turn(_speak_turn(2), _ctx(nearby=(("agent_pip_01", "Pip"),)))
+
+    assert captured
+    ids = {c["agent_id"] for c in captured[0]}
+    assert "__area__" not in ids
+    assert "agent_pip_01" in ids
+    assert "__area__" not in mod._directory
+    assert "__area__" not in mod.affinities
+
+
+def test_restore_state_drops_area_affinity_entries():
+    mod = _module()
+    mod.restore_state(
+        {
+            **mod.export_state(),
+            "affinities": {
+                "__area__": {"name": "Environment", "score": 1, "summary": "Welcoming."},
+                "agent_pip_01": {"name": "Pip", "score": 0, "summary": ""},
+            },
+            "directory": {"__area__": "Environment", "agent_pip_01": "Pip"},
+            "window_nearby_ids": ["__area__", "agent_pip_01"],
+        }
+    )
+    assert "__area__" not in mod.affinities
+    assert "agent_pip_01" in mod.affinities
+    assert "__area__" not in mod._directory
+    assert "__area__" not in mod._window_nearby_ids
+
+
 def test_live_pending_preserved_across_consolidation():
     mod = _module()
     mod.record_turn(_speak_turn(1), _ctx(turn_number=1))
@@ -342,3 +433,42 @@ def test_empty_row_summary_preserves_prior_blurb():
     mod.record_turn(_speak_turn(4), _ctx(turn_number=4))
     assert mod.affinities["npc"]["summary"] == prior_blurb
     assert mod.affinities["npc"]["score"] == 1
+
+
+def test_affinity_calls_run_sequentially_when_concurrent_disabled(monkeypatch):
+    from campaign_rpg_engine.llm.client import set_concurrent_llm_calls
+
+    order: list[str] = []
+
+    def summary(**kwargs):
+        order.append("A")
+        return "Summary A."
+
+    def affinity(**kwargs):
+        order.append("B")
+        return [
+            {
+                "agent_id": c["agent_id"],
+                "name": c["name"],
+                "delta": 1,
+                "summary": "Bond",
+            }
+            for c in (kwargs.get("candidates") or [])
+        ]
+
+    set_concurrent_llm_calls(False)
+    try:
+        mod = AffinityModule(
+            summary_interval=2,
+            summary_tail=0,
+            background_consolidation=True,
+            _summary_generator=summary,
+            _affinity_generator=affinity,
+        )
+        mod.record_turn(_speak_turn(1), _ctx(turn_number=1))
+        mod.record_turn(_speak_turn(2), _ctx(turn_number=2))
+        assert order == ["A", "B"]
+        assert mod.consolidation_state == "idle"
+        assert mod.summary.startswith("Summary")
+    finally:
+        set_concurrent_llm_calls(True)

@@ -30,6 +30,12 @@ class MemoryRecordContext:
     agent_name: str = ""
     """Other agents in the same area at record time: (id, name)."""
     nearby_agents: tuple[tuple[str, str], ...] = ()
+    """Owner personality text for consolidation prompts."""
+    personality: str = ""
+    """Owner passive (non-detailed) description — labeled “appearance” in consolidation prompts."""
+    appearance: str = ""
+    """Other agents in the area: (name, passive_description)."""
+    other_agents: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)

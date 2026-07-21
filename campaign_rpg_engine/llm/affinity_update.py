@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Sequence
 from typing import Any
 
 from campaign_rpg_engine.llm.client import get_text_completion
+from campaign_rpg_engine.llm.memory_summary import log_consolidation_error
 from campaign_rpg_engine.log_utils import log_turn
 from campaign_rpg_engine.memory_modules.affinity_ladder import (
     DEFAULT_RELATIONSHIP_SUMMARY_MAX_CHARS,
@@ -21,7 +23,12 @@ def build_affinity_update_prompt(
     batch_text: str,
     candidates: list[dict[str, Any]],
     max_summary_chars: int = DEFAULT_RELATIONSHIP_SUMMARY_MAX_CHARS,
+    personality: str = "",
+    appearance: str = "",
+    other_agents: Sequence[tuple[str, str]] = (),
 ) -> str:
+    from campaign_rpg_engine.llm.memory_summary import format_consolidation_identity_preamble
+
     blocks: list[str] = []
     for entry in candidates:
         name = str(entry.get("name") or entry["agent_id"])
@@ -35,7 +42,14 @@ When to emit +1: {plus_guidance(score, name)}
 When to emit -1: {minus_guidance(score, name)}"""
         )
     candidate_block = "\n\n".join(blocks)
+    identity = format_consolidation_identity_preamble(
+        personality=personality,
+        appearance=appearance,
+        other_agents=other_agents,
+    )
     return f"""You update relationship affinities for {agent_name} in a grid-area RPG simulation.
+
+{identity}
 
 You receive ONLY the recent turn window below (not any long-term rolling chronicle).
 Award affinity deltas ONLY from events in that window. Use prior relationship summaries
@@ -49,11 +63,14 @@ Rules:
 - Score deltas must come from THIS WINDOW only.
 - Relationship summary: 1–2 short sentences, at most {max_summary_chars} characters,
   concrete facts (“She covered for you on watch”), not adjective stacks.
+- Match pronouns and gendered language to {agent_name}'s personality and appearance above
+  (do not default to “he” / “she” without that context).
 - Do not invent agents or events.
 - At affinity 10 never emit +1; at -10 never emit -1.
 - Respond with ONLY a JSON array (no markdown fences). Each item:
   {{"agent_id": "...", "name": "...", "delta": -1|0|1, "summary": "..."}}
-- Include every listed candidate exactly once.
+- Include every listed candidate when possible; omitted candidates are treated as
+  delta 0 with no relationship-summary change.
 
 Candidates:
 {candidate_block}
@@ -63,18 +80,88 @@ Turn window:
 """.strip()
 
 
+def _looks_like_missing_leading_bracket(content: str) -> bool:
+    """Featherless DeepSeek often returns array bodies without the opening ``[``."""
+    text = content.strip()
+    return (
+        bool(text)
+        and not text.startswith("[")
+        and text.endswith("]")
+        and text.lstrip().startswith("{")
+    )
+
+
+def _json_array_repair_candidates(cleaned: str) -> list[str]:
+    """
+    Build parse attempts for common Featherless bracket mistakes.
+
+    Outer structure must be a JSON **array** ``[{...}, ...]``. Item objects use
+    ``{}``; the wrapper uses ``[]``. Repairs:
+
+    - missing leading ``[`` when body ends with ``]``
+    - missing leading ``[`` and/or trailing ``]`` when body is ``{...}`` / ``{...},{...}``
+    - leading ``[`` but trailing ``}`` instead of ``]``
+    - outer curly wrapper ``{{...},{...}}`` → ``[{...},{...}]``
+    """
+    text = cleaned.strip()
+    if not text:
+        return [cleaned]
+
+    candidates = [text]
+    starts_obj = text.lstrip().startswith("{")
+    starts_arr = text.startswith("[")
+    ends_arr = text.endswith("]")
+    ends_obj = text.endswith("}")
+
+    if starts_obj and ends_arr and not starts_arr:
+        candidates.append("[" + text.lstrip())
+    if starts_obj and ends_obj and not starts_arr:
+        candidates.append("[" + text.lstrip() + "]")
+    if starts_arr and ends_obj:
+        candidates.append(text[:-1] + "]")
+    # Model wrapped the array in `{}` instead of `[]`: {{...},{...}} → [{...},{...}]
+    if text.startswith("{{") and text.endswith("}}") and len(text) >= 4:
+        candidates.append("[" + text[1:-1] + "]")
+
+    # De-dupe while preserving order
+    seen: set[str] = set()
+    out: list[str] = []
+    for item in candidates:
+        if item not in seen:
+            seen.add(item)
+            out.append(item)
+    return out
+
+
 def _extract_json_array(text: str) -> list[Any]:
     cleaned = text.strip()
     if cleaned.startswith("```"):
         cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
         cleaned = re.sub(r"\s*```$", "", cleaned)
-    try:
-        data = json.loads(cleaned)
-    except json.JSONDecodeError:
+        cleaned = cleaned.strip()
+
+    candidates = _json_array_repair_candidates(cleaned)
+
+    last_exc: json.JSONDecodeError | None = None
+    for candidate in candidates:
+        try:
+            data = json.loads(candidate)
+            break
+        except json.JSONDecodeError as exc:
+            last_exc = exc
+    else:
         match = re.search(r"\[[\s\S]*\]", cleaned)
-        if not match:
-            raise
+        if match is None:
+            for candidate in candidates[1:]:
+                match = re.search(r"\[[\s\S]*\]", candidate)
+                if match is not None:
+                    break
+        if match is None:
+            if last_exc is not None:
+                raise last_exc
+            raise json.JSONDecodeError("Expecting value", cleaned, 0)
         data = json.loads(match.group(0))
+
     if not isinstance(data, list):
         raise ValueError("Affinity consolidator must return a JSON array")
     return data
@@ -88,12 +175,8 @@ def parse_and_validate_affinity_updates(
 ) -> list[dict[str, Any]]:
     by_id = {str(c["agent_id"]): c for c in candidates}
     rows = _extract_json_array(raw)
-    if len(rows) != len(candidates):
-        raise ValueError(
-            f"Affinity consolidator returned {len(rows)} rows; expected {len(candidates)}"
-        )
     seen: set[str] = set()
-    out: list[dict[str, Any]] = []
+    parsed: dict[str, dict[str, Any]] = {}
     for row in rows:
         if not isinstance(row, dict):
             raise ValueError("Affinity update rows must be objects")
@@ -118,17 +201,28 @@ def parse_and_validate_affinity_updates(
         if len(summary) > max_summary_chars:
             summary = summary[: max_summary_chars - 1] + "…"
         name = str(row.get("name") or by_id[agent_id].get("name") or agent_id)
+        parsed[agent_id] = {
+            "agent_id": agent_id,
+            "name": name,
+            "delta": delta,
+            "summary": summary,
+        }
+
+    # Omitted candidates → no change (delta 0, keep prior relationship summary).
+    out: list[dict[str, Any]] = []
+    for candidate in candidates:
+        agent_id = str(candidate["agent_id"])
+        if agent_id in parsed:
+            out.append(parsed[agent_id])
+            continue
         out.append(
             {
                 "agent_id": agent_id,
-                "name": name,
-                "delta": delta,
-                "summary": summary,
+                "name": str(candidate.get("name") or agent_id),
+                "delta": 0,
+                "summary": str(candidate.get("summary") or "").strip(),
             }
         )
-    if seen != set(by_id):
-        missing = set(by_id) - seen
-        raise ValueError(f"Missing affinity updates for: {sorted(missing)}")
     return out
 
 
@@ -139,6 +233,9 @@ def generate_affinity_updates(
     candidates: list[dict[str, Any]],
     max_summary_chars: int = DEFAULT_RELATIONSHIP_SUMMARY_MAX_CHARS,
     turn_number: int | None = None,
+    personality: str = "",
+    appearance: str = "",
+    other_agents: Sequence[tuple[str, str]] = (),
 ) -> list[dict[str, Any]]:
     """Call the LLM for affinity deltas + relationship blurbs (Call B)."""
     if not candidates:
@@ -148,30 +245,47 @@ def generate_affinity_updates(
         batch_text=batch_text,
         candidates=candidates,
         max_summary_chars=max_summary_chars,
+        personality=personality,
+        appearance=appearance,
+        other_agents=other_agents,
     )
-    response = get_text_completion(prompt, temperature=0.2)
-    raw = str(response.parsed).strip()
-    if not raw:
-        raise RuntimeError("LLM returned empty affinity update")
-    updates = parse_and_validate_affinity_updates(
-        raw,
-        candidates=candidates,
-        max_summary_chars=max_summary_chars,
-    )
+    raw_output: str | None = None
+    turn = turn_number or 0
+    try:
+        response = get_text_completion(prompt, temperature=0.2)
+        raw_output = response.raw_response
+        raw = str(response.parsed).strip()
+        if not raw:
+            raise RuntimeError("LLM returned empty affinity update")
+        updates = parse_and_validate_affinity_updates(
+            raw,
+            candidates=candidates,
+            max_summary_chars=max_summary_chars,
+        )
 
-    tokens = None
-    if response.total_tokens is not None:
-        tokens = {
-            "prompt": response.prompt_tokens,
-            "completion": response.completion_tokens,
-            "total": response.total_tokens,
-        }
-    log_turn(
-        turn_number or 0,
-        phase="memory_affinity",
-        prompt=prompt,
-        raw_output=response.raw_response,
-        result=json.dumps(updates),
-        tokens=tokens,
-    )
-    return updates
+        tokens = None
+        if response.total_tokens is not None:
+            tokens = {
+                "prompt": response.prompt_tokens,
+                "completion": response.completion_tokens,
+                "total": response.total_tokens,
+            }
+        log_turn(
+            turn,
+            phase="memory_affinity",
+            prompt=prompt,
+            raw_output=response.raw_response,
+            result=json.dumps(updates),
+            tokens=tokens,
+        )
+        return updates
+    except Exception as exc:
+        log_consolidation_error(
+            "Affinity consolidation failed",
+            exc,
+            turn_number=turn,
+            phase="memory_affinity",
+            prompt=prompt,
+            raw_output=raw_output,
+        )
+        raise

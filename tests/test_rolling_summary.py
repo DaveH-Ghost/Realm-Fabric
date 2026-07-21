@@ -360,8 +360,38 @@ def test_failed_retry_raises_when_still_failing():
     assert module.summary == ""
     assert len(module.stored_turns) == 2
 
-    with pytest.raises(MemoryConsolidationError, match="Check the log"):
+    with pytest.raises(MemoryConsolidationError, match="Check the log") as raised:
         module.ensure_ready_for_turn()
+    assert module.consolidation_state == "failed"
+    assert raised.value.concurrency_limit_exceeded is False
+    assert raised.value.error_code is None
+
+
+def test_failed_retry_marks_concurrency_limit():
+    def always_fail(**kwargs):
+        raise RuntimeError(
+            "Error code: 429 - Concurrency limit exceeded. Your plan limit: 4 units"
+        )
+
+    module = _module(summary_interval=2, _summary_generator=always_fail)
+    _fill_turns(module, 2)
+    assert module.consolidation_state == "failed"
+
+    with pytest.raises(MemoryConsolidationError) as raised:
+        module.ensure_ready_for_turn()
+    assert raised.value.concurrency_limit_exceeded is True
+    assert raised.value.error_code == "concurrency_limit_exceeded"
+    assert "concurrency" in str(raised.value).lower()
+
+
+def test_flush_for_save_does_not_raise_on_failed_consolidation():
+    def always_fail(**kwargs):
+        raise RuntimeError("still failing")
+
+    module = _module(summary_interval=2, _summary_generator=always_fail)
+    _fill_turns(module, 2)
+    assert module.consolidation_state == "failed"
+    module.flush_for_save()
     assert module.consolidation_state == "failed"
 
 
@@ -514,3 +544,34 @@ def _witness(text: str):
         text=text,
         actor_position=(0, 3),
     )
+
+
+def test_concurrent_disabled_forces_sync_consolidation_even_if_background_true():
+    from campaign_rpg_engine.llm.client import set_concurrent_llm_calls
+
+    started = threading.Event()
+    release = threading.Event()
+    set_concurrent_llm_calls(False)
+    try:
+        module = RollingSummaryModule(
+            summary_interval=2,
+            background_consolidation=True,
+            _summary_generator=_blocking_summary_generator(
+                started, release, "Forced sync summary"
+            ),
+        )
+        module.record_turn(_speak_turn(1), _record_ctx(turn_number=1))
+        # Without concurrent calls, consolidation must finish inside record_turn.
+        # Release the blocker from another thread if the sync path waits on it.
+        def _release_soon():
+            assert started.wait(timeout=2.0)
+            release.set()
+
+        helper = threading.Thread(target=_release_soon, daemon=True)
+        helper.start()
+        module.record_turn(_speak_turn(2), _record_ctx(turn_number=2))
+        helper.join(timeout=2.0)
+        assert module.consolidation_state == "idle"
+        assert module.summary == "Forced sync summary"
+    finally:
+        set_concurrent_llm_calls(True)

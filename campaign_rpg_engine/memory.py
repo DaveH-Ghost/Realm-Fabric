@@ -90,6 +90,9 @@ class Memory:
         agent_id: str,
         agent_name: str = "",
         nearby_agents: tuple[tuple[str, str], ...] = (),
+        personality: str = "",
+        appearance: str = "",
+        other_agents: tuple[tuple[str, str], ...] = (),
     ) -> None:
         self._module.record_turn(
             record,
@@ -98,6 +101,9 @@ class Memory:
                 turn_number=record.turn_number,
                 agent_name=agent_name,
                 nearby_agents=nearby_agents,
+                personality=personality,
+                appearance=appearance,
+                other_agents=other_agents,
             ),
         )
 
@@ -147,6 +153,12 @@ class Memory:
         """Wait for memory consolidation when the module requires it."""
         if isinstance(self._module, TurnGatedMemoryModule):
             self._module.ensure_ready_for_turn()
+
+    def flush_for_save(self) -> None:
+        """Settle in-flight consolidation for save without retrying failures."""
+        flush = getattr(self._module, "flush_for_save", None)
+        if callable(flush):
+            flush()
 
     def reset_looked_at(self) -> None:
         self._looked_at.clear()

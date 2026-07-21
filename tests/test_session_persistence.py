@@ -165,6 +165,33 @@ def test_salient_turns_storage_survives_budget_trim():
     assert fresh.total_turns == 5
 
 
+def test_save_snapshot_succeeds_when_agent_consolidation_failed():
+    """Undo/checkpoint must not raise when an agent has a failed consolidation."""
+    from campaign_rpg_engine.memory import Memory
+
+    session = Session.from_default()
+    agent = session.get_active_agent()
+
+    def always_fail(**kwargs):
+        raise RuntimeError("consolidation boom")
+
+    module = RollingSummaryModule(
+        summary_interval=2,
+        summary_tail=0,
+        background_consolidation=False,
+        _summary_generator=always_fail,
+    )
+    agent.memory = Memory(module=module)
+    ctx = MemoryRecordContext(agent_id=agent.id, turn_number=1, agent_name=agent.name)
+    module.record_turn(_speak_turn(1), ctx)
+    module.record_turn(_speak_turn(2), ctx)
+    assert module.consolidation_state == "failed"
+
+    data = build_save_snapshot(session)
+    assert data["snapshot_version"] == SNAPSHOT_VERSION
+    assert module.consolidation_state == "failed"
+
+
 def test_rolling_summary_summary_and_pending_round_trip():
     module = RollingSummaryModule(
         summary_interval=2,

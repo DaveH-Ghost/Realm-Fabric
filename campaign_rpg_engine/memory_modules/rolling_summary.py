@@ -6,7 +6,11 @@ import copy
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from campaign_rpg_engine.llm.memory_summary import generate_rolling_summary
+from campaign_rpg_engine.llm.client import concurrent_llm_calls_enabled
+from campaign_rpg_engine.llm.memory_summary import (
+    generate_rolling_summary,
+    other_agents_from_snapshot_extra,
+)
 from campaign_rpg_engine.memory_modules.base import (
     MemoryObserveContext,
     MemoryRecordContext,
@@ -128,7 +132,13 @@ class RollingSummaryModule:
         self._total_turns += 1
 
         if self._should_summarize():
-            self._schedule_consolidation(ctx.agent_name or ctx.agent_id, record.turn_number)
+            self._schedule_consolidation(
+                ctx.agent_name or ctx.agent_id,
+                record.turn_number,
+                personality=ctx.personality,
+                appearance=ctx.appearance,
+                other_agents=ctx.other_agents,
+            )
 
     def record_observation(self, event: WitnessedEvent, ctx: MemoryObserveContext) -> None:
         del ctx
@@ -140,6 +150,10 @@ class RollingSummaryModule:
             run=self._run_summary_for_snapshot,
             on_success=self._apply_successful_consolidation,
         )
+
+    def flush_for_save(self) -> None:
+        """Wait for in-flight consolidation; do not retry or raise on failure."""
+        self._consolidation_runner.flush_for_save()
 
     def render(self, ctx: MemoryRenderContext) -> str:
         del ctx
@@ -162,7 +176,15 @@ class RollingSummaryModule:
             and self._total_turns % self.summary_interval == 0
         )
 
-    def _schedule_consolidation(self, agent_name: str, turn_number: int) -> None:
+    def _schedule_consolidation(
+        self,
+        agent_name: str,
+        turn_number: int,
+        *,
+        personality: str = "",
+        appearance: str = "",
+        other_agents: tuple[tuple[str, str], ...] = (),
+    ) -> None:
         batch_turns, batch_witnessed = self._turns_for_summary_batch()
         snapshot = ConsolidationSnapshot(
             turns=copy.deepcopy(batch_turns),
@@ -170,10 +192,15 @@ class RollingSummaryModule:
             agent_name=agent_name,
             turn_number=turn_number,
             previous_summary=self._summary,
+            extra={
+                "personality": personality,
+                "appearance": appearance,
+                "other_agents": list(other_agents),
+            },
         )
         self._consolidation_runner.start(
             snapshot,
-            background=self.background_consolidation,
+            background=self.background_consolidation and concurrent_llm_calls_enabled(),
             run=self._run_summary_for_snapshot,
             on_success=self._apply_successful_consolidation,
             thread_name=f"rolling-summary-{agent_name}-turn-{turn_number}",
@@ -227,6 +254,9 @@ class RollingSummaryModule:
             batch_text=batch_text,
             max_chars=self.max_summary_chars,
             turn_number=snapshot.turn_number,
+            personality=str(snapshot.extra.get("personality") or ""),
+            appearance=str(snapshot.extra.get("appearance") or ""),
+            other_agents=other_agents_from_snapshot_extra(snapshot.extra),
         )
 
     @property

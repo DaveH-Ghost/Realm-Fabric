@@ -67,6 +67,7 @@ class SessionResult:
 
     ok: bool
     message: str
+    error_code: str | None = None
 
 
 @dataclass(frozen=True)
@@ -77,6 +78,7 @@ class TurnResult:
     message: str
     record: TurnRecord | None = None
     agent: Agent | None = None
+    error_code: str | None = None
 
 
 class Session:
@@ -704,7 +706,12 @@ class Session:
 
         gate = self._gate_agent_turn(agent)
         if not gate.ok:
-            return TurnResult(ok=False, message=gate.message, agent=agent)
+            return TurnResult(
+                ok=False,
+                message=gate.message,
+                agent=agent,
+                error_code=gate.error_code,
+            )
 
         turn_number = next_turn_number_for_agent(agent)
         pending_session = self.session_turn + 1
@@ -766,6 +773,7 @@ class Session:
             return SessionResult(
                 ok=False,
                 message=f"Cannot run turn for {agent.name}: {exc}",
+                error_code=getattr(exc, "error_code", None),
             )
         return SessionResult(ok=True, message="")
 

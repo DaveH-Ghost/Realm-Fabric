@@ -296,6 +296,13 @@ def commit_turn_record(
         nearby_agents=tuple(
             (other.id, other.name) for other in commit_area.agents if other.id != agent.id
         ),
+        personality=agent.personality,
+        appearance=agent.passive_description,
+        other_agents=tuple(
+            (other.name, other.passive_description)
+            for other in commit_area.agents
+            if other.id != agent.id
+        ),
     )
 
     witness_session = session_turn if session_turn is not None else record.turn_number

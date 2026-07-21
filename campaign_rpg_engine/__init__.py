@@ -1,5 +1,5 @@
 """
-campaign_rpg_engine — public engine API for CampAIgn-RPG-Engine (1.7.1).
+campaign_rpg_engine — public engine API for CampAIgn-RPG-Engine (1.7.2).
 
 Import from this package in application code.
 """
@@ -45,10 +45,14 @@ from campaign_rpg_engine.interaction_handlers import (
     run_named_handler,
 )
 from campaign_rpg_engine.llm.client import (
+    ConcurrencyLimitError,
     LLMParseError,
     PromptTooLargeError,
+    concurrent_llm_calls_enabled,
     get_compound_turn,
     get_llm_provider,
+    is_concurrency_limit_error,
+    set_concurrent_llm_calls,
 )
 from campaign_rpg_engine.llm.prompt_context import PromptContext, build_prompt_context
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
@@ -180,6 +184,7 @@ __all__ = [
     "DecorationMutationResult",
     "GameProfile",
     "GridBounds",
+    "ConcurrencyLimitError",
     "LLMParseError",
     "LLMResponse",
     "Lorebook",
@@ -194,6 +199,7 @@ __all__ = [
     "MIN_SUMMARY_INTERVAL",
     "MIN_SUMMARY_TAIL",
     "PromptTooLargeError",
+    "is_concurrency_limit_error",
     "MIN_WINDOW",
     "Object",
     "ObjectAction",
@@ -249,6 +255,7 @@ __all__ = [
     "get_compound_turn",
     "get_handler_registration",
     "get_input_warning_percent",
+    "concurrent_llm_calls_enabled",
     "get_llm_provider",
     "get_max_input_tokens",
     "handler_catalog_entry",
@@ -283,6 +290,7 @@ __all__ = [
     "run_interaction_handler",
     "run_named_handler",
     "run_turn_verb",
+    "set_concurrent_llm_calls",
     "unregister_event_listeners",
     "validate_area_template",
     "validate_prompt_blocks",
