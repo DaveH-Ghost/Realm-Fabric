@@ -1,6 +1,6 @@
 # API reference
 
-Stable **`campaign_rpg_engine`** surface (**1.7.2**). Import from this package in application code.
+Stable **`campaign_rpg_engine`** surface (**1.7.3**). Import from this package in application code.
 
 ```python
 import campaign_rpg_engine
@@ -108,7 +108,7 @@ Returns **`AreaTemplateMutationResult`** from `spawn_area_from_template`.
 
 | Export | Description |
 |--------|-------------|
-| `register_turn_verb(id, fn, ...)` | Compound `action: "verb"`; optional `path_range` + `path_target_from_turn` (1.4.0) |
+| `register_turn_verb(id, fn, ...)` | Compound `action: "verb"`; optional `path_range` / `path_range_from_turn` + `path_target_from_turn` (1.4.0 / 1.7.3) |
 | `list_registered_turn_verbs()`, `run_turn_verb(...)`, `run_turn_verb_phases(...)` | Turn verb introspection / dispatch |
 | `ActionOutcome.passive_witness_exclude_agent_ids` | Skip passive witness for named observers (1.4.0) |
 | `register_prompt_slot(name, renderer, ...)` | Named prompt layout slot |

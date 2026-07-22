@@ -169,3 +169,28 @@ def test_emit_area_event_empty_agent_ids_broadcasts_all():
     for agent in (explorer, goblin):
         assert "Everyone hears this." in agent.memory.render_prompt_block(agent, session.area)
     assert len(session.area.recent_events) == 1
+
+
+def test_emit_area_event_fires_session_event():
+    from campaign_rpg_engine.events.registry import (
+        clear_event_listeners_for_tests,
+        register_event_listener,
+    )
+
+    clear_event_listeners_for_tests()
+    seen: list[dict] = []
+
+    def on_area_event(session, **payload):
+        del session
+        seen.append(payload)
+
+    register_event_listener("area_event", on_area_event, plugin_id="test_area_event")
+    try:
+        session = Session.from_default()
+        result = session.emit_area_event("A horn sounds.")
+        assert result.ok
+        assert len(seen) == 1
+        assert seen[0]["text"] == "A horn sounds."
+        assert seen[0]["broadcast"] is True
+    finally:
+        clear_event_listeners_for_tests()

@@ -434,6 +434,13 @@ class Session:
             agents=recipients,
         )
 
+        self._emit_event(
+            "area_event",
+            text=cleaned,
+            broadcast=broadcast,
+            agent_ids=list(agent_ids) if agent_ids else None,
+        )
+
         if broadcast:
             return SessionResult(ok=True, message=f"Area event: {cleaned}")
 

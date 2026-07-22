@@ -2,7 +2,7 @@
 
 Release notes and historical implementation checklists for CampAIgn-RPG-Engine.
 
-**Current:** [v1.7.2-changelog.md](v1.7.2-changelog.md) — joint release with Studio 1.7.2 (Featherless concurrency + affinity hardening).
+**Current:** [v1.7.3-changelog.md](v1.7.3-changelog.md) — joint release with Studio 1.7.3 (verb pathing + `area_event` hook).
 
 ---
 
@@ -10,6 +10,7 @@ Release notes and historical implementation checklists for CampAIgn-RPG-Engine.
 
 | Version | Summary |
 |---------|---------|
+| [1.7.3](v1.7.3-changelog.md) | Explicit move for pathing verbs; `path_range_from_turn`; `area_event` session emit |
 | [1.7.2](v1.7.2-changelog.md) | Concurrent LLM policy; affinity JSON repair; identity preamble; consolidation failure hooks |
 | [1.7.1](v1.7.1-changelog.md) | Leading-dot JSON key repair; honor explicit move when it reaches interact range |
 | [1.6.1](v1.6.1-changelog.md) | PyPI/tag train with Studio 1.6.1 (no engine API delta vs 1.6.0) |

@@ -4,7 +4,7 @@ Grid-based LLM agent simulation engine: multi-area worlds, compound turns (move 
 
 **License:** [MIT](LICENSE) — open source.
 
-**Current version:** **1.7.2** — Featherless concurrency policy and affinity consolidation hardening. See [changelog index](docs/changelog/README.md).
+**Current version:** **1.7.3** — Verb pathing parity with interact (`path_range_from_turn`, honor explicit move in range) and `area_event` session hook for plugins. See [changelog index](docs/changelog/README.md).
 
 ## Quick start
 

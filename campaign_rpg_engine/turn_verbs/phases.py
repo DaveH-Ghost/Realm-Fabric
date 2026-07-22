@@ -20,7 +20,11 @@ from campaign_rpg_engine.move_target import (
 from campaign_rpg_engine.occupancy import find_blocker_between, is_tile_enterable
 from campaign_rpg_engine.pathfinding import find_path, walk_with_pathfinding
 from campaign_rpg_engine.perception import nearest_standable_in_chebyshev_range
-from campaign_rpg_engine.turn_verbs.registry import get_turn_verb_registration, run_turn_verb
+from campaign_rpg_engine.turn_verbs.registry import (
+    get_turn_verb_registration,
+    resolve_verb_path_range,
+    run_turn_verb,
+)
 
 if TYPE_CHECKING:
     from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
@@ -187,17 +191,49 @@ def _path_agent_toward_agent(
     return path_move, _too_far_message(target, verb_id)
 
 
+def verb_registration_has_pathing(reg) -> bool:
+    """True when a registration opts into agent-target pathing."""
+    if reg is None or reg.path_target_from_turn is None:
+        return False
+    return reg.path_range is not None or reg.path_range_from_turn is not None
+
+
 def verb_turn_has_pathing(turn: AgentCompoundTurn) -> bool:
-    """True when this verb turn opts into engine pathing (replaces explicit move)."""
+    """True when this verb turn opts into engine pathing (usually replaces explicit move)."""
     if turn.action != "verb":
         return False
     verb_id = (turn.verb or "").strip()
     if not verb_id:
         return False
     reg = get_turn_verb_registration(verb_id)
-    if reg is None or reg.path_range is None or reg.path_target_from_turn is None:
+    if not verb_registration_has_pathing(reg):
         return False
     return bool(reg.path_target_from_turn(turn))
+
+
+def explicit_move_reaches_agent_range(
+    agent: Agent,
+    area: Area,
+    *,
+    move: str,
+    target_id: str,
+    action_range: int,
+) -> bool:
+    """
+    True when the compound ``move`` would leave the agent in Chebyshev range of *target_id*.
+
+    Used so nav honors an explicit move that already achieves verb range,
+    instead of replacing it with auto-pathing toward the target agent.
+    """
+    from campaign_rpg_engine.actions.move import simulate_move_final_position
+
+    target = area.get_agent_by_id(target_id)
+    if target is None:
+        return False
+    final = simulate_move_final_position(agent, area, move)
+    if final is None:
+        return False
+    return chebyshev_distance(final, target.position) <= action_range
 
 
 def run_turn_verb_phases(
@@ -215,16 +251,17 @@ def run_turn_verb_phases(
         return VerbPhaseResult(None, run_turn_verb(session, agent, area, turn))
 
     path_move: ActionOutcome | None = None
-    if reg.path_range is not None and reg.path_target_from_turn is not None:
+    if verb_registration_has_pathing(reg):
+        action_range = resolve_verb_path_range(session, agent, area, turn, reg)
         target_id = (reg.path_target_from_turn(turn) or "").strip()
-        if target_id:
+        if action_range is not None and target_id:
             target = area.get_agent_by_id(target_id)
             if target is not None and target.id != agent.id:
                 path_move, path_err = _path_agent_toward_agent(
                     agent,
                     area,
                     target,
-                    reg.path_range,
+                    action_range,
                     verb_id,
                     session=session,
                     trigger_fired=trigger_fired,

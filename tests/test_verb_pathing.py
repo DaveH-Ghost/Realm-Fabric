@@ -70,7 +70,7 @@ def test_verb_paths_toward_agent_before_execute():
     clear_turn_verbs_for_tests()
 
 
-def test_verb_pathing_ignores_explicit_move():
+def test_verb_pathing_ignores_explicit_move_when_out_of_range():
     clear_turn_verbs_for_tests()
     _register_near_verb()
 
@@ -103,6 +103,94 @@ def test_verb_pathing_ignores_explicit_move():
     assert actor.position != (4, 4)
     assert any(step.kind == "move" for step in record.steps)
     assert "Goblin" in record.result
+    clear_turn_verbs_for_tests()
+
+
+def test_verb_honors_explicit_move_when_already_in_range():
+    clear_turn_verbs_for_tests()
+    _register_near_verb()
+
+    session = Session.from_profile(load_profile("default_compound"))
+    actor = session.get_active_agent()
+    actor.position = (0, 0)
+    actor.move_speed = 4
+    area = session.get_area_for_agent(actor)
+    create_agent_from_args(
+        area,
+        'name "Goblin" pdesc "A goblin." desc "x" personality "x" at 2,0',
+    )
+    goblin = area.get_agent_by_name("Goblin")
+
+    record = run_compound_turn(
+        actor,
+        area,
+        AgentCompoundTurn(
+            reasoning="Step next to them first.",
+            move="1,0",
+            action="verb",
+            verb="near",
+            target=goblin.id,
+        ),
+        1,
+        session=session,
+        session_turn=1,
+    )
+
+    assert actor.position == (1, 0)
+    move_steps = [step for step in record.steps if step.kind == "move"]
+    assert len(move_steps) == 1
+    assert "near Goblin" in record.result
+    clear_turn_verbs_for_tests()
+
+
+def test_verb_dynamic_path_range_from_turn():
+    clear_turn_verbs_for_tests()
+
+    def far(session, agent, area, turn):
+        del session, area, turn
+        return ActionOutcome(
+            result=f"You gesture at range from {agent.position}.",
+            passive_result="",
+        )
+
+    register_turn_verb(
+        "far",
+        far,
+        description="Approach with dynamic range",
+        path_range=1,
+        path_range_from_turn=lambda session, agent, area, turn: 3,
+        path_target_from_turn=lambda turn: (turn.target or "").strip() or None,
+    )
+
+    session = Session.from_profile(load_profile("default_compound"))
+    actor = session.get_active_agent()
+    actor.position = (0, 0)
+    actor.move_speed = 1
+    area = session.get_area_for_agent(actor)
+    create_agent_from_args(
+        area,
+        'name "Goblin" pdesc "A goblin." desc "x" personality "x" at 3,0',
+    )
+    goblin = area.get_agent_by_name("Goblin")
+
+    record = run_compound_turn(
+        actor,
+        area,
+        AgentCompoundTurn(
+            reasoning="Dynamic range should let me act without pathing fully.",
+            action="verb",
+            verb="far",
+            target=goblin.id,
+        ),
+        1,
+        session=session,
+        session_turn=1,
+    )
+
+    # range 3 from (0,0) to (3,0) — already in range, no move needed
+    assert actor.position == (0, 0)
+    assert not any(step.kind == "move" for step in record.steps)
+    assert "gesture" in record.result.lower()
     clear_turn_verbs_for_tests()
 
 

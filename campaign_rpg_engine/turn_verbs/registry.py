@@ -20,6 +20,10 @@ TurnVerbExecutor = Callable[
 ]
 ValidateTurnVerb = Callable[["AgentCompoundTurn"], str | None]
 VerbPathTarget = Callable[["AgentCompoundTurn"], str | None]
+VerbPathRange = Callable[
+    ["Session | None", "Agent", "Area", "AgentCompoundTurn"],
+    int | None,
+]
 
 
 @dataclass(frozen=True)
@@ -31,6 +35,8 @@ class TurnVerbRegistration:
     """When set, path toward :attr:`path_target_from_turn` before running the verb."""
     path_target_from_turn: VerbPathTarget | None = None
     """Return an in-area ``agent_*`` id to approach, or None to skip pathing."""
+    path_range_from_turn: VerbPathRange | None = None
+    """Optional dynamic range; when it returns an int, it overrides :attr:`path_range`."""
 
 
 _REGISTRY: dict[str, TurnVerbRegistration] = {}
@@ -44,13 +50,20 @@ def register_turn_verb(
     validate_turn: ValidateTurnVerb | None = None,
     path_range: int | None = None,
     path_target_from_turn: VerbPathTarget | None = None,
+    path_range_from_turn: VerbPathRange | None = None,
 ) -> None:
     cleaned = verb_id.strip()
     if not cleaned:
         raise ValueError("verb_id must not be empty")
-    if (path_range is None) != (path_target_from_turn is None):
-        raise ValueError("path_range and path_target_from_turn must both be set or both omitted")
-    if path_range is not None and path_range < 0:
+    has_static = path_range is not None
+    has_dynamic = path_range_from_turn is not None
+    has_target = path_target_from_turn is not None
+    if has_target != (has_static or has_dynamic):
+        raise ValueError(
+            "path_target_from_turn must be set together with path_range "
+            "and/or path_range_from_turn"
+        )
+    if has_static and path_range is not None and path_range < 0:
         raise ValueError("path_range must be non-negative")
     _REGISTRY[cleaned] = TurnVerbRegistration(
         executor=executor,
@@ -58,7 +71,25 @@ def register_turn_verb(
         validate_turn=validate_turn,
         path_range=path_range,
         path_target_from_turn=path_target_from_turn,
+        path_range_from_turn=path_range_from_turn,
     )
+
+
+def resolve_verb_path_range(
+    session: Session | None,
+    agent: Agent,
+    area: Area,
+    turn: AgentCompoundTurn,
+    reg: TurnVerbRegistration,
+) -> int | None:
+    """Return the Chebyshev range for verb pathing, or None to skip pathing."""
+    if reg.path_range_from_turn is not None:
+        resolved = reg.path_range_from_turn(session, agent, area, turn)
+        if resolved is not None:
+            if resolved < 0:
+                return None
+            return resolved
+    return reg.path_range
 
 
 def list_registered_turn_verbs() -> list[str]:

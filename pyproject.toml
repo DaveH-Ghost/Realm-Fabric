@@ -1,6 +1,6 @@
 [project]
 name = "campaign-rpg-engine"
-version = "1.7.2"
+version = "1.7.3"
 description = "CampAIgn — map-based LLM RPG simulation engine (Session API, multi-area worlds, compound turns)"
 readme = "README.md"
 requires-python = ">=3.11"

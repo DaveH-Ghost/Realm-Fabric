@@ -19,7 +19,15 @@ from campaign_rpg_engine.area import Area
 from campaign_rpg_engine.llm.schemas import AgentCompoundTurn
 from campaign_rpg_engine.memory import StepKind, TurnRecord, TurnStep
 from campaign_rpg_engine.perception import perform_look as do_look
-from campaign_rpg_engine.turn_verbs.phases import run_turn_verb_phases, verb_turn_has_pathing
+from campaign_rpg_engine.turn_verbs.phases import (
+    explicit_move_reaches_agent_range,
+    run_turn_verb_phases,
+    verb_turn_has_pathing,
+)
+from campaign_rpg_engine.turn_verbs.registry import (
+    get_turn_verb_registration,
+    resolve_verb_path_range,
+)
 
 if TYPE_CHECKING:
     from campaign_rpg_engine.session import Session
@@ -65,10 +73,31 @@ def execute_nav_phase(
 ) -> list[TurnStep]:
     """Run optional move from compound turn. Commits position changes."""
     if verb_turn_has_pathing(turn):
+        # Auto-pathing inside the verb usually owns movement. Honor an explicit
+        # move when it would already put the agent in verb range this turn.
+        if not turn.move:
+            return []
+        verb_id = (turn.verb or "").strip()
+        reg = get_turn_verb_registration(verb_id)
+        if reg is None or reg.path_target_from_turn is None:
+            return []
+        target_id = (reg.path_target_from_turn(turn) or "").strip()
+        action_range = resolve_verb_path_range(session, agent, area, turn, reg)
+        if (
+            not target_id
+            or action_range is None
+            or not explicit_move_reaches_agent_range(
+                agent,
+                area,
+                move=turn.move,
+                target_id=target_id,
+                action_range=action_range,
+            )
+        ):
+            return []
+    elif not turn.move:
         return []
-    if not turn.move:
-        return []
-    if turn.action == "interact":
+    elif turn.action == "interact":
         # Auto-pathing inside interact usually owns movement. Honor an explicit
         # move when it would already put the agent in interact range this turn
         # (important for intentional positioning).
@@ -84,6 +113,9 @@ def execute_nav_phase(
             )
         ):
             return []
+
+    if not turn.move:
+        return []
 
     outcome = do_move(
         agent,
